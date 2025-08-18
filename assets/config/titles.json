@@ -1,0 +1,31 @@
+{
+  "titles": [
+    {
+      "id": "title_001",
+      "name": "河馬新手",
+      "unlock_condition": {
+        "type": "total_taps",
+        "value": 100
+      },
+      "display_text": "初來乍到的河馬訓練師"
+    },
+    {
+      "id": "title_002", 
+      "name": "點擊大師",
+      "unlock_condition": {
+        "type": "total_taps",
+        "value": 1000
+      },
+      "display_text": "手指飛快的點擊專家"
+    },
+    {
+      "id": "title_003",
+      "name": "放置王者",
+      "unlock_condition": {
+        "type": "idle_time_hours",
+        "value": 24
+      },
+      "display_text": "耐心等待的放置高手"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "quests": [
+    {
+      "id": "quest_001",
+      "name": "首次點擊",
+      "description": "點擊河馬 10 次",
+      "target_condition": {
+        "type": "tap_count",
+        "value": 10
+      },
+      "rewards": {
+        "coins": 50,
+        "experience": 10
+      }
+    },
+    {
+      "id": "quest_002",
+      "name": "放置收益",
+      "description": "透過放置獲得 100 金幣",
+      "target_condition": {
+        "type": "idle_income_total",
+        "value": 100
+      },
+      "rewards": {
+        "coins": 200,
+        "experience": 25
+      }
+    },
+    {
+      "id": "quest_003",
+      "name": "裝備升級",
+      "description": "升級任意裝備 1 次",
+      "target_condition": {
+        "type": "equipment_upgrades",
+        "value": 1
+      },
+      "rewards": {
+        "coins": 150,
+        "experience": 20
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "tap": {
+    "base": 1
+  },
+  "idle": {
+    "base_per_sec": 0.1
+  },
+  "dailyTapCap": 200,
+  "ui": {
+    "theme": "green",
+    "showDebugPanel": true
+  },
+  "version": "1.0.0"
+}
