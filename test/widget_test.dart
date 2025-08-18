@@ -11,20 +11,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Idle Hippo main screen displays title and initial value', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const IdleHippoApp());
 
-    // Verify that our counter starts at 0.
+    // Verify that the title "Idle Hippo" is displayed
+    expect(find.text('Idle Hippo'), findsOneWidget);
+    
+    // Verify that the initial value "0" is displayed
     expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    
+    // Verify that the app uses the correct background color
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.backgroundColor, Colors.lightGreen[50]);
   });
 }
