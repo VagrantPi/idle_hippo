@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/config_service.dart';
+import '../models/game_state.dart';
 
 class DebugPanel extends StatefulWidget {
-  const DebugPanel({super.key});
+  final GameState? gameState;
+  
+  const DebugPanel({super.key, this.gameState});
 
   @override
   State<DebugPanel> createState() => _DebugPanelState();
@@ -14,7 +17,7 @@ class _DebugPanelState extends State<DebugPanel> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isVisible || !_configService.isLoaded) {
+    if (!_isVisible) {
       return const SizedBox.shrink();
     }
 
@@ -55,10 +58,27 @@ class _DebugPanelState extends State<DebugPanel> {
               ],
             ),
             const SizedBox(height: 8),
-            _buildConfigRow('tap.base', _configService.getValue('game.tap.base')),
-            _buildConfigRow('idle.base_per_sec', _configService.getValue('game.idle.base_per_sec')),
-            _buildConfigRow('dailyTapCap', _configService.getValue('game.dailyTapCap')),
-            const SizedBox(height: 4),
+            
+            // Config Section
+            if (_configService.isLoaded) ...[
+              _buildSectionTitle('Config'),
+              _buildConfigRow('tap.base', _configService.getValue('game.tap.base')),
+              _buildConfigRow('idle.base_per_sec', _configService.getValue('game.idle.base_per_sec')),
+              _buildConfigRow('dailyTapCap', _configService.getValue('game.dailyTapCap')),
+              const SizedBox(height: 8),
+            ],
+            
+            // Game State Section
+            if (widget.gameState != null) ...[
+              _buildSectionTitle('Game State'),
+              _buildConfigRow('saveVersion', widget.gameState!.saveVersion),
+              _buildConfigRow('memePoints', widget.gameState!.memePoints),
+              _buildConfigRow('equipments', widget.gameState!.equipments.length),
+              _buildConfigRow('lastTs', _formatTimestamp(widget.gameState!.lastTs)),
+              const SizedBox(height: 8),
+            ],
+            
+            // Actions
             GestureDetector(
               onTap: _reloadConfig,
               child: Container(
@@ -82,18 +102,37 @@ class _DebugPanelState extends State<DebugPanel> {
     );
   }
 
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.yellow,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildConfigRow(String key, dynamic value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 1),
       child: Text(
         '$key=$value',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 12,
+          fontSize: 11,
           fontFamily: 'monospace',
         ),
       ),
     );
+  }
+
+  String _formatTimestamp(int timestamp) {
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
   }
 
   Future<void> _reloadConfig() async {
