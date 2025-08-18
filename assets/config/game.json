@@ -5,7 +5,7 @@
   "idle": {
     "base_per_sec": 0.1
   },
-  "dailyTapCap": 200,
+  "dailyTapCap": 10,
   "ui": {
     "theme": "green",
     "showDebugPanel": true
