@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/config_service.dart';
+import '../services/game_clock_service.dart';
+import '../services/idle_income_service.dart';
 import '../models/game_state.dart';
 
 class DebugPanel extends StatefulWidget {
@@ -13,6 +15,8 @@ class DebugPanel extends StatefulWidget {
 
 class _DebugPanelState extends State<DebugPanel> {
   final ConfigService _configService = ConfigService();
+  final GameClockService _gameClock = GameClockService();
+  final IdleIncomeService _idleIncome = IdleIncomeService();
   bool _isVisible = true;
 
   @override
@@ -77,25 +81,19 @@ class _DebugPanelState extends State<DebugPanel> {
               _buildConfigRow('lastTs', _formatTimestamp(widget.gameState!.lastTs)),
               const SizedBox(height: 8),
             ],
+
+            // GameClock Section
+            _buildSectionTitle('GameClock'),
+            _buildGameClockStats(),
+            const SizedBox(height: 8),
+
+            // IdleIncome Section
+            _buildSectionTitle('IdleIncome'),
+            _buildIdleIncomeStats(),
+            const SizedBox(height: 8),
             
             // Actions
-            GestureDetector(
-              onTap: _reloadConfig,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'Reload Config',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ),
+            _buildActions(),
           ],
         ),
       ),
@@ -130,6 +128,104 @@ class _DebugPanelState extends State<DebugPanel> {
     );
   }
 
+  Widget _buildGameClockStats() {
+    final stats = _gameClock.getStats();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildConfigRow('fps', stats['currentFps']?.toStringAsFixed(1) ?? '0.0'),
+        _buildConfigRow('avgDelta(ms)', stats['averageDeltaMs']?.toStringAsFixed(1) ?? '0.0'),
+        _buildConfigRow('state', _gameClock.lifecycleState),
+        _buildConfigRow('subscribers', stats['subscribersCount']),
+        _buildConfigRow('isRunning', stats['isRunning']),
+        _buildConfigRow('fixedStep', stats['isFixedStepMode']),
+      ],
+    );
+  }
+
+  Widget _buildIdleIncomeStats() {
+    final stats = _idleIncome.getStats();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildConfigRow('idlePerSec', stats['currentIdlePerSec']),
+        _buildConfigRow('totalTime(s)', stats['totalIdleTime']?.toStringAsFixed(1) ?? '0.0'),
+        _buildConfigRow('totalIncome', stats['totalIdleIncome']?.toStringAsFixed(2) ?? '0.0'),
+        _buildConfigRow('avgIncome/s', stats['averageIncomePerSec']?.toStringAsFixed(3) ?? '0.0'),
+        _buildConfigRow('subscribed', stats['isSubscribed']),
+      ],
+    );
+  }
+
+  Widget _buildActions() {
+    return Column(
+      children: [
+        // Reload Config Button
+        GestureDetector(
+          onTap: _reloadConfig,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Reload Config',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+        
+        // Toggle Fixed Step Mode Button
+        GestureDetector(
+          onTap: _toggleFixedStepMode,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: _gameClock.getStats()['isFixedStepMode'] == true 
+                  ? Colors.orange.withOpacity(0.3)
+                  : Colors.blue.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              _gameClock.getStats()['isFixedStepMode'] == true 
+                  ? 'Disable Fixed Step' 
+                  : 'Enable Fixed Step',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+
+        // Reset Idle Stats Button
+        GestureDetector(
+          onTap: _resetIdleStats,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Reset Idle Stats',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   String _formatTimestamp(int timestamp) {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
@@ -156,6 +252,37 @@ class _DebugPanelState extends State<DebugPanel> {
           ),
         );
       }
+    }
+  }
+
+  void _toggleFixedStepMode() {
+    final isCurrentlyFixed = _gameClock.getStats()['isFixedStepMode'] == true;
+    _gameClock.setFixedStepMode(!isCurrentlyFixed, fixedDelta: 0.05); // 20fps for testing
+    setState(() {});
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isCurrentlyFixed 
+              ? 'Fixed step mode disabled' 
+              : 'Fixed step mode enabled (20fps)'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _resetIdleStats() {
+    _idleIncome.resetStats();
+    setState(() {});
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Idle stats reset'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 }

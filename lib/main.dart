@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'services/config_service.dart';
 import 'services/secure_save_service.dart';
+import 'services/game_clock_service.dart';
+import 'services/idle_income_service.dart';
 import 'models/game_state.dart';
 import 'ui/debug_panel.dart';
 
@@ -16,6 +18,10 @@ void main() async {
     // 初始化存檔服務
     final saveService = SecureSaveService();
     await saveService.init(currentVersion: 1);
+
+    // 初始化時間系統
+    final gameClock = GameClockService();
+    gameClock.init();
   }
   
   runApp(const IdleHippoApp());
@@ -53,30 +59,39 @@ class IdleHippoScreen extends StatefulWidget {
 class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final ConfigService _configService = ConfigService();
   final SecureSaveService _saveService = SecureSaveService();
+  final GameClockService _gameClock = GameClockService();
+  final IdleIncomeService _idleIncome = IdleIncomeService();
   
   GameState _gameState = GameState.initial(1);
   bool _showDebugPanel = true;
   Timer? _autoSaveTimer;
+  Timer? _uiUpdateTimer;
+
+  double _accumulatedIdleIncome = 0.0;
 
   @override
   void initState() {
     super.initState();
     _initializeFromConfig();
-    _loadGameState();
+    _initializeGame();
     _startAutoSaveTimer();
   }
 
-  void _startAutoSaveTimer() {
-    // 每分鐘自動存檔一次，確保 lastTs 保持更新
-    _autoSaveTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      _saveGameState();
-    });
+  Future<void> _initializeGame() async {
+    await _loadGameState();
+    
+    // 確保 IdleIncome 初始化完成後再啟動時間系統
+    _gameClock.start();
   }
 
   @override
   void dispose() {
     print('Disposing _IdleHippoScreenState');
     _autoSaveTimer?.cancel();
+    _uiUpdateTimer?.cancel();
+    _gameClock.stop();
+    _gameClock.dispose();
+    _idleIncome.dispose();
     super.dispose();
   }
 
@@ -96,16 +111,49 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       setState(() {
         _gameState = loadedState;
       });
+      
+      // 統一在這裡初始化放置收益系統
+      _idleIncome.init(onIncomeGenerated: (double points) {
+        _accumulatedIdleIncome += points;
+        
+        // 當累積收益 >= 1 時才更新 GameState
+        if (_accumulatedIdleIncome >= 1.0) {
+          final pointsToAdd = _accumulatedIdleIncome.floor();
+          _accumulatedIdleIncome -= pointsToAdd;
+          
+          setState(() {
+            _gameState = _gameState.copyWith(
+              memePoints: _gameState.memePoints + pointsToAdd,
+            );
+          });
+        }
+      });
+      
       print('Game state loaded: ${_gameState.memePoints} meme points');
     } catch (e) {
       print('Failed to load game state: $e');
     }
   }
 
+  void _startAutoSaveTimer() {
+    // 每 10 秒自動存檔一次，平衡效能與即時性
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      _saveGameState();
+    });
+    
+    // 每秒更新 UI 顯示，讓使用者看到即時變化
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        // 觸發 UI 重建，更新顯示的 memePoints
+      });
+    });
+  }
+
   Future<void> _saveGameState() async {
     try {
-      // 更新時間戳再存檔
+      // 直接存檔當前 GameState，不需要合併 IdleIncome
       final updatedState = _gameState.updateTimestamp();
+      
       setState(() {
         _gameState = updatedState;
       });
@@ -127,13 +175,17 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
   void _onTap() {
     final tapValue = _configService.getValue('game.tap.base', defaultValue: 1);
+    
+    // 直接更新 GameState 的 memePoints（點擊收益）
+    final updatedState = _gameState.copyWith(
+      memePoints: _gameState.memePoints + (tapValue as int),
+    ).updateTimestamp();
+    
     setState(() {
-      _gameState = _gameState.copyWith(
-        memePoints: _gameState.memePoints + (tapValue as num).toInt(),
-      );
+      _gameState = updatedState;
     });
     
-    // 自動存檔
+    // 立即存檔
     _saveGameState();
   }
 
@@ -155,6 +207,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         setState(() {
           _gameState = GameState.initial(1);
         });
+        
+        // 重置放置收益統計
+        _idleIncome.resetStats();
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -200,8 +255,11 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     );
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
+    // 計算總 memePoints：GameState 的點擊收益 + IdleIncome 的放置收益
+    final displayMemePoints = _gameState.memePoints;
+
     return Scaffold(
       backgroundColor: Colors.lightGreen[50],
       body: Stack(
@@ -241,7 +299,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                     child: Column(
                       children: [
                         Text(
-                          '${_gameState.memePoints}',
+                          '$displayMemePoints',
                           style: TextStyle(
                             fontSize: 72,
                             fontWeight: FontWeight.bold,
@@ -300,6 +358,26 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         'Save v${_gameState.saveVersion}',
                         style: TextStyle(
                           color: Colors.blue[700],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _gameClock.isRunning 
+                            ? Colors.orange.withOpacity(0.1)
+                            : Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _gameClock.isRunning ? 'Clock Running' : 'Clock Stopped',
+                        style: TextStyle(
+                          color: _gameClock.isRunning 
+                              ? Colors.orange[700]
+                              : Colors.red[700],
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
