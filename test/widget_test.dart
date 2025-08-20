@@ -34,7 +34,7 @@ class TestIdleHippoScreen extends StatefulWidget {
 }
 
 class _TestIdleHippoScreenState extends State<TestIdleHippoScreen> {
-  int _currentValue = 0;
+  final int _currentValue = 0;
 
   @override
   Widget build(BuildContext context) {

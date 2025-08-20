@@ -7,10 +7,10 @@ class SettingsPage extends StatefulWidget {
   final PageType previousPage;
 
   const SettingsPage({
-    Key? key,
+    super.key,
     required this.onLanguageChanged,
     this.previousPage = PageType.home,
-  }) : super(key: key);
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();

@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/widgets.dart';
 import 'package:idle_hippo/services/game_clock_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
-import 'package:idle_hippo/services/config_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

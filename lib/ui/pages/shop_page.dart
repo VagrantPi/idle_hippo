@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 
 class ShopPage extends StatelessWidget {
-  const ShopPage({Key? key}) : super(key: key);
+  const ShopPage({super.key});
 
   @override
   Widget build(BuildContext context) {

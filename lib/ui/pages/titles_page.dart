@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 
 class TitlesPage extends StatelessWidget {
-  const TitlesPage({Key? key}) : super(key: key);
+  const TitlesPage({super.key});
 
   @override
   Widget build(BuildContext context) {

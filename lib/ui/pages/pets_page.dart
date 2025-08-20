@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 
 class PetsPage extends StatelessWidget {
-  const PetsPage({Key? key}) : super(key: key);
+  const PetsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

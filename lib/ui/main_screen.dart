@@ -20,10 +20,10 @@ class MainScreen extends StatefulWidget {
   final VoidCallback onCharacterTap;
 
   const MainScreen({
-    Key? key,
+    super.key,
     required this.memePoints,
     required this.onCharacterTap,
-  }) : super(key: key);
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -182,7 +182,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildBackground() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: double.infinity,
       child: AnimatedOpacity(
@@ -285,7 +285,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   Text(
-                    _idleIncome.currentIdlePerSec.toStringAsFixed(2) + ' ' + _localization.getCommon('perSecond'),
+                    '${_idleIncome.currentIdlePerSec.toStringAsFixed(2)} ${_localization.getCommon('perSecond')}',
                     style: const TextStyle(
                       color: Colors.yellow,
                       fontSize: 12,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 
 class MusicGamePage extends StatelessWidget {
-  const MusicGamePage({Key? key}) : super(key: key);
+  const MusicGamePage({super.key});
 
   @override
   Widget build(BuildContext context) {

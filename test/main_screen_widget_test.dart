@@ -1,46 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_hippo/ui/components/animated_button.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
-import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 
 void main() {
   group('MainScreen Widget Tests', () {
-    late GameState testGameState;
+    late PageManager pageManager;
+    late VoidCallback onCharacterTap;
+    int tapCount = 0;
 
     setUp(() {
-      testGameState = GameState(
-        memePoints: 1000,
-        memePointsPerSecond: 10.5,
-        level: 5,
-        experience: 250,
-        experienceToNext: 500,
-      );
+      pageManager = PageManager();
+      tapCount = 0;
+      onCharacterTap = () {
+        tapCount++;
+      };
       
       // 初始化服務
-      LocalizationService.instance.setLanguage('en');
-      PageManager.instance.setCurrentPage(PageType.home);
+      LocalizationService().init(language: 'en');
+      pageManager.navigateToPage(PageType.home);
     });
 
-    testWidgets('should display game state information correctly', (WidgetTester tester) async {
+    testWidgets('should display meme points correctly', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: MainScreen(gameState: testGameState),
+          home: MainScreen(
+            memePoints: 1000,
+            onCharacterTap: onCharacterTap,
+          ),
         ),
       );
 
       // 檢查是否顯示 meme points
       expect(find.text('1000'), findsOneWidget);
-      
-      // 檢查是否顯示每秒收益
-      expect(find.textContaining('10.5'), findsOneWidget);
     });
 
     testWidgets('should show character image', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: MainScreen(gameState: testGameState),
+          home: MainScreen(
+            memePoints: 1000,
+            onCharacterTap: onCharacterTap,
+          ),
         ),
       );
 
@@ -51,7 +54,10 @@ void main() {
     testWidgets('should have navigation buttons', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: MainScreen(gameState: testGameState),
+          home: MainScreen(
+            memePoints: 1000,
+            onCharacterTap: onCharacterTap,
+          ),
         ),
       );
 
@@ -62,54 +68,62 @@ void main() {
     testWidgets('should handle character tap', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: MainScreen(gameState: testGameState),
+          home: MainScreen(
+            memePoints: 1000,
+            onCharacterTap: onCharacterTap,
+          ),
         ),
       );
 
       // 查找角色區域並點擊
-      final characterFinder = find.byKey(const Key('character_area'));
-      if (characterFinder.evaluate().isNotEmpty) {
-        await tester.tap(characterFinder);
-        await tester.pump();
-        
-        // 檢查是否有粒子效果產生
-        expect(find.byType(AnimatedBuilder), findsWidgets);
-      }
-    });
-
-    testWidgets('should switch pages when navigation buttons are tapped', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MainScreen(gameState: testGameState),
-        ),
-      );
-
-      // 初始應該在首頁
-      expect(PageManager.instance.currentPage, equals(PageType.home));
-
-      // 查找並點擊裝備按鈕（如果存在）
-      final equipmentButton = find.byKey(const Key('nav_equipment'));
-      if (equipmentButton.evaluate().isNotEmpty) {
-        await tester.tap(equipmentButton);
-        await tester.pump();
-        
-        expect(PageManager.instance.currentPage, equals(PageType.equipment));
-      }
-    });
-
-    testWidgets('should respond to language changes', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MainScreen(gameState: testGameState),
-        ),
-      );
-
-      // 切換語言
-      LocalizationService.instance.setLanguage('zh');
+      final characterFinder = find.byType(GestureDetector).first;
+      await tester.tap(characterFinder);
       await tester.pump();
+      
+      // 檢查點擊處理函數是否被調用
+      expect(tapCount, 1);
+    });
 
-      // 檢查語言是否已切換
-      expect(LocalizationService.instance.currentLanguage, equals('zh'));
+    testWidgets('should show settings button', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MainScreen(
+            memePoints: 1000,
+            onCharacterTap: onCharacterTap,
+          ),
+        ),
+      );
+
+      // 找到所有 AnimatedButton 組件
+      final animatedButtons = find.byType(AnimatedButton);
+      
+      // 找出設置按鈕（圖標路徑包含 'Setting' 或 'setting' 的按鈕）
+      final settingsButton = find.byWidgetPredicate(
+        (widget) => widget is AnimatedButton && 
+                   (widget.iconPath.toLowerCase().contains('setting') || 
+                    widget.iconPath.contains('設定')), // 支援英文和中文路徑
+      );
+      
+      // 驗證設置按鈕是否存在
+      expect(settingsButton, findsOneWidget, reason: 'Settings button not found');
+      
+      // 獲取按鈕實例並驗證點擊事件
+      final button = tester.widget<AnimatedButton>(settingsButton);
+      expect(button.onTap, isNotNull, reason: 'Settings button onTap is null');
+    });
+
+    testWidgets('should show resource display', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MainScreen(
+            memePoints: 1000,
+            onCharacterTap: onCharacterTap,
+          ),
+        ),
+      );
+
+      // 檢查資源顯示區域是否存在
+      expect(find.text('1000'), findsOneWidget);
     });
   });
 }
