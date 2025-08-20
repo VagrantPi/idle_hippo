@@ -33,6 +33,7 @@ class LocalizationService {
     try {
       final String jsonString = await rootBundle.loadString('assets/lang/$languageCode.json');
       _localizedStrings = json.decode(jsonString);
+      _currentLanguage = languageCode; // 確保更新當前語言
       print('LocalizationService: Loaded language $languageCode');
     } catch (e) {
       print('LocalizationService: Failed to load language $languageCode: $e');

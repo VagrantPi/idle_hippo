@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 
 class QuestPage extends StatelessWidget {
-  const QuestPage({Key? key}) : super(key: key);
+  const QuestPage({super.key});
 
   @override
   Widget build(BuildContext context) {

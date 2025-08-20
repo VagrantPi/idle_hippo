@@ -6,10 +6,10 @@ class PlusMemeParticle extends StatefulWidget {
   final VoidCallback onComplete;
 
   const PlusMemeParticle({
-    Key? key,
+    super.key,
     required this.startPosition,
     required this.onComplete,
-  }) : super(key: key);
+  });
 
   @override
   State<PlusMemeParticle> createState() => _PlusMemeParticleState();

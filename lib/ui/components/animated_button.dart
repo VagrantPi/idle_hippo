@@ -11,7 +11,7 @@ class AnimatedButton extends StatefulWidget {
   final double borderWidth;
 
   const AnimatedButton({
-    Key? key,
+    super.key,
     required this.iconPath,
     required this.onTap,
     this.size = 48.0,
@@ -20,7 +20,7 @@ class AnimatedButton extends StatefulWidget {
     this.title,
     this.borderColor,
     this.borderWidth = 2.0,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedButton> createState() => _AnimatedButtonState();
@@ -142,23 +142,30 @@ class _AnimatedButtonState extends State<AnimatedButton>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      widget.iconPath,
-                      width: widget.isNavButton ? widget.size * 0.6 : widget.size * 0.8,
-                      height: widget.isNavButton ? widget.size * 0.6 : widget.size * 0.8,
-                      fit: BoxFit.fitWidth,
+                    Flexible(
+                      child: Image.asset(
+                        widget.iconPath,
+                        width: 300,
+                        // width: widget.isNavButton ? widget.size * 0.6 : widget.size * 0.8,
+                        // height: widget.isNavButton ? widget.size * 0.6 : widget.size * 0.8,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     if (widget.showTitle && widget.title != null)
-                      Text(
-                        widget.title!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          widget.title!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
                         ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
                       )
                   ],
                 ),
