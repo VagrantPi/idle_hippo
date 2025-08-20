@@ -1,12 +1,14 @@
 {
   "tap": {
     "base": 1,
-    "base_gain": 0.5
+    "base_gain": 0.5,
+    "daily_cap_base": 200,
+    "daily_cap_ad_multiplier": 2
   },
   "idle": {
     "base_per_sec": 0.1
   },
-  "dailyTapCap": 10,
+  "dailyTapCap": 200,
   "ui": {
     "theme": "green",
     "showDebugPanel": true

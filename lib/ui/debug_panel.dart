@@ -8,8 +8,9 @@ import '../services/tap_service.dart';
 class DebugPanel extends StatefulWidget {
   final GameState? gameState;
   final TapService? tapService;
+  final Future<void> Function()? onResetAll;
   
-  const DebugPanel({super.key, this.gameState, this.tapService});
+  const DebugPanel({super.key, this.gameState, this.tapService, this.onResetAll});
 
   @override
   State<DebugPanel> createState() => _DebugPanelState();
@@ -238,6 +239,40 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             child: const Text(
               'Reset Idle Stats',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 4),
+
+        // Reset All State Button
+        GestureDetector(
+          onTap: () async {
+            if (widget.onResetAll != null) {
+              await widget.onResetAll!();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('All state reset'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              setState(() {});
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Reset All State',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
