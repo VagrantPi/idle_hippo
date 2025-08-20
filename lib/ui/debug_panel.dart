@@ -3,11 +3,13 @@ import '../services/config_service.dart';
 import '../services/game_clock_service.dart';
 import '../services/idle_income_service.dart';
 import '../models/game_state.dart';
+import '../services/tap_service.dart';
 
 class DebugPanel extends StatefulWidget {
   final GameState? gameState;
+  final TapService? tapService;
   
-  const DebugPanel({super.key, this.gameState});
+  const DebugPanel({super.key, this.gameState, this.tapService});
 
   @override
   State<DebugPanel> createState() => _DebugPanelState();
@@ -67,6 +69,7 @@ class _DebugPanelState extends State<DebugPanel> {
             if (_configService.isLoaded) ...[
               _buildSectionTitle('Config'),
               _buildConfigRow('tap.base', _configService.getValue('game.tap.base')),
+              _buildConfigRow('tap.base_gain', _configService.getValue('game.tap.base_gain')),
               _buildConfigRow('idle.base_per_sec', _configService.getValue('game.idle.base_per_sec')),
               _buildConfigRow('dailyTapCap', _configService.getValue('game.dailyTapCap')),
               const SizedBox(height: 8),
@@ -91,6 +94,13 @@ class _DebugPanelState extends State<DebugPanel> {
             _buildSectionTitle('IdleIncome'),
             _buildIdleIncomeStats(),
             const SizedBox(height: 8),
+
+            // Tap Section
+            if (widget.tapService != null) ...[
+              _buildSectionTitle('Tap'),
+              _buildTapStats(),
+              const SizedBox(height: 8),
+            ],
             
             // Actions
             _buildActions(),
@@ -153,6 +163,19 @@ class _DebugPanelState extends State<DebugPanel> {
         _buildConfigRow('totalIncome', stats['totalIdleIncome']?.toStringAsFixed(2) ?? '0.0'),
         _buildConfigRow('avgIncome/s', stats['averageIncomePerSec']?.toStringAsFixed(3) ?? '0.0'),
         _buildConfigRow('subscribed', stats['isSubscribed']),
+      ],
+    );
+  }
+
+  Widget _buildTapStats() {
+    final stats = widget.tapService!.getStats();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildConfigRow('basePoints', stats['basePoints']),
+        _buildConfigRow('cooldownSeconds', stats['cooldownSeconds']),
+        _buildConfigRow('tap.total', stats['totalTapEvents']),
+        _buildConfigRow('tap.accepted', stats['acceptedTapEvents']),
       ],
     );
   }

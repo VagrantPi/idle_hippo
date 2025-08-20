@@ -6,6 +6,7 @@ import 'package:idle_hippo/services/game_clock_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/secure_save_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
+import 'package:idle_hippo/services/tap_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 
@@ -43,6 +44,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final GameClockService _gameClock = GameClockService();
   final IdleIncomeService _idleIncome = IdleIncomeService();
   final LocalizationService _localization = LocalizationService();
+  final TapService _tapService = TapService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -149,12 +151,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   }
 
   void _onCharacterTap() {
-    final tapValue = (_configService.getValue('game.tap.base', defaultValue: 1) as num).toInt();
-    setState(() {
-      _gameState = _gameState.copyWith(
-        memePoints: _gameState.memePoints + tapValue,
-      );
-    });
+    final gained = _tapService.tryTap();
+    if (gained > 0) {
+      setState(() {
+        _gameState = _gameState.copyWith(
+          memePoints: _gameState.memePoints + gained,
+        );
+      });
+    }
   }
 
   @override
@@ -171,6 +175,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
           if (showDebugPanel)
             DebugPanel(
               gameState: _gameState,
+              tapService: _tapService,
             ),
         ],
       ),

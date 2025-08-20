@@ -1,6 +1,7 @@
 {
   "tap": {
-    "base": 1
+    "base": 1,
+    "base_gain": 0.5
   },
   "idle": {
     "base_per_sec": 0.1
