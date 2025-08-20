@@ -10,7 +10,8 @@ assets/config/
 ├── equipments.json    # 裝備資料配置
 ├── pets.json          # 寵物資料配置
 ├── titles.json        # 稱號資料配置
-└── quests.json        # 任務資料配置
+├── quests.json        # 任務資料配置
+└── game_config.json   # 遊戲動態配置
 ```
 
 ---
@@ -27,6 +28,17 @@ assets/config/
 | `ui.theme` | string | UI 主題色彩 | "green" |
 | `ui.showDebugPanel` | boolean | 是否顯示除錯面板 | true |
 | `version` | string | 配置版本號 | "1.0.0" |
+| `character.animation` | object | 角色動畫設定 | - |
+| `character.animation.swing` | object | 搖擺動畫設定 | - |
+| `character.animation.swing.duration` | number | 動畫持續時間(毫秒) | 300 |
+| `character.animation.swing.angle` | number | 搖擺角度(度) | 0.5 |
+| `character.animation.move` | object | 移動動畫設定 | - |
+| `character.animation.move.duration` | object | 移動動畫時間範圍 | - |
+| `character.animation.move.duration.min` | number | 最小持續時間(秒) | 2 |
+| `character.animation.move.duration.max` | number | 最大持續時間(秒) | 5 |
+| `character.animation.move.range` | object | 移動範圍(像素) | - |
+| `character.animation.move.range.x` | number | X軸移動範圍 | 80 |
+| `character.animation.move.range.y` | number | Y軸移動範圍 | 80 |
 
 ### 範例配置
 
@@ -43,7 +55,65 @@ assets/config/
     "theme": "green",
     "showDebugPanel": true
   },
-  "version": "1.0.0"
+  "character": {
+    "animation": {
+      "swing": {
+        "duration": 300,
+        "angle": 0.5
+      },
+      "move": {
+        "duration": {
+          "min": 2,
+          "max": 5
+        },
+        "range": {
+          "x": 80,
+          "y": 80
+        }
+      }
+    }
+  },
+  "version": "1.1.0"
+}
+```
+
+---
+
+## ⚙️ game_config.json - 遊戲動態配置
+
+### 參數說明
+
+| 參數 | 類型 | 說明 | 範例值 |
+|------|------|------|--------|
+| `enable_ads` | boolean | 是否啟用廣告 | true |
+| `iap_products` | array | 應用內購買商品列表 | - |
+| `iap_products[].id` | string | 商品ID | "no_ads" |
+| `iap_products[].type` | string | 商品類型 | "consumable", "non_consumable" |
+| `iap_products[].price` | string | 顯示價格 | "$2.99" |
+| `iap_products[].reward` | string | 獎勵描述 | "移除所有廣告" |
+| `server_time` | string | 伺服器時間 | "2025-08-20T13:30:00Z" |
+| `maintenance` | object | 維護設定 | - |
+| `maintenance.enabled` | boolean | 是否在維護中 | false |
+| `maintenance.message` | string | 維護訊息 | "系統維護中..." |
+
+### 範例配置
+
+```json
+{
+  "enable_ads": true,
+  "iap_products": [
+    {
+      "id": "no_ads",
+      "type": "non_consumable",
+      "price": "$2.99",
+      "reward": "移除所有廣告"
+    }
+  ],
+  "server_time": "2025-08-20T13:30:00Z",
+  "maintenance": {
+    "enabled": false,
+    "message": "系統維護中..."
+  }
 }
 ```
 
@@ -287,4 +357,4 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 
 ---
 
-*最後更新: 2025-01-19*
+*最後更新: 2025-08-20*

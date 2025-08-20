@@ -1,0 +1,21 @@
+{
+  "common": {
+    "memePoints": "ミームポイント",
+    "perSecond": "/秒"
+  },
+  "pages": {
+    "home": "ホーム",
+    "equipment": "装備", 
+    "pets": "ペット",
+    "shop": "ショップ",
+    "titles": "称号",
+    "quest": "クエスト",
+    "settings": "設定",
+    "musicGame": "音楽ゲーム",
+    "noAds": "広告なし"
+  },
+  "ui": {
+    "taskBar": "タスク進行",
+    "language": "言語"
+  }
+}

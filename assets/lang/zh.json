@@ -1,0 +1,21 @@
+{
+  "common": {
+    "memePoints": "迷因點數",
+    "perSecond": "/秒"
+  },
+  "pages": {
+    "home": "主頁",
+    "equipment": "裝備", 
+    "pets": "寵物",
+    "shop": "商城",
+    "titles": "稱號",
+    "quest": "任務",
+    "settings": "設定",
+    "musicGame": "音樂遊戲",
+    "noAds": "無廣告"
+  },
+  "ui": {
+    "taskBar": "任務進度",
+    "language": "語言"
+  }
+}
