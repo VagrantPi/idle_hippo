@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:idle_hippo/ui/components/daily_cap_progress_bar.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 import 'package:idle_hippo/ui/components/animated_button.dart';
@@ -18,11 +19,21 @@ class MainScreen extends StatefulWidget {
   final int memePoints;
 
   final VoidCallback onCharacterTap;
+  final int Function()? onCharacterTapWithResult; // optional: returns gained points
+  final int dailyCapTodayGained;
+  final int dailyCapEffective;
+  final bool adDoubledToday;
+  final VoidCallback? onAdDouble;
 
   const MainScreen({
     super.key,
     required this.memePoints,
     required this.onCharacterTap,
+    this.onCharacterTapWithResult,
+    this.dailyCapTodayGained = 0,
+    this.dailyCapEffective = 200,
+    this.adDoubledToday = false,
+    this.onAdDouble,
   });
 
   @override
@@ -137,11 +148,19 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       _characterController.reverse();
     });
 
-    // 生成粒子特效
-    _generateParticle();
+    // 觸發遊戲邏輯（若提供帶回傳版本則優先使用）
+    int gained = 0;
+    if (widget.onCharacterTapWithResult != null) {
+      gained = widget.onCharacterTapWithResult!();
+    } else {
+      widget.onCharacterTap();
+      gained = 1; // 舊版預設視為成功以維持舊行為
+    }
 
-    // 觸發遊戲邏輯
-    widget.onCharacterTap();
+    // 僅在實際加分時生成粒子
+    if (gained > 0) {
+      _generateParticle();
+    }
   }
 
   void _generateParticle() {
@@ -256,54 +275,105 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildResourceDisplay() {
+  Widget _buildDailyCapDisplay() {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 8,
       left: 8,
-      child: IntrinsicWidth(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 左側顯示 memePoints
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 260),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 進度條（獨立元件）
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 使用擴展以填滿可用寬度
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  child: DailyCapProgressBar(
+                    current: widget.dailyCapTodayGained.toDouble(),
+                    max: widget.dailyCapEffective.toDouble(),
+                    height: 12,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${widget.dailyCapEffective - widget.dailyCapTodayGained} / ${widget.dailyCapEffective}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResourceDisplay() {
+    return Positioned(
+      // 放在日常點數顯示之下，避免重疊
+      top: MediaQuery.of(context).padding.top + 8 + 45,
+      left: 8,
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 迷因點數區塊
+            Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    _localization.getCommon('memePoints'),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _localization.getCommon('memePoints'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${_idleIncome.currentIdlePerSec.toStringAsFixed(2)} ${_localization.getCommon('perSecond')}',
+                        style: const TextStyle(
+                          color: Colors.yellow,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(width: 8),
                   Text(
-                    '${_idleIncome.currentIdlePerSec.toStringAsFixed(2)} ${_localization.getCommon('perSecond')}',
+                    '${widget.memePoints}',
                     style: const TextStyle(
                       color: Colors.yellow,
-                      fontSize: 12,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                '${widget.memePoints}',
-                style: const TextStyle(
-                  color: Colors.yellow,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -328,7 +398,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       child: AnimatedButton(
         iconPath: 'assets/images/icon/Setting.png',
         onTap: () => _pageManager.navigateToPage(PageType.settings),
-        size: 70,
+        size: 50,
       ),
     );
   }
@@ -548,6 +618,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             // 右側按鈕
             _buildRightSideButtons(),
             
+            // 日常點數顯示
+            _buildDailyCapDisplay(),
+
             // 資源顯示
             _buildResourceDisplay(),
           ],

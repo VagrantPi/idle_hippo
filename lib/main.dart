@@ -7,6 +7,7 @@ import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/secure_save_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/tap_service.dart';
+import 'package:idle_hippo/services/daily_tap_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 
@@ -45,6 +46,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final IdleIncomeService _idleIncome = IdleIncomeService();
   final LocalizationService _localization = LocalizationService();
   final TapService _tapService = TapService();
+  final DailyTapService _dailyTap = DailyTapService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -150,32 +152,107 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     }
   }
 
+  Future<void> _resetAllState() async {
+    // 重置服務統計
+    _tapService.reset();
+    _idleIncome.resetStats();
+
+    // 重置遊戲狀態（含每日上限區塊與資源）
+    setState(() {
+      _gameState = GameState(
+        saveVersion: _saveService.currentVersion,
+        memePoints: 0,
+        equipments: {},
+        lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
+        dailyTap: null,
+      );
+    });
+
+    // 立即存檔
+    await _saveGameState();
+  }
+
   void _onCharacterTap() {
     final gained = _tapService.tryTap();
-    if (gained > 0) {
+    // 套用每日上限（即使 gained==0 也維持 UI 動效由 MainScreen 播放）
+    if (gained >= 0) {
+      final result = _dailyTap.applyTap(_gameState, gained);
+      if (result.allowedGain > 0) {
+        setState(() {
+          _gameState = result.state.copyWith(
+            memePoints: result.state.memePoints + result.allowedGain,
+          );
+        });
+      } else {
+        // 僅更新狀態以確保 dailyTap block 初始化/維持
+        setState(() {
+          _gameState = result.state;
+        });
+      }
+    }
+  }
+
+  int _onCharacterTapWithResult() {
+    final gained = _tapService.tryTap();
+    if (gained <= 0) {
+      // 冷卻中或無效點擊
+      final ensured = _dailyTap.ensureDailyBlock(_gameState);
+      if (!identical(ensured, _gameState)) {
+        setState(() => _gameState = ensured);
+      }
+      return 0;
+    }
+
+    final result = _dailyTap.applyTap(_gameState, gained);
+    if (result.allowedGain > 0) {
       setState(() {
-        _gameState = _gameState.copyWith(
-          memePoints: _gameState.memePoints + gained,
+        _gameState = result.state.copyWith(
+          memePoints: result.state.memePoints + result.allowedGain,
         );
       });
+      return result.allowedGain;
+    } else {
+      // 已達每日上限：更新狀態但不加分
+      setState(() {
+        _gameState = result.state;
+      });
+      return 0;
     }
+  }
+
+  Future<void> _fakeAdDoubleToday() async {
+    // 假流程：3 秒等待後啟用翻倍
+    await Future.delayed(const Duration(seconds: 3));
+    setState(() {
+      _gameState = _dailyTap.setAdDoubled(_gameState, enabled: true);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final showDebugPanel = _configService.getValue('game.ui.showDebugPanel', defaultValue: false);
     
+    // 計算今日上限資訊
+    final stateWithDaily = _dailyTap.ensureDailyBlock(_gameState);
+    final stats = _dailyTap.getStats(stateWithDaily);
+
     return Scaffold(
       body: Stack(
         children: [
           MainScreen(
             memePoints: _gameState.memePoints,
             onCharacterTap: _onCharacterTap,
+            onCharacterTapWithResult: _onCharacterTapWithResult,
+            dailyCapTodayGained: stats['todayGained'] as int,
+            dailyCapEffective: stats['effectiveCap'] as int,
+            adDoubledToday: stats['adDoubledToday'] as bool,
+            onAdDouble: _fakeAdDoubleToday,
           ),
           if (showDebugPanel)
             DebugPanel(
               gameState: _gameState,
               tapService: _tapService,
+              onResetAll: _resetAllState,
             ),
         ],
       ),

@@ -24,7 +24,9 @@ assets/config/
 |------|------|------|--------|
 | `tap.base` | number | 基礎點擊收益 | 1 |
 | `idle.base_per_sec` | number | 基礎放置收益（每秒） | 0.1 |
-| `dailyTapCap` | number | 每日點擊上限 | 200 |
+| `dailyTapCap` | number | 每日點擊上限（舊鍵，仍支援以保相容） | 200 |
+| `tap.daily_cap_base` | number | 每日點擊上限（基礎值） | 200 |
+| `tap.daily_cap_ad_multiplier` | number | 廣告翻倍倍率（影響當日上限） | 2 |
 | `ui.theme` | string | UI 主題色彩 | "green" |
 | `ui.showDebugPanel` | boolean | 是否顯示除錯面板 | true |
 | `version` | string | 配置版本號 | "1.0.0" |
@@ -45,7 +47,9 @@ assets/config/
 ```json
 {
   "tap": {
-    "base": 1
+    "base": 1,
+    "daily_cap_base": 200,
+    "daily_cap_ad_multiplier": 2
   },
   "idle": {
     "base_per_sec": 0.1
@@ -319,7 +323,8 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 {
   "tap": {"base": 2},           // 提高點擊收益
   "idle": {"base_per_sec": 0.2}, // 提高放置收益
-  "dailyTapCap": 300            // 增加每日點擊上限
+  "tap": {"daily_cap_base": 300}, // 增加每日點擊上限（新鍵）
+  "dailyTapCap": 300              // 舊鍵，保相容
 }
 ```
 
@@ -354,6 +359,27 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 2. **錯誤處理**: ConfigService 會自動處理缺失的 key，回傳預設值
 3. **版本控制**: 建議在 `version` 欄位記錄配置版本
 4. **備份**: 修改前建議備份原始配置檔案
+
+---
+
+## 🆕 每日上限與廣告翻倍（Step 6）
+
+- `tap.daily_cap_base`：定義當日可由點擊獲得的基礎上限。
+- `tap.daily_cap_ad_multiplier`：當日一次性看廣告後的上限倍率（例如 2 → 上限翻倍）。
+- 舊鍵 `dailyTapCap` 仍被 `DailyTapService` 讀取，用於向後相容；若同時存在，將以新鍵為主。
+
+範例：
+
+```json
+{
+  "tap": {
+    "base": 1,
+    "daily_cap_base": 200,
+    "daily_cap_ad_multiplier": 2
+  },
+  "dailyTapCap": 200
+}
+```
 
 ---
 
