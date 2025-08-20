@@ -1,0 +1,21 @@
+{
+  "common": {
+    "memePoints": "밈 포인트",
+    "perSecond": "/초"
+  },
+  "pages": {
+    "home": "홈",
+    "equipment": "장비", 
+    "pets": "펫",
+    "shop": "상점",
+    "titles": "칭호",
+    "quest": "퀘스트",
+    "settings": "설정",
+    "musicGame": "음악 게임",
+    "noAds": "광고 없음"
+  },
+  "ui": {
+    "taskBar": "작업 진행",
+    "language": "언어"
+  }
+}

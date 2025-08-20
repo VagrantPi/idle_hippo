@@ -1,5 +1,24 @@
 {
   "app_title": "Idle Hippo",
   "initial_value": "0",
-  "welcome_message": "Welcome to Idle Hippo!"
+  "welcome_message": "Welcome to Idle Hippo!",
+  "common": {
+    "memePoints": "Meme Points",
+    "perSecond": "/s"
+  },
+  "pages": {
+    "home": "Home",
+    "equipment": "Equipment", 
+    "pets": "Pets",
+    "shop": "Shop",
+    "titles": "Titles",
+    "quest": "Quest",
+    "settings": "Settings",
+    "musicGame": "Music Game",
+    "noAds": "No Ads"
+  },
+  "ui": {
+    "taskBar": "Task Progress",
+    "language": "Language"
+  }
 }
