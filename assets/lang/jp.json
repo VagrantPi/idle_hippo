@@ -26,6 +26,12 @@
     "toLevel": "まで Lv",
     "locked": "未解放"
   },
+  "tab": {
+    "equip": {
+      "tap": "タップ",
+      "idle": "放置"
+    }
+  },
   "equip": {
     "rgb_keyboard": {
       "name": "RGB ゲーミングキーボード"
@@ -35,6 +41,21 @@
     },
     "dress": {
       "name": "ワンピース"
+    },
+    "youtube": {
+      "name": "YouTube",
+      "desc": "放置ミームエネルギーを生成。"
+    },
+    "btc": {
+      "name": "BTC",
+      "desc": "仮想通貨の勢いで放置収益UP。"
+    },
+    "doge": {
+      "name": "DOGE",
+      "desc": "そんな放置、すごいワオ。"
+    },
+    "lock": {
+      "need_level": "{name} を Lv.{level} で解放"
     }
   }
 }

@@ -18,13 +18,19 @@
     "taskBar": "작업 진행",
     "language": "언어",
     "level": "레벨",
-    "upgrade": "강화",
-    "maxLevel": "최대",
+    "upgrade": "업그레이드",
+    "maxLevel": "최대 레벨",
     "cost": "비용",
     "bonus": "보너스",
     "requires": "필요",
     "toLevel": "까지 Lv",
-    "locked": "잠금 해제 안됨"
+    "locked": "잠김"
+  },
+  "tab": {
+    "equip": {
+      "tap": "탭",
+      "idle": "방치"
+    }
   },
   "equip": {
     "rgb_keyboard": {
@@ -34,7 +40,22 @@
       "name": "마스크"
     },
     "dress": {
-      "name": "원피스"
+      "name": "드레스"
+    },
+    "youtube": {
+      "name": "틱톡",
+      "desc": "방치 미믹 에너지를 생성."
+    },
+    "btc": {
+      "name": "BTC",
+      "desc": "코인 열기로 방치 수익 UP."
+    },
+    "doge": {
+      "name": "DOGE",
+      "desc": "이런 방치, 대단 Wow."
+    },
+    "lock": {
+      "need_level": "{name} Lv.{level} 달성 시 해제"
     }
   }
 }

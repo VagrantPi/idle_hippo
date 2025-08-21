@@ -11,11 +11,15 @@ class GameClockService with WidgetsBindingObserver {
   static const double _targetFps = 60.0;
   static const double _maxDeltaSeconds = 0.2;
   static const double _emaAlpha = 0.2;
-  static const Duration _tickInterval = Duration(milliseconds: 16); // ~60fps
+  // 以 _targetFps 計算 tick 週期（微秒），讓節拍與目標 FPS 對齊
+  static final Duration _tickInterval = Duration(
+      microseconds: (1000000 / _targetFps).round());
 
   // 狀態變數
   Timer? _gameTimer;
-  DateTime? _lastTickTime;
+  // 使用單調時間來源避免系統時間變更影響 delta 計算
+  final Stopwatch _stopwatch = Stopwatch();
+  int? _lastTickMicros;
   bool _isInForeground = true;
   bool _isRunning = false;
   bool _isFixedStepMode = false;
@@ -48,6 +52,9 @@ class GameClockService with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _fpsCountStartTime = DateTime.now();
     _frameCount = 0;
+    if (!_stopwatch.isRunning) {
+      _stopwatch.start();
+    }
     print('GameClock: Initialized');
   }
 
@@ -56,7 +63,7 @@ class GameClockService with WidgetsBindingObserver {
     if (_isRunning) return;
     
     _isRunning = true;
-    _lastTickTime = DateTime.now();
+    _lastTickMicros = _stopwatch.elapsedMicroseconds;
     _resetFpsCounter();
     
     if (_isInForeground) {
@@ -124,16 +131,16 @@ class GameClockService with WidgetsBindingObserver {
 
   /// 主要 tick 邏輯
   void _tick() {
-    final now = DateTime.now();
-    
-    if (_lastTickTime == null) {
-      _lastTickTime = now;
+    final nowMicros = _stopwatch.elapsedMicroseconds;
+
+    if (_lastTickMicros == null) {
+      _lastTickMicros = nowMicros;
       return;
     }
 
-    // 計算原始 delta
-    double rawDelta = now.difference(_lastTickTime!).inMicroseconds / 1000000.0;
-    _lastTickTime = now;
+    // 計算原始 delta（單調時間）
+    double rawDelta = (nowMicros - _lastTickMicros!) / 1000000.0;
+    _lastTickMicros = nowMicros;
 
     // 處理異常值
     if (rawDelta.isNaN || rawDelta.isInfinite || rawDelta < 0) {
@@ -222,7 +229,7 @@ class GameClockService with WidgetsBindingObserver {
     
     if (_isInForeground && !wasInForeground) {
       // 回到前台 - 重置時間基準避免大 delta
-      _lastTickTime = DateTime.now();
+      _lastTickMicros = _stopwatch.elapsedMicroseconds;
       _resetFpsCounter();
       
       if (_isRunning) {

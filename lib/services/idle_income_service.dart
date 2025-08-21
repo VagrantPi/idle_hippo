@@ -1,5 +1,8 @@
 import '../services/config_service.dart';
 import '../services/game_clock_service.dart';
+import '../services/equipment_service.dart';
+import '../services/decimal_utils.dart';
+import '../models/game_state.dart';
 
 class IdleIncomeService {
   static final IdleIncomeService _instance = IdleIncomeService._internal();
@@ -8,6 +11,7 @@ class IdleIncomeService {
 
   final ConfigService _configService = ConfigService();
   final GameClockService _gameClock = GameClockService();
+  final EquipmentService _equipmentService = EquipmentService();
   
   // 狀態變數
   bool _isSubscribed = false;
@@ -23,20 +27,36 @@ class IdleIncomeService {
   // 收益回調函數
   void Function(double points)? _onIncomeGenerated;
   
+  // 當前 GameState 參考（用於計算裝備加成）
+  GameState? _currentGameState;
+  
   // Getters
   double get totalIdleTime => _totalIdleTime;
   double get totalIdleIncome => _totalIdleIncome;
   double get currentIdlePerSec {
     if (_idlePerSecOverride != null) return _idlePerSecOverride!;
-    // 預設為 0.1，以在測試或尚未載入設定時提供合理的非零值
-    final v = _configService.getValue('game.idle.base_per_sec', defaultValue: 0.1);
-    if (v is num) return v.toDouble();
-    return 0.1;
+    
+    // 基礎放置速率
+    final baseVal = _configService.getValue('game.idle.base_per_sec', defaultValue: 0.1);
+    final base = baseVal is num ? baseVal.toDouble() : 0.1;
+    
+    // 放置裝備加成
+    double equipmentBonus = 0.0;
+    if (_currentGameState != null) {
+      equipmentBonus = _equipmentService.sumIdleBonus(_currentGameState!);
+    }
+    
+    return DecimalUtils.add(base, equipmentBonus);
   }
 
   /// 測試用途：設定 idle_per_sec 覆寫（傳入 null 以清除）
   void setTestingIdlePerSec(double? value) {
     _idlePerSecOverride = value;
+  }
+
+  /// 更新當前 GameState（用於計算裝備加成）
+  void updateGameState(GameState gameState) {
+    _currentGameState = gameState;
   }
   
   /// 初始化放置收益系統
@@ -75,14 +95,14 @@ class IdleIncomeService {
     if (idlePerSec <= 0) return;
     
     // 計算本幀的放置收益
-    final idleIncome = idlePerSec * deltaSeconds;
+    final idleIncome = DecimalUtils.multiply(idlePerSec, deltaSeconds);
     
     // 直接透過回調將收益加到 GameState
     _onIncomeGenerated?.call(idleIncome);
     
     // 更新統計
-    _totalIdleTime += deltaSeconds;
-    _totalIdleIncome += idleIncome;
+    _totalIdleTime = DecimalUtils.add(_totalIdleTime, deltaSeconds);
+    _totalIdleIncome = DecimalUtils.add(_totalIdleIncome, idleIncome);
   }
 
   /// 測試用途：啟用/關閉測試模式（啟用後不會訂閱 GameClock）

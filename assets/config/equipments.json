@@ -59,5 +59,70 @@
         { "level": 10, "cost": 890, "bonus": 0.02 }
       ]
     }
+  ],
+  "idle_equipments": [
+    {
+      "id": "youtube",
+      "icon": "assets/images/equipment/YouTube.png",
+      "name_key": "equip.youtube.name",
+      "desc_key": "equip.youtube.desc",
+      "type": "idle",
+      "unlock": null,
+      "max_level": 10,
+      "levels": [
+        { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
+        { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
+        { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
+        { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
+        { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
+        { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
+        { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
+        { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
+        { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
+        { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
+      ]
+    },
+    {
+      "id": "btc",
+      "icon": "assets/images/equipment/BTC.png",
+      "name_key": "equip.btc.name",
+      "desc_key": "equip.btc.desc",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "youtube", "level": 3 },
+      "max_level": 10,
+      "levels": [
+        { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
+        { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
+        { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
+        { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
+        { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
+        { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
+        { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
+        { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
+        { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
+        { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
+      ]
+    },
+    {
+      "id": "doge",
+      "icon": "assets/images/equipment/DOGE.png",
+      "name_key": "equip.doge.name",
+      "desc_key": "equip.doge.desc",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "btc", "level": 3 },
+      "max_level": 10,
+      "levels": [
+        { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
+        { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
+        { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
+        { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
+        { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
+        { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
+        { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
+        { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
+        { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
+        { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
+      ]
+    }
   ]
 }
