@@ -11,6 +11,10 @@ class IdleIncomeService {
   
   // 狀態變數
   bool _isSubscribed = false;
+  bool _testingMode = false; // 測試模式：不訂閱 GameClock，由測試手動推進
+  
+  // 測試覆寫：允許在測試中直接指定 idle_per_sec
+  double? _idlePerSecOverride;
   
   // 統計資料
   double _totalIdleTime = 0.0;
@@ -23,10 +27,16 @@ class IdleIncomeService {
   double get totalIdleTime => _totalIdleTime;
   double get totalIdleIncome => _totalIdleIncome;
   double get currentIdlePerSec {
+    if (_idlePerSecOverride != null) return _idlePerSecOverride!;
     // 預設為 0.1，以在測試或尚未載入設定時提供合理的非零值
     final v = _configService.getValue('game.idle.base_per_sec', defaultValue: 0.1);
     if (v is num) return v.toDouble();
     return 0.1;
+  }
+
+  /// 測試用途：設定 idle_per_sec 覆寫（傳入 null 以清除）
+  void setTestingIdlePerSec(double? value) {
+    _idlePerSecOverride = value;
   }
   
   /// 初始化放置收益系統
@@ -36,7 +46,7 @@ class IdleIncomeService {
       _onIncomeGenerated = onIncomeGenerated;
     }
     
-    if (!_isSubscribed) {
+    if (!_testingMode && !_isSubscribed) {
       _gameClock.subscribe('idle_income', _onTick);
       _isSubscribed = true;
       print('IdleIncomeService: Initialized and subscribed to GameClock');
@@ -73,6 +83,20 @@ class IdleIncomeService {
     // 更新統計
     _totalIdleTime += deltaSeconds;
     _totalIdleIncome += idleIncome;
+  }
+
+  /// 測試用途：啟用/關閉測試模式（啟用後不會訂閱 GameClock）
+  void enableTestingMode(bool enabled) {
+    _testingMode = enabled;
+    if (_testingMode && _isSubscribed) {
+      _gameClock.unsubscribe('idle_income');
+      _isSubscribed = false;
+    }
+  }
+
+  /// 測試用途：手動推進一個 tick（只在測試模式下使用）
+  void onTickForTest(double deltaSeconds) {
+    _onTick(deltaSeconds);
   }
   
   /// 獲取詳細統計資訊（用於 debug）
