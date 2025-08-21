@@ -22,7 +22,12 @@ class IdleIncomeService {
   // Getters
   double get totalIdleTime => _totalIdleTime;
   double get totalIdleIncome => _totalIdleIncome;
-  double get currentIdlePerSec => _configService.getValue('game.idle.base_per_sec', defaultValue: 0.1);
+  double get currentIdlePerSec {
+    // 預設為 0.1，以在測試或尚未載入設定時提供合理的非零值
+    final v = _configService.getValue('game.idle.base_per_sec', defaultValue: 0.1);
+    if (v is num) return v.toDouble();
+    return 0.1;
+  }
   
   /// 初始化放置收益系統
   void init({void Function(double points)? onIncomeGenerated}) {

@@ -6,7 +6,7 @@
     "daily_cap_ad_multiplier": 2
   },
   "idle": {
-    "base_per_sec": 0.1
+    "base_per_sec": 0.0
   },
   "dailyTapCap": 200,
   "ui": {

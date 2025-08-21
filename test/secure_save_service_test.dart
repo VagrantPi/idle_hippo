@@ -7,7 +7,7 @@ void main() {
       final state = GameState.initial(1);
       
       expect(state.saveVersion, 1);
-      expect(state.memePoints, 0);
+      expect(state.memePoints, 0.0);
       expect(state.equipments, isEmpty);
       expect(state.lastTs, greaterThan(0));
       expect(state.validate(), true);
@@ -16,7 +16,7 @@ void main() {
     test('should serialize and deserialize correctly', () {
       final originalState = GameState(
         saveVersion: 1,
-        memePoints: 123,
+        memePoints: 123.0,
         equipments: {'tiktok': 2, 'idle_chip': 0},
         lastTs: 1724000000000,
       );
@@ -31,7 +31,7 @@ void main() {
       // Valid state
       final validState = GameState(
         saveVersion: 1,
-        memePoints: 100,
+        memePoints: 100.0,
         equipments: {'weapon': 1},
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       );
@@ -40,7 +40,7 @@ void main() {
       // Invalid states
       final invalidMemePoints = GameState(
         saveVersion: 1,
-        memePoints: -1,
+        memePoints: -1.0,
         equipments: {},
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       );
@@ -48,7 +48,7 @@ void main() {
 
       final invalidEquipment = GameState(
         saveVersion: 1,
-        memePoints: 0,
+        memePoints: 0.0,
         equipments: {'weapon': -1},
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       );
@@ -71,11 +71,11 @@ void main() {
     test('should copy with new values correctly', () {
       final originalState = GameState.initial(1);
       final copiedState = originalState.copyWith(
-        memePoints: 100,
+        memePoints: 100.0,
         equipments: {'weapon': 2},
       );
       
-      expect(copiedState.memePoints, 100);
+      expect(copiedState.memePoints, 100.0);
       expect(copiedState.equipments['weapon'], 2);
       expect(copiedState.saveVersion, originalState.saveVersion);
       expect(copiedState.lastTs, originalState.lastTs);
@@ -91,7 +91,7 @@ void main() {
     test('should maintain data integrity through serialization cycles', () {
       final originalState = GameState(
         saveVersion: 2,
-        memePoints: 999,
+        memePoints: 999.0,
         equipments: {'sword': 5, 'shield': 3, 'potion': 0},
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       );
@@ -110,7 +110,7 @@ void main() {
     test('should handle edge case values', () {
       final edgeState = GameState(
         saveVersion: 0,
-        memePoints: 0,
+        memePoints: 0.0,
         equipments: {},
         lastTs: 1,
       );

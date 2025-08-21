@@ -19,6 +19,25 @@
   },
   "ui": {
     "taskBar": "Task Progress",
-    "language": "Language"
+    "language": "Language",
+    "level": "Level",
+    "upgrade": "Upgrade",
+    "maxLevel": "Maxed",
+    "cost": "Cost",
+    "bonus": "Bonus",
+    "requires": "Requires",
+    "toLevel": "to Lv",
+    "locked": "Locked"
+  },
+  "equip": {
+    "rgb_keyboard": {
+      "name": "RGB Gaming Keyboard"
+    },
+    "faceMask": {
+      "name": "Face Mask"
+    },
+    "dress": {
+      "name": "Dress"
+    }
   }
 }

@@ -17,7 +17,8 @@ void main() {
 
     test('initial applyTap initializes daily block and increments gain', () {
       final result = svc.applyTap(state, 1);
-      expect(result.allowedGain, 1);
+      final gained = result.allowedGain.floor();
+      expect(gained, 1);
       final stats = svc.getStats(result.state);
       expect(stats['todayGained'], 1);
       expect(stats['effectiveCap'], 200);
@@ -46,7 +47,7 @@ void main() {
       var total = 0;
       while (total < 200) {
         final step = svc.applyTap(st, 50);
-        total += step.allowedGain;
+        total += step.allowedGain.floor();
         st = step.state;
       }
       expect(total, 200);

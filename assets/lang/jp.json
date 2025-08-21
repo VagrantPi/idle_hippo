@@ -16,6 +16,25 @@
   },
   "ui": {
     "taskBar": "タスク進行",
-    "language": "言語"
+    "language": "言語",
+    "level": "レベル",
+    "upgrade": "強化",
+    "maxLevel": "最大",
+    "cost": "コスト",
+    "bonus": "ボーナス",
+    "requires": "必要",
+    "toLevel": "まで Lv",
+    "locked": "未解放"
+  },
+  "equip": {
+    "rgb_keyboard": {
+      "name": "RGB ゲーミングキーボード"
+    },
+    "faceMask": {
+      "name": "マスク"
+    },
+    "dress": {
+      "name": "ワンピース"
+    }
   }
 }

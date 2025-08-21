@@ -16,7 +16,8 @@ import 'package:idle_hippo/ui/pages/no_ads_page.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
 
 class MainScreen extends StatefulWidget {
-  final int memePoints;
+  final double memePoints;
+  final Map<String, int> equipments;
 
   final VoidCallback onCharacterTap;
   final int Function()? onCharacterTapWithResult; // optional: returns gained points
@@ -24,16 +25,25 @@ class MainScreen extends StatefulWidget {
   final int dailyCapEffective;
   final bool adDoubledToday;
   final VoidCallback? onAdDouble;
+  final void Function(String id)? onEquipmentUpgrade;
+  final VoidCallback? onToggleDebug; // optional: toggle debug panel from parent
+  final double? lastTapDisplayValue; // optional: display base+bonus value for particle
+  final double? displayMemePoints; // optional: for UI display only (includes fractional idle accumulation)
 
   const MainScreen({
     super.key,
     required this.memePoints,
+    this.equipments = const {},
     required this.onCharacterTap,
     this.onCharacterTapWithResult,
     this.dailyCapTodayGained = 0,
     this.dailyCapEffective = 200,
     this.adDoubledToday = false,
     this.onAdDouble,
+    this.onEquipmentUpgrade,
+    this.onToggleDebug,
+    this.lastTapDisplayValue,
+    this.displayMemePoints,
   });
 
   @override
@@ -55,6 +65,14 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   final List<Widget> _particles = [];
   static const int _maxParticles = 10;
+
+  String _formatNumber(num value) {
+    final v = value.toDouble();
+    if (v.abs() >= 1e9) return (v / 1e9).toStringAsFixed(1) + 'B';
+    if (v.abs() >= 1e6) return (v / 1e6).toStringAsFixed(1) + 'M';
+    if (v.abs() >= 1e3) return (v / 1e3).toStringAsFixed(1) + 'K';
+    return v.toStringAsFixed(2);
+  }
 
   @override
   void initState() {
@@ -159,11 +177,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     // 僅在實際加分時生成粒子
     if (gained > 0) {
-      _generateParticle();
+      _generateParticle(gained);
     }
   }
 
-  void _generateParticle() {
+  void _generateParticle(num gained) {
     if (_particles.length >= _maxParticles) {
       // 移除最舊的粒子
       setState(() {
@@ -185,6 +203,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     final particleY = characterCenterY + math.sin(angle) * distance;
 
     final particleKey = UniqueKey();
+    final displayValue = (widget.lastTapDisplayValue != null && widget.lastTapDisplayValue! > 0)
+        ? widget.lastTapDisplayValue!
+        : gained;
     final particle = PlusMemeParticle(
       key: particleKey,
       startPosition: Offset(particleX, particleY),
@@ -193,6 +214,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           _particles.removeWhere((p) => p.key == particleKey);
         });
       },
+      baseValue: displayValue,
     );
 
     setState(() {
@@ -218,6 +240,30 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebugToggle() {
+    final size = MediaQuery.of(context).size;
+    return Positioned(
+      left: 8,
+      top: size.height / 2 - 24,
+      child: GestureDetector(
+        onTap: () => widget.onToggleDebug?.call(),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
+          ),
+          child: const Icon(
+            Icons.bug_report,
+            color: Colors.white,
+            size: 24,
+          ),
         ),
       ),
     );
@@ -354,7 +400,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                         ),
                       ),
                       Text(
-                        '${_idleIncome.currentIdlePerSec.toStringAsFixed(2)} ${_localization.getCommon('perSecond')}',
+                        '${_formatNumber(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
                         style: const TextStyle(
                           color: Colors.yellow,
                           fontSize: 12,
@@ -364,7 +410,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${widget.memePoints}',
+                    _formatNumber(widget.displayMemePoints ?? widget.memePoints),
+                    textAlign: TextAlign.right,
+                    softWrap: false,
                     style: const TextStyle(
                       color: Colors.yellow,
                       fontSize: 20,
@@ -555,7 +603,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     Widget pageContent;
     switch (_pageManager.currentPage) {
       case PageType.equipment:
-        pageContent = const EquipmentPage();
+        pageContent = EquipmentPage(
+          memePoints: widget.memePoints,
+          equipments: widget.equipments,
+          onUpgrade: widget.onEquipmentUpgrade ?? (_){},
+        );
         break;
       case PageType.pets:
         pageContent = const PetsPage();
@@ -631,6 +683,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           
           // 底部導航欄
           _buildBottomNavigation(),
+
+          // 左側 y 軸中心 Debug 切換按鈕
+          _buildDebugToggle(),
         ],
       ),
     );
