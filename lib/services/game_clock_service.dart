@@ -192,6 +192,24 @@ class GameClockService with WidgetsBindingObserver {
     }
   }
 
+  /// 測試用途：手動推進時間，繞過計時器（不受前/後台限制）
+  /// 僅用於測試快速模擬長時間累積，避免實際等待。
+  /// 注意：會套用與 _tick 相同的統計更新語意（含夾制）。
+  void debugPump(double deltaSeconds, {int times = 1}) {
+    if (deltaSeconds.isNaN || deltaSeconds.isInfinite || deltaSeconds <= 0) {
+      return;
+    }
+    final clamped = math.min(deltaSeconds, _maxDeltaSeconds);
+    for (int i = 0; i < times; i++) {
+      // 在 fixedStep 模式下，以固定值進行
+      final deltaForStats = _isFixedStepMode ? _fixedDelta : clamped;
+      _smoothDelta = _emaAlpha * deltaForStats + (1.0 - _emaAlpha) * _smoothDelta;
+      _updateStats(deltaForStats);
+      final deltaToBroadcast = _isFixedStepMode ? _fixedDelta : clamped;
+      _broadcastTick(deltaToBroadcast);
+    }
+  }
+
   /// 應用生命週期變化處理
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
