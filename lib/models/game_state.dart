@@ -36,7 +36,7 @@ class DailyTapState {
 
 class GameState {
   final int saveVersion;
-  final int memePoints;
+  final double memePoints;
   final Map<String, int> equipments;
   final int lastTs;
   final DailyTapState? dailyTap;
@@ -53,7 +53,7 @@ class GameState {
   factory GameState.initial(int currentVersion) {
     return GameState(
       saveVersion: currentVersion,
-      memePoints: 0,
+      memePoints: 0.0,
       equipments: {},
       lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       dailyTap: null,
@@ -74,7 +74,7 @@ class GameState {
   factory GameState.fromMap(Map<String, dynamic> map) {
     return GameState(
       saveVersion: map['save_version'] as int,
-      memePoints: map['memePoints'] as int,
+      memePoints: (map['memePoints'] as num).toDouble(),
       equipments: Map<String, int>.from(map['equipments'] as Map),
       lastTs: map['lastTs'] as int,
       dailyTap: map.containsKey('dailyTap') && map['dailyTap'] is Map<String, dynamic>
@@ -104,7 +104,7 @@ class GameState {
     try {
       // 檢查必要欄位存在且類型正確
       if (saveVersion < 0) return false;
-      if (memePoints < 0) return false;
+      if (memePoints < 0.0) return false;
       if (lastTs <= 0) return false;
       
       // 檢查 equipments 中的值都是非負數
@@ -123,7 +123,7 @@ class GameState {
   /// 複製並更新部分欄位
   GameState copyWith({
     int? saveVersion,
-    int? memePoints,
+    double? memePoints,
     Map<String, int>? equipments,
     int? lastTs,
     DailyTapState? dailyTap,

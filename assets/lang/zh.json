@@ -16,6 +16,25 @@
   },
   "ui": {
     "taskBar": "任務進度",
-    "language": "語言"
+    "language": "語言",
+    "level": "等級",
+    "upgrade": "升級",
+    "maxLevel": "已滿級",
+    "cost": "成本",
+    "bonus": "加成",
+    "requires": "需要",
+    "toLevel": "至 Lv",
+    "locked": "未解鎖"
+  },
+  "equip": {
+    "rgb_keyboard": {
+      "name": "RGB 遊戲鍵盤"
+    },
+    "faceMask": {
+      "name": "口罩"
+    },
+    "dress": {
+      "name": "連身裙"
+    }
   }
 }

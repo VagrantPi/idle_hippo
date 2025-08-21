@@ -23,25 +23,39 @@ void main() {
       pageManager.navigateToPage(PageType.home);
     });
 
-    testWidgets('should display meme points correctly', (WidgetTester tester) async {
+    testWidgets('should display meme points in formatted style (e.g., 12.3K)', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
-            memePoints: 1000,
+            memePoints: 12345.0,
             onCharacterTap: onCharacterTap,
           ),
         ),
       );
 
-      // 檢查是否顯示 meme points
-      expect(find.text('1000'), findsOneWidget);
+      // 檢查格式化後的 meme points 顯示
+      expect(find.text('12.3K'), findsOneWidget);
+    });
+
+    testWidgets('should display meme points in formatted style (e.g., 1.23)', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MainScreen(
+            memePoints: 1.23,
+            onCharacterTap: onCharacterTap,
+          ),
+        ),
+      );
+
+      // 檢查格式化後的 meme points 顯示
+      expect(find.text('1.23'), findsOneWidget);
     });
 
     testWidgets('should show character image', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
-            memePoints: 1000,
+            memePoints: 1000.0,
             onCharacterTap: onCharacterTap,
           ),
         ),
@@ -55,8 +69,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
-            memePoints: 1000,
+            memePoints: 1000.0,
             onCharacterTap: onCharacterTap,
+            equipments: {},
+            onEquipmentUpgrade: (equipmentId) {},
           ),
         ),
       );
@@ -116,14 +132,29 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
-            memePoints: 1000,
+            memePoints: 12345,
             onCharacterTap: onCharacterTap,
           ),
         ),
       );
 
-      // 檢查資源顯示區域是否存在
-      expect(find.text('1000'), findsOneWidget);
+      // 檢查資源顯示區域的數字已格式化
+      expect(find.text('12.3K'), findsOneWidget);
+    });
+
+    testWidgets('should display idle income per second formatted (default 0.1 -> 0 /s)', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MainScreen(
+            memePoints: 0.0,
+            onCharacterTap: onCharacterTap,
+          ),
+        ),
+      );
+
+      // 預設 currentIdlePerSec 來自 ConfigService 未載入時的 default 0.1
+      // 格式化後顯示應為 '0 /s'
+      expect(find.textContaining('0 /s'), findsOneWidget);
     });
   });
 }

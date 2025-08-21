@@ -53,7 +53,7 @@ class DailyTapService {
   }
 
   // Returns (updatedState, allowedGain)
-  ({GameState state, int allowedGain}) applyTap(GameState state, int requestedGain) {
+  ({GameState state, double allowedGain}) applyTap(GameState state, double requestedGain) {
     final s0 = ensureDailyBlock(state);
     final block = s0.dailyTap!;
     final cap = effectiveCap(s0);
@@ -61,9 +61,9 @@ class DailyTapService {
       return (state: s0, allowedGain: 0);
     }
     final remaining = cap - block.todayGained;
-    final allow = requestedGain.clamp(0, remaining);
+    final allow = requestedGain.clamp(0.0, remaining.toDouble());
     final s1 = s0.copyWith(
-      dailyTap: block.copyWith(todayGained: block.todayGained + allow),
+      dailyTap: block.copyWith(todayGained: block.todayGained + allow.floor()),
     );
     return (state: s1, allowedGain: allow);
   }

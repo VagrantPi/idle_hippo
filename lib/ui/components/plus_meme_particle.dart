@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class PlusMemeParticle extends StatefulWidget {
   final Offset startPosition;
   final VoidCallback onComplete;
+  final num baseValue;
 
   const PlusMemeParticle({
     super.key,
     required this.startPosition,
     required this.onComplete,
+    this.baseValue = 0,
   });
 
   @override
@@ -24,6 +26,15 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
   
   late double _targetY;
   late double _duration;
+
+  // 實作千分位，固定顯示兩位小數（包含 K/M/B），例如 12.34K, 0.12, 12.34, 12.34M, 12.34B
+  String _formatNumber(num value) {
+    final v = value.toDouble();
+    if (v.abs() >= 1e9) return (v / 1e9).toStringAsFixed(2) + 'B';
+    if (v.abs() >= 1e6) return (v / 1e6).toStringAsFixed(2) + 'M';
+    if (v.abs() >= 1e3) return (v / 1e3).toStringAsFixed(2) + 'K';
+    return v.toStringAsFixed(2);
+  }
 
   @override
   void initState() {
@@ -89,27 +100,45 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
             child: Opacity(
               opacity: _fadeAnimation.value,
               child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Image.asset(
-                  'assets/images/icon/PlusMemePoint.png',
-                  width: 60,
-                  height: 60,
-                  errorBuilder: (context, error, stackTrace) {
-                    // 載入失敗時顯示替代圖示
-                    return Container(
-                      width: 60,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Icon(
-                        Icons.add,
+                scale: _scaleAnimation.value * 0.5, // 整體縮小 50%
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/icon/PlusMemePoint.png',
+                      width: 30, // 保持原始尺寸，透過 Transform.scale * 0.5 達到 50%
+                      height: 30,
+                      errorBuilder: (context, error, stackTrace) {
+                        // 載入失敗時顯示替代圖示
+                        return Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatNumber(widget.baseValue),
+                      style: const TextStyle(
                         color: Colors.white,
-                        size: 32,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
             ),

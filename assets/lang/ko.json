@@ -16,6 +16,25 @@
   },
   "ui": {
     "taskBar": "작업 진행",
-    "language": "언어"
+    "language": "언어",
+    "level": "레벨",
+    "upgrade": "강화",
+    "maxLevel": "최대",
+    "cost": "비용",
+    "bonus": "보너스",
+    "requires": "필요",
+    "toLevel": "까지 Lv",
+    "locked": "잠금 해제 안됨"
+  },
+  "equip": {
+    "rgb_keyboard": {
+      "name": "RGB 게이밍 키보드"
+    },
+    "faceMask": {
+      "name": "마스크"
+    },
+    "dress": {
+      "name": "원피스"
+    }
   }
 }

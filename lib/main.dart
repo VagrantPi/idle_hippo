@@ -8,8 +8,10 @@ import 'package:idle_hippo/services/secure_save_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/tap_service.dart';
 import 'package:idle_hippo/services/daily_tap_service.dart';
+import 'package:idle_hippo/services/equipment_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
+import 'package:idle_hippo/services/decimal_utils.dart';
 
 void main() {
   runApp(const IdleHippoApp());
@@ -47,13 +49,18 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final LocalizationService _localization = LocalizationService();
   final TapService _tapService = TapService();
   final DailyTapService _dailyTap = DailyTapService();
+  final EquipmentService _equipment = EquipmentService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
   Timer? _uiUpdateTimer;
+  bool _showDebugPanel = false;
+  double _lastTapDisplayValue = 0.0; // base + sum(equipment bonus)
 
   // 累積的放置收益（使用 double 避免小數被截斷）
   double _accumulatedIdleIncome = 0.0;
+  // 移除不再需要的累積小數變數
+  Timer? _tapFracTimer;
 
   @override
   void initState() {
@@ -76,6 +83,13 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     try {
       await _configService.loadConfig();
       print('Config loaded successfully');
+      // 初始值可由設定檔控制是否顯示 DebugPanel
+      final initialShow = _configService.getValue('game.ui.showDebugPanel', defaultValue: false);
+      if (mounted && initialShow is bool) {
+        setState(() {
+          _showDebugPanel = initialShow;
+        });
+      }
     } catch (e) {
       print('Failed to load config: $e');
     }
@@ -94,6 +108,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   void dispose() {
     _autoSaveTimer?.cancel();
     _uiUpdateTimer?.cancel();
+    _tapFracTimer?.cancel();
     _gameClock.dispose();
     _idleIncome.dispose();
     super.dispose();
@@ -122,7 +137,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         
         setState(() {
           _gameState = _gameState.copyWith(
-            memePoints: _gameState.memePoints + pointsToAdd,
+            memePoints: DecimalUtils.add(_gameState.memePoints, pointsToAdd),
           );
         });
       }
@@ -161,7 +176,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     setState(() {
       _gameState = GameState(
         saveVersion: _saveService.currentVersion,
-        memePoints: 0,
+        memePoints: 0.0,
         equipments: {},
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
         dailyTap: null,
@@ -172,15 +187,24 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     await _saveGameState();
   }
 
+  void _onEquipmentUpgrade(String id) {
+    setState(() {
+      _gameState = _equipment.upgrade(_gameState, id);
+    });
+  }
+
   void _onCharacterTap() {
     final gained = _tapService.tryTap();
     // 套用每日上限（即使 gained==0 也維持 UI 動效由 MainScreen 播放）
     if (gained >= 0) {
-      final result = _dailyTap.applyTap(_gameState, gained);
+      // 若通過冷卻（gained>0），以裝備加成覆寫實際得分
+      final effectiveGain = gained > 0 ? _equipment.computeTapGain(_gameState) : 0.0;
+      _lastTapDisplayValue = effectiveGain.toDouble();
+      final result = _dailyTap.applyTap(_gameState, effectiveGain);
       if (result.allowedGain > 0) {
         setState(() {
           _gameState = result.state.copyWith(
-            memePoints: result.state.memePoints + result.allowedGain,
+            memePoints: DecimalUtils.add(result.state.memePoints, result.allowedGain),
           );
         });
       } else {
@@ -200,17 +224,21 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       if (!identical(ensured, _gameState)) {
         setState(() => _gameState = ensured);
       }
+      _lastTapDisplayValue = 0.0;
       return 0;
     }
 
-    final result = _dailyTap.applyTap(_gameState, gained);
+    // 通過冷卻，以裝備加成覆寫實際得分
+    final effectiveGain = _equipment.computeTapGain(_gameState);
+    _lastTapDisplayValue = effectiveGain.toDouble();
+    final result = _dailyTap.applyTap(_gameState, effectiveGain);
     if (result.allowedGain > 0) {
       setState(() {
         _gameState = result.state.copyWith(
-          memePoints: result.state.memePoints + result.allowedGain,
+          memePoints: DecimalUtils.add(result.state.memePoints, result.allowedGain),
         );
       });
-      return result.allowedGain;
+      return result.allowedGain.floor();
     } else {
       // 已達每日上限：更新狀態但不加分
       setState(() {
@@ -230,8 +258,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final showDebugPanel = _configService.getValue('game.ui.showDebugPanel', defaultValue: false);
-    
     // 計算今日上限資訊
     final stateWithDaily = _dailyTap.ensureDailyBlock(_gameState);
     final stats = _dailyTap.getStats(stateWithDaily);
@@ -241,14 +267,19 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         children: [
           MainScreen(
             memePoints: _gameState.memePoints,
+            equipments: _gameState.equipments,
             onCharacterTap: _onCharacterTap,
             onCharacterTapWithResult: _onCharacterTapWithResult,
             dailyCapTodayGained: stats['todayGained'] as int,
             dailyCapEffective: stats['effectiveCap'] as int,
             adDoubledToday: stats['adDoubledToday'] as bool,
             onAdDouble: _fakeAdDoubleToday,
+            onEquipmentUpgrade: _onEquipmentUpgrade,
+            onToggleDebug: () => setState(() => _showDebugPanel = !_showDebugPanel),
+            lastTapDisplayValue: _lastTapDisplayValue,
+            displayMemePoints: (_gameState.memePoints + _accumulatedIdleIncome),
           ),
-          if (showDebugPanel)
+          if (_showDebugPanel)
             DebugPanel(
               gameState: _gameState,
               tapService: _tapService,
