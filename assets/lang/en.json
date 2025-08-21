@@ -22,12 +22,18 @@
     "language": "Language",
     "level": "Level",
     "upgrade": "Upgrade",
-    "maxLevel": "Maxed",
+    "maxLevel": "Max Level",
     "cost": "Cost",
     "bonus": "Bonus",
     "requires": "Requires",
     "toLevel": "to Lv",
     "locked": "Locked"
+  },
+  "tab": {
+    "equip": {
+      "tap": "Tap",
+      "idle": "Idle"
+    }
   },
   "equip": {
     "rgb_keyboard": {
@@ -38,6 +44,18 @@
     },
     "dress": {
       "name": "Dress"
+    },
+    "youtube": {
+      "name": "YouTube"
+    },
+    "btc": {
+      "name": "BTC"
+    },
+    "doge": {
+      "name": "DOGE"
+    },
+    "lock": {
+      "need_level": "Unlock after {name} Lv.{level}"
     }
   }
 }

@@ -17,7 +17,7 @@ void main() {
       final originalState = GameState(
         saveVersion: 1,
         memePoints: 123.0,
-        equipments: {'tiktok': 2, 'idle_chip': 0},
+        equipments: {'youtube': 2, 'idle_chip': 0},
         lastTs: 1724000000000,
       );
 

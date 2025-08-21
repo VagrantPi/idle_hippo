@@ -26,6 +26,7 @@ class MainScreen extends StatefulWidget {
   final bool adDoubledToday;
   final VoidCallback? onAdDouble;
   final void Function(String id)? onEquipmentUpgrade;
+  final void Function(String id)? onIdleEquipmentUpgrade;
   final VoidCallback? onToggleDebug; // optional: toggle debug panel from parent
   final double? lastTapDisplayValue; // optional: display base+bonus value for particle
   final double? displayMemePoints; // optional: for UI display only (includes fractional idle accumulation)
@@ -41,6 +42,7 @@ class MainScreen extends StatefulWidget {
     this.adDoubledToday = false,
     this.onAdDouble,
     this.onEquipmentUpgrade,
+    this.onIdleEquipmentUpgrade,
     this.onToggleDebug,
     this.lastTapDisplayValue,
     this.displayMemePoints,
@@ -71,7 +73,13 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     if (v.abs() >= 1e9) return (v / 1e9).toStringAsFixed(1) + 'B';
     if (v.abs() >= 1e6) return (v / 1e6).toStringAsFixed(1) + 'M';
     if (v.abs() >= 1e3) return (v / 1e3).toStringAsFixed(1) + 'K';
-    return v.toStringAsFixed(2);
+    // 對於迷因點數顯示，只保留一位小數以避免過多小數位
+    return v.toStringAsFixed(1);
+  }
+
+  // 速率顯示（/s）使用整數顯示：例如 0.1 -> '0', 1.9 -> '2'
+  String _formatPerSecond(num value) {
+    return value.toDouble().toStringAsFixed(0);
   }
 
   @override
@@ -400,7 +408,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                         ),
                       ),
                       Text(
-                        '${_formatNumber(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
+                        '${_formatPerSecond(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
                         style: const TextStyle(
                           color: Colors.yellow,
                           fontSize: 12,
@@ -607,6 +615,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           memePoints: widget.memePoints,
           equipments: widget.equipments,
           onUpgrade: widget.onEquipmentUpgrade ?? (_){},
+          onUpgradeIdle: widget.onIdleEquipmentUpgrade ?? (_){},
         );
         break;
       case PageType.pets:

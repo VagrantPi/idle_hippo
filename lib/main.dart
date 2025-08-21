@@ -71,6 +71,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   }
 
   Future<void> _initializeGame() async {
+    // 初始化 GameClock（註冊生命週期監聽與單調計時）
+    _gameClock.init();
     await _initializeFromConfig();
     await _initializeLocalization();
     await _loadGameState();
@@ -128,12 +130,12 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     
     // 統一在這裡初始化放置收益系統
     _idleIncome.init(onIncomeGenerated: (double points) {
-      _accumulatedIdleIncome += points;
+      _accumulatedIdleIncome = DecimalUtils.add(_accumulatedIdleIncome, points);
       
       // 當累積收益 >= 1 時才更新 GameState
       if (_accumulatedIdleIncome >= 1.0) {
         final pointsToAdd = _accumulatedIdleIncome.floor();
-        _accumulatedIdleIncome -= pointsToAdd;
+        _accumulatedIdleIncome = DecimalUtils.subtract(_accumulatedIdleIncome, pointsToAdd);
         
         setState(() {
           _gameState = _gameState.copyWith(
@@ -142,6 +144,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         });
       }
     });
+    
+    // 設定 GameState 參考以計算放置裝備加成
+    _idleIncome.updateGameState(_gameState);
   }
 
   void _startAutoSaveTimer() {
@@ -181,7 +186,13 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
         dailyTap: null,
       );
+      // 同步清空本地暫存顯示/收益
+      _accumulatedIdleIncome = 0.0;
+      _lastTapDisplayValue = 0.0;
     });
+
+    // 重置後更新 IdleIncomeService 的 GameState 參考，確保加成立即生效為 0
+    _idleIncome.updateGameState(_gameState);
 
     // 立即存檔
     await _saveGameState();
@@ -190,6 +201,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   void _onEquipmentUpgrade(String id) {
     setState(() {
       _gameState = _equipment.upgrade(_gameState, id);
+    });
+  }
+
+  void _onIdleEquipmentUpgrade(String id) {
+    setState(() {
+      _gameState = _equipment.upgradeIdle(_gameState, id);
+      // 更新 IdleIncomeService 的 GameState 參考以重新計算加成
+      _idleIncome.updateGameState(_gameState);
     });
   }
 
@@ -275,9 +294,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             adDoubledToday: stats['adDoubledToday'] as bool,
             onAdDouble: _fakeAdDoubleToday,
             onEquipmentUpgrade: _onEquipmentUpgrade,
+            onIdleEquipmentUpgrade: _onIdleEquipmentUpgrade,
             onToggleDebug: () => setState(() => _showDebugPanel = !_showDebugPanel),
             lastTapDisplayValue: _lastTapDisplayValue,
-            displayMemePoints: (_gameState.memePoints + _accumulatedIdleIncome),
+            displayMemePoints: DecimalUtils.add(_gameState.memePoints, _accumulatedIdleIncome),
           ),
           if (_showDebugPanel)
             DebugPanel(

@@ -27,7 +27,7 @@
      {
        "save_version": 1,
        "memePoints": 0,
-       "equipments": { "tiktok": 1, "idle_chip": 0 },
+       "equipments": { "youtube": 1, "idle_chip": 0 },
        "lastTs": 1724000000000
      }
      ```
@@ -87,9 +87,9 @@
 ## 4. 實例化需求測試案例
 
 ### 測試案例 1：基本保存與恢復
-- **Given** 玩家當前 `memePoints = 123`、`equipments = {"tiktok": 2}`  
+- **Given** 玩家當前 `memePoints = 123`、`equipments = {"youtube": 2}`  
 - **When** 關閉 App 並重開  
-- **Then** 讀取到 `memePoints = 123`、`equipments = {"tiktok": 2}`、`lastTs` 為關閉前所寫入之 UTC 毫秒
+- **Then** 讀取到 `memePoints = 123`、`equipments = {"youtube": 2}`、`lastTs` 為關閉前所寫入之 UTC 毫秒
 
 ---
 

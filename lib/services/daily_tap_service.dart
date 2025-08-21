@@ -1,5 +1,6 @@
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/config_service.dart';
+import 'package:idle_hippo/services/decimal_utils.dart';
 
 typedef NowProvider = DateTime Function();
 
@@ -60,10 +61,10 @@ class DailyTapService {
     if (block.todayGained >= cap) {
       return (state: s0, allowedGain: 0);
     }
-    final remaining = cap - block.todayGained;
+    final remaining = DecimalUtils.subtract(cap.toDouble(), block.todayGained.toDouble()).toInt();
     final allow = requestedGain.clamp(0.0, remaining.toDouble());
     final s1 = s0.copyWith(
-      dailyTap: block.copyWith(todayGained: block.todayGained + allow.floor()),
+      dailyTap: block.copyWith(todayGained: DecimalUtils.add(block.todayGained.toDouble(), allow.floor()).toInt()),
     );
     return (state: s1, allowedGain: allow);
   }

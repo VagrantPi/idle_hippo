@@ -26,6 +26,12 @@
     "toLevel": "至 Lv",
     "locked": "未解鎖"
   },
+  "tab": {
+    "equip": {
+      "tap": "點擊",
+      "idle": "放置"
+    }
+  },
   "equip": {
     "rgb_keyboard": {
       "name": "RGB 遊戲鍵盤"
@@ -35,6 +41,21 @@
     },
     "dress": {
       "name": "連身裙"
+    },
+    "youtube": {
+      "name": "Youtube",
+      "desc": "產生被動迷因能量。"
+    },
+    "btc": {
+      "name": "BTC",
+      "desc": "幣圈熱度加持，放置收益提高。"
+    },
+    "doge": {
+      "name": "DOGE",
+      "desc": "如此放置，非常哇。"
+    },
+    "lock": {
+      "need_level": "需要 {name} 達到 Lv.{level} 解鎖"
     }
   }
 }

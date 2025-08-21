@@ -30,10 +30,10 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
   // 實作千分位，固定顯示兩位小數（包含 K/M/B），例如 12.34K, 0.12, 12.34, 12.34M, 12.34B
   String _formatNumber(num value) {
     final v = value.toDouble();
-    if (v.abs() >= 1e9) return (v / 1e9).toStringAsFixed(2) + 'B';
-    if (v.abs() >= 1e6) return (v / 1e6).toStringAsFixed(2) + 'M';
-    if (v.abs() >= 1e3) return (v / 1e3).toStringAsFixed(2) + 'K';
-    return v.toStringAsFixed(2);
+    if (v.abs() >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B';
+    if (v.abs() >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M';
+    if (v.abs() >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K';
+    return v.toStringAsFixed(1);
   }
 
   @override
