@@ -95,4 +95,9 @@ class LocalizationService {
   String getUI(String uiKey) {
     return getString('ui.$uiKey');
   }
+
+  /// 便捷方法：取得 offline 文字
+  String getOffline(String offlineKey) {
+    return getString('offline.$offlineKey');
+  }
 }

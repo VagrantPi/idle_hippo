@@ -61,6 +61,8 @@
   "offline": {
     "title": "離線收益",
     "message": "你離線了 {time}，共累積 ≈ {points}",
-    "confirm": "確認"
+    "confirm": "確認",
+    "double_reward": "獎勵 x2",
+    "doubled_success": "獎勵已翻倍！"
   }
 }

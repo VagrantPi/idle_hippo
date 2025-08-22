@@ -64,6 +64,8 @@
   "offline": {
     "title": "Offline Reward",
     "message": "You were away {time}, earned ≈ {points}",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "double_reward": "Double x2",
+    "doubled_success": "Reward Doubled!"
   }
 }

@@ -39,11 +39,21 @@ class OfflineState {
   final double pendingReward; // not yet claimed
   final int capHours; // cap in hours, default 6
 
+  // Step 11: Fields for reward doubling
+  final double lastReward;
+  final double lastRewardSec;
+  final int lastRewardAtMs;
+  final bool lastRewardDoubled;
+
   const OfflineState({
     this.lastExitUtcMs = 0,
     this.idleRateSnapshot = 0.0,
     this.pendingReward = 0.0,
     this.capHours = 6,
+    this.lastReward = 0.0,
+    this.lastRewardSec = 0.0,
+    this.lastRewardAtMs = 0,
+    this.lastRewardDoubled = false,
   });
 
   factory OfflineState.fromMap(Map<String, dynamic> map) {
@@ -52,6 +62,10 @@ class OfflineState {
       idleRateSnapshot: (map['idle_rate_snapshot'] ?? 0.0).toDouble(),
       pendingReward: (map['pendingReward'] ?? 0.0).toDouble(),
       capHours: (map['capHours'] ?? 6) as int,
+      lastReward: (map['lastReward'] ?? 0.0).toDouble(),
+      lastRewardSec: (map['lastRewardSec'] ?? 0.0).toDouble(),
+      lastRewardAtMs: (map['lastRewardAtMs'] ?? 0) as int,
+      lastRewardDoubled: (map['lastRewardDoubled'] ?? false) as bool,
     );
   }
 
@@ -60,6 +74,10 @@ class OfflineState {
         'idle_rate_snapshot': idleRateSnapshot,
         'pendingReward': pendingReward,
         'capHours': capHours,
+        'lastReward': lastReward,
+        'lastRewardSec': lastRewardSec,
+        'lastRewardAtMs': lastRewardAtMs,
+        'lastRewardDoubled': lastRewardDoubled,
       };
 
   bool validate() {
@@ -67,6 +85,9 @@ class OfflineState {
     if (idleRateSnapshot < 0) return false;
     if (pendingReward < 0) return false;
     if (capHours <= 0) return false;
+    if (lastReward < 0) return false;
+    if (lastRewardSec < 0) return false;
+    if (lastRewardAtMs < 0) return false;
     return true;
   }
 
@@ -75,18 +96,28 @@ class OfflineState {
     double? idleRateSnapshot,
     double? pendingReward,
     int? capHours,
+    double? lastReward,
+    double? lastRewardSec,
+    int? lastRewardAtMs,
+    bool? lastRewardDoubled,
   }) {
     return OfflineState(
       lastExitUtcMs: lastExitUtcMs ?? this.lastExitUtcMs,
       idleRateSnapshot: idleRateSnapshot ?? this.idleRateSnapshot,
       pendingReward: pendingReward ?? this.pendingReward,
       capHours: capHours ?? this.capHours,
+      lastReward: lastReward ?? this.lastReward,
+      lastRewardSec: lastRewardSec ?? this.lastRewardSec,
+      lastRewardAtMs: lastRewardAtMs ?? this.lastRewardAtMs,
+      lastRewardDoubled: lastRewardDoubled ?? this.lastRewardDoubled,
     );
   }
 
   @override
   String toString() {
-    return 'Offline(lastExitUtcMs: $lastExitUtcMs, snapshot: $idleRateSnapshot, pending: $pendingReward, capHours: $capHours)';
+    return 'Offline(lastExitUtcMs: $lastExitUtcMs, snapshot: $idleRateSnapshot, ' 
+           'pending: $pendingReward, capHours: $capHours, lastReward: $lastReward, ' 
+           'lastRewardDoubled: $lastRewardDoubled)';
   }
 
   @override
@@ -96,11 +127,23 @@ class OfflineState {
         other.lastExitUtcMs == lastExitUtcMs &&
         other.idleRateSnapshot == idleRateSnapshot &&
         other.pendingReward == pendingReward &&
-        other.capHours == capHours;
+        other.capHours == capHours &&
+        other.lastReward == lastReward &&
+        other.lastRewardSec == lastRewardSec &&
+        other.lastRewardAtMs == lastRewardAtMs &&
+        other.lastRewardDoubled == lastRewardDoubled;
   }
 
   @override
-  int get hashCode => lastExitUtcMs.hashCode ^ idleRateSnapshot.hashCode ^ pendingReward.hashCode ^ capHours.hashCode;
+  int get hashCode =>
+      lastExitUtcMs.hashCode ^
+      idleRateSnapshot.hashCode ^
+      pendingReward.hashCode ^
+      capHours.hashCode ^
+      lastReward.hashCode ^
+      lastRewardSec.hashCode ^
+      lastRewardAtMs.hashCode ^
+      lastRewardDoubled.hashCode;
 }
 
 class GameState {

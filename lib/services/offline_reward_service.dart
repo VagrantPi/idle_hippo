@@ -13,7 +13,8 @@ class OfflineRewardService with WidgetsBindingObserver {
   late double Function() _getIdlePerSec; // 當前放置速率（每秒）
   late GameState Function() _getGameState; // 取得最新的 GameState（由宿主維護）
   late Future<void> Function(GameState) _persist; // 寫入存檔
-  void Function(double reward, Duration effective)? _onPendingReward;
+  void Function(double reward, Duration effective, {required bool canDouble})? _onOfflineReward;
+  void Function(double amount)? _onOfflineDoubled;
   int Function()? _nowUtcMsProvider; // 測試注入當前 UTC ms
 
   bool _initialized = false;
@@ -22,13 +23,15 @@ class OfflineRewardService with WidgetsBindingObserver {
     required double Function() getIdlePerSec,
     required GameState Function() getGameState,
     required Future<void> Function(GameState) onPersist,
-    void Function(double, Duration)? onPendingReward,
+    void Function(double, Duration, {required bool canDouble})? onOfflineReward,
+    void Function(double)? onOfflineDoubled,
     int Function()? nowUtcMsProvider,
   }) {
     _getIdlePerSec = getIdlePerSec;
     _getGameState = getGameState;
     _persist = onPersist;
-    _onPendingReward = onPendingReward;
+    _onOfflineReward = onOfflineReward;
+    _onOfflineDoubled = onOfflineDoubled;
     _nowUtcMsProvider = nowUtcMsProvider;
 
     if (!_initialized) {
@@ -76,18 +79,24 @@ class OfflineRewardService with WidgetsBindingObserver {
     final gs = _getGameState();
     // 若已有待領取（舊版本遺留），立即入帳並清空，仍通知 UI 顯示本次金額
     if (gs.offline.pendingReward > 0) {
+      // This is a migration path for older versions. For Step 11, we assume this is handled.
+      // We will show the reward, but doubling is not possible for this migrated reward.
       final eff = _effectiveDuration(gs);
-      final applied = gs.memePoints + gs.offline.pendingReward;
+      final rewardAmount = gs.offline.pendingReward;
       final now = _nowMs();
       final migrated = gs.copyWith(
-        memePoints: applied,
+        memePoints: gs.memePoints + rewardAmount,
         offline: gs.offline.copyWith(
-          pendingReward: 0.0,
-          lastExitUtcMs: now,
+          pendingReward: 0.0, // Clear legacy field
+          lastExitUtcMs: now, // Prevent re-calculation
+          lastReward: rewardAmount, // Store it for info, but no doubling
+          lastRewardSec: eff.inSeconds.toDouble(),
+          lastRewardAtMs: now,
+          lastRewardDoubled: true, // Mark as not doublable
         ),
       );
       await _persist(migrated);
-      _onPendingReward?.call(gs.offline.pendingReward, eff);
+      _onOfflineReward?.call(rewardAmount, eff, canDouble: false);
       return;
     }
 
@@ -108,17 +117,27 @@ class OfflineRewardService with WidgetsBindingObserver {
     final reward = snapshot * effectiveSeconds;
     if (reward <= 0) return;
 
-    // 立即入帳並清空 pending，更新 lastExitUtcMs 以避免重複結算
+    // Step 11: 立即入帳，並記錄獎勵狀態以供翻倍使用
     final nowTs = _nowMs();
     final updated = gs.copyWith(
       memePoints: gs.memePoints + reward,
       offline: gs.offline.copyWith(
-        pendingReward: 0.0,
-        lastExitUtcMs: nowTs,
+        lastExitUtcMs: nowTs, // 更新時間戳，避免重覆結算
+        pendingReward: 0.0, // 清空舊欄位（若有）
+        lastReward: reward,
+        lastRewardSec: effectiveSeconds,
+        lastRewardAtMs: nowTs,
+        lastRewardDoubled: false, // 新獎勵，重置翻倍狀態
       ),
     );
     await _persist(updated);
-    _onPendingReward?.call(reward, Duration(seconds: effectiveSeconds.floor()));
+
+    // 通知 UI 顯示彈窗，並告知可以翻倍
+    _onOfflineReward?.call(
+      reward,
+      Duration(seconds: effectiveSeconds.floor()),
+      canDouble: true,
+    );
   }
 
   Duration _effectiveDuration(GameState gs) {
@@ -172,5 +191,32 @@ class OfflineRewardService with WidgetsBindingObserver {
       offline: gs.offline.copyWith(pendingReward: 0.0),
     );
     await _persist(updated);
+  }
+
+  /// Step 11: 玩家點擊「觀看廣告翻倍」按鈕後呼叫
+  Future<void> claimOfflineAdDouble() async {
+    final gs = _getGameState();
+    final rewardToDouble = gs.offline.lastReward;
+
+    // 防呆：沒有獎勵或已翻倍過，則不執行
+    if (rewardToDouble <= 0 || gs.offline.lastRewardDoubled) {
+      return;
+    }
+
+    // 假廣告流程：等待 3 秒
+    await Future.delayed(const Duration(seconds: 3));
+
+    // 再次取得最新狀態，以防萬一在等待時狀態有變
+    final currentGs = _getGameState();
+    final updated = currentGs.copyWith(
+      // 再加發同額一次
+      memePoints: currentGs.memePoints + rewardToDouble,
+      // 更新狀態為「已翻倍」
+      offline: currentGs.offline.copyWith(lastRewardDoubled: true),
+    );
+    await _persist(updated);
+
+    // 通知 UI 翻倍成功，並回傳加發的金額
+    _onOfflineDoubled?.call(rewardToDouble);
   }
 }
