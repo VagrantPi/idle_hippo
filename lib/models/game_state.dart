@@ -18,7 +18,6 @@ class DailyTapState {
       adDoubledToday: (map['adDoubledToday'] ?? false) as bool,
     );
   }
-
   Map<String, dynamic> toMap() => {
         'date': date,
         'todayGained': todayGained,
@@ -34,12 +33,83 @@ class DailyTapState {
   }
 }
 
+class OfflineState {
+  final int lastExitUtcMs; // UTC milliseconds
+  final double idleRateSnapshot; // per second
+  final double pendingReward; // not yet claimed
+  final int capHours; // cap in hours, default 6
+
+  const OfflineState({
+    this.lastExitUtcMs = 0,
+    this.idleRateSnapshot = 0.0,
+    this.pendingReward = 0.0,
+    this.capHours = 6,
+  });
+
+  factory OfflineState.fromMap(Map<String, dynamic> map) {
+    return OfflineState(
+      lastExitUtcMs: (map['lastExitUtcMs'] ?? 0) as int,
+      idleRateSnapshot: (map['idle_rate_snapshot'] ?? 0.0).toDouble(),
+      pendingReward: (map['pendingReward'] ?? 0.0).toDouble(),
+      capHours: (map['capHours'] ?? 6) as int,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'lastExitUtcMs': lastExitUtcMs,
+        'idle_rate_snapshot': idleRateSnapshot,
+        'pendingReward': pendingReward,
+        'capHours': capHours,
+      };
+
+  bool validate() {
+    if (lastExitUtcMs < 0) return false;
+    if (idleRateSnapshot < 0) return false;
+    if (pendingReward < 0) return false;
+    if (capHours <= 0) return false;
+    return true;
+  }
+
+  OfflineState copyWith({
+    int? lastExitUtcMs,
+    double? idleRateSnapshot,
+    double? pendingReward,
+    int? capHours,
+  }) {
+    return OfflineState(
+      lastExitUtcMs: lastExitUtcMs ?? this.lastExitUtcMs,
+      idleRateSnapshot: idleRateSnapshot ?? this.idleRateSnapshot,
+      pendingReward: pendingReward ?? this.pendingReward,
+      capHours: capHours ?? this.capHours,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'Offline(lastExitUtcMs: $lastExitUtcMs, snapshot: $idleRateSnapshot, pending: $pendingReward, capHours: $capHours)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is OfflineState &&
+        other.lastExitUtcMs == lastExitUtcMs &&
+        other.idleRateSnapshot == idleRateSnapshot &&
+        other.pendingReward == pendingReward &&
+        other.capHours == capHours;
+  }
+
+  @override
+  int get hashCode => lastExitUtcMs.hashCode ^ idleRateSnapshot.hashCode ^ pendingReward.hashCode ^ capHours.hashCode;
+}
+
 class GameState {
   final int saveVersion;
   final double memePoints;
   final Map<String, int> equipments;
   final int lastTs;
   final DailyTapState? dailyTap;
+  final OfflineState offline;
 
   const GameState({
     required this.saveVersion,
@@ -47,6 +117,7 @@ class GameState {
     required this.equipments,
     required this.lastTs,
     this.dailyTap,
+    this.offline = const OfflineState(),
   });
 
   /// 建立初始狀態
@@ -57,6 +128,7 @@ class GameState {
       equipments: {},
       lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       dailyTap: null,
+      offline: const OfflineState(),
     );
   }
 
@@ -80,6 +152,9 @@ class GameState {
       dailyTap: map.containsKey('dailyTap') && map['dailyTap'] is Map<String, dynamic>
           ? DailyTapState.fromMap(map['dailyTap'] as Map<String, dynamic>)
           : null,
+      offline: map.containsKey('offline') && map['offline'] is Map<String, dynamic>
+          ? OfflineState.fromMap(map['offline'] as Map<String, dynamic>)
+          : const OfflineState(),
     );
   }
 
@@ -96,6 +171,7 @@ class GameState {
       'equipments': equipments,
       'lastTs': lastTs,
       if (dailyTap != null) 'dailyTap': dailyTap!.toMap(),
+      'offline': offline.toMap(),
     };
   }
 
@@ -113,6 +189,8 @@ class GameState {
       }
       // dailyTap 若存在，檢查 todayGained 非負
       if (dailyTap != null && dailyTap!.todayGained < 0) return false;
+      // 檢查 offline 區塊
+      if (!offline.validate()) return false;
       
       return true;
     } catch (e) {
@@ -127,6 +205,7 @@ class GameState {
     Map<String, int>? equipments,
     int? lastTs,
     DailyTapState? dailyTap,
+    OfflineState? offline,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -134,6 +213,7 @@ class GameState {
       equipments: equipments ?? Map<String, int>.from(this.equipments),
       lastTs: lastTs ?? this.lastTs,
       dailyTap: dailyTap ?? this.dailyTap,
+      offline: offline ?? this.offline,
     );
   }
 
@@ -147,7 +227,7 @@ class GameState {
   @override
   String toString() {
     return 'GameState(saveVersion: $saveVersion, memePoints: $memePoints, '
-           'equipments: $equipments, lastTs: $lastTs)';
+           'equipments: $equipments, lastTs: $lastTs, offline: $offline)';
   }
 
   @override
@@ -158,7 +238,8 @@ class GameState {
         other.memePoints == memePoints &&
         _mapEquals(other.equipments, equipments) &&
         other.lastTs == lastTs &&
-        _dailyTapEquals(other.dailyTap, dailyTap);
+        _dailyTapEquals(other.dailyTap, dailyTap) &&
+        other.offline == offline;
   }
 
   @override
@@ -167,7 +248,8 @@ class GameState {
         memePoints.hashCode ^
         equipments.hashCode ^
         lastTs.hashCode ^
-        (dailyTap?.hashCode ?? 0);
+        (dailyTap?.hashCode ?? 0) ^
+        offline.hashCode;
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

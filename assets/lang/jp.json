@@ -55,7 +55,12 @@
       "desc": "そんな放置、すごいワオ。"
     },
     "lock": {
-      "need_level": "{name} を Lv.{level} で解放"
+      "need_level": "{name} Lv.{level} で解放"
     }
+  },
+  "offline": {
+    "title": "オフライン報酬",
+    "message": "{time} の間オフライン、約 {points} を獲得",
+    "confirm": "確認"
   }
 }

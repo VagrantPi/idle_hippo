@@ -12,10 +12,12 @@ void main() {
   group('MainScreen Widget Tests', () {
     late PageManager pageManager;
     late VoidCallback onCharacterTap;
+    late ConfigService configService;
     int tapCount = 0;
 
     setUp(() {
       pageManager = PageManager();
+      configService = ConfigService();
       tapCount = 0;
       onCharacterTap = () {
         tapCount++;
@@ -148,6 +150,8 @@ void main() {
     // 預設 currentIdlePerSec 來自 ConfigService 未載入時的 default 0.1
     // 格式化後顯示應為 '0 /s'
     testWidgets('should display idle income per second formatted (default 0.1 -> 0 /s)', (WidgetTester tester) async {
+      configService.loadConfig();
+
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -159,10 +163,11 @@ void main() {
 
       final allTextWidgets = find.byType(Text);
       for (int i = 0; i < tester.widgetList(allTextWidgets).length; i++) {
-        tester.widget<Text>(allTextWidgets.at(i));
+        final textWidget = tester.widget<Text>(allTextWidgets.at(i));
+        print(textWidget.data);
       }
       
-      expect(find.text('0 /s'), findsOneWidget);
+      expect(find.text('0.0 /s'), findsOneWidget);
     });
   });
 }

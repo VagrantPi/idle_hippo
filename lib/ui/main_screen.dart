@@ -79,7 +79,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   // 速率顯示（/s）使用整數顯示：例如 0.1 -> '0', 1.9 -> '2'
   String _formatPerSecond(num value) {
-    return value.toDouble().toStringAsFixed(0);
+    return value.toDouble().toStringAsFixed(1);
   }
 
   @override
