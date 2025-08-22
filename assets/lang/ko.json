@@ -61,6 +61,8 @@
   "offline": {
     "title": "오프라인 보상",
     "message": "{time} 동안 오프라인, 약 {points} 획득",
-    "confirm": "확인"
+    "confirm": "확인",
+    "double_reward": "보상 x2",
+    "doubled_success": "보상이 두 배가 되었습니다!"
   }
 }

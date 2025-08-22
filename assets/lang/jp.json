@@ -61,6 +61,8 @@
   "offline": {
     "title": "オフライン報酬",
     "message": "{time} の間オフライン、約 {points} を獲得",
-    "confirm": "確認"
+    "confirm": "確認",
+    "double_reward": "報酬 x2",
+    "doubled_success": "報酬が2倍になりました！"
   }
 }

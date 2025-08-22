@@ -13,6 +13,7 @@ import 'package:idle_hippo/services/offline_reward_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
+import 'package:idle_hippo/ui/components/slide_in_dialog.dart';
 
 void main() {
   runApp(const IdleHippoApp());
@@ -191,27 +192,151 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
           await _saveGameState();
         }
       },
-      onPendingReward: (reward, effective) {
-        _showOfflineRewardDialog(reward: reward, effective: effective);
+      onOfflineReward: (reward, effective, {required bool canDouble}) {
+        _showOfflineRewardDialog(
+          reward: reward,
+          effective: effective,
+          canDouble: canDouble,
+        );
+      },
+      onOfflineDoubled: (amount) {
+        if (!mounted) return;
+        final title = _localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!');
+        final confirm = _localization.getOffline('confirm');
+        final points = amount.toStringAsFixed(0);
+
+        showTopSlideDialog(
+          context,
+          barrierDismissible: true,
+          child: Builder(
+            builder: (ctx) {
+              final theme = Theme.of(ctx);
+              return GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xCC113300),
+                        Color(0xCC1F5E1F),
+                      ],
+                    ),
+                    border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.8), width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00FFD1).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                            ),
+                            child: const Icon(Icons.check_circle, color: Color(0xFF00FFD1)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                            const SizedBox(width: 6),
+                            Text(
+                              '+$points',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.yellow,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _localization.getCommon('memePoints'),
+                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            height: 44,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1F5E1F),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: Text(
+                                confirm,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
       },
     );
   }
 
-  Future<void> _claimOfflineReward() async {
-    final pending = _gameState.offline.pendingReward;
-    if (pending <= 0) return;
-    setState(() {
-      _gameState = _gameState.copyWith(
-        memePoints: DecimalUtils.add(_gameState.memePoints, pending),
-        offline: _gameState.offline.copyWith(pendingReward: 0.0),
-      );
-    });
-    if (!widget.testMode) {
-      await _saveGameState();
-    }
-  }
 
-  void _showOfflineRewardDialog({required double reward, required Duration effective}) {
+  void _showOfflineRewardDialog({
+    required double reward,
+    required Duration effective,
+    required bool canDouble,
+  }) {
     // 若已顯示或 reward 無效，略過
     if (reward <= 0) return;
     final title = _localization.getString('offline.title', defaultValue: 'Offline Reward');
@@ -231,15 +356,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         .replaceAll('{time}', timeStr)
         .replaceAll('{points}', pointsStr);
 
-    showDialog(
-      context: context,
+    showTopSlideDialog(
+      context,
       barrierDismissible: false,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          backgroundColor: Colors.transparent,
-          child: Container(
+      child: Builder(
+        builder: (ctx) {
+          final theme = Theme.of(ctx);
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               gradient: const LinearGradient(
@@ -299,7 +423,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 強調點數
                       Row(
                         children: [
                           const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
@@ -319,7 +442,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      // 補充描述（沿用原 message 模板）
                       Text(
                         message,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -331,40 +453,59 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: SizedBox(
-                    width: 160,
-                    height: 44,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2B0A56),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (canDouble)
+                      SizedBox(
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.slow_motion_video, size: 20),
+                          label: Text(_localization.getString('offline.double_reward', defaultValue: 'Double x2')),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE89A00),
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () async {
+                            Navigator.of(ctx).pop();
+                            await _offline.claimOfflineAdDouble();
+                          },
                         ),
                       ),
-                      onPressed: () async {
-                        Navigator.of(ctx).pop();
-                        await _claimOfflineReward();
-                      },
-                      child: Text(
-                        confirm,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                    if (canDouble) const SizedBox(width: 12),
+                    SizedBox(
+                      width: 120,
+                      height: 44,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2B0A56),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Text(
+                          confirm,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

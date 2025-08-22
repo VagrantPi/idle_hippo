@@ -1,134 +1,175 @@
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/offline_reward_service.dart';
 
 void main() {
-  // 初始化 Widgets 綁定，供 OfflineRewardService 使用 WidgetsBindingObserver
   TestWidgetsFlutterBinding.ensureInitialized();
-  group('OfflineRewardService', () {
+
+  // This setup runs once for all tests.
+  setUpAll(() async {
+    // Mock rootBundle to load test config so ConfigService can init
+    // Note: 'flutter/assets' is a BasicMessageChannel with StringCodec, not a MethodChannel.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', (ByteData? message) async {
+      final String? key = const StringCodec().decodeMessage(message);
+      if (key == null) return null;
+      if (key.endsWith('game.json')) {
+        return const StringCodec().encodeMessage(json.encode({'baseMemePerSecond': 1.0}));
+      }
+      if (key.endsWith('equipments.json')) {
+        return const StringCodec().encodeMessage(
+          json.encode({'tap_equipments': [], 'idle_equipments': []}),
+        );
+      }
+      if (key.endsWith('pets.json')) {
+        return const StringCodec().encodeMessage(json.encode({'pets': []}));
+      }
+      if (key.endsWith('titles.json')) {
+        return const StringCodec().encodeMessage(json.encode({'titles': []}));
+      }
+      if (key.endsWith('quests.json')) {
+        return const StringCodec().encodeMessage(json.encode({'quests': []}));
+      }
+      return null;
+    });
+    // Manually init ConfigService for testing
+    await ConfigService().loadConfig();
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMessageHandler('flutter/assets', null);
+  });
+
+  group('OfflineRewardService - Basic', () {
     late OfflineRewardService service;
     late GameState state;
     late int nowMs;
     double lastReward = 0;
     Duration lastEffective = Duration.zero;
+    bool lastCanDouble = false;
+
+    double idlePerSec = 2.0;
 
     setUp(() {
       service = OfflineRewardService();
-      nowMs = DateTime.utc(2025, 1, 1, 0, 0, 0).millisecondsSinceEpoch;
-      state = GameState(
-        saveVersion: 1,
-        memePoints: 0,
-        equipments: const {},
-        lastTs: nowMs,
-        offline: const OfflineState(),
+      nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+      state = GameState.initial(1).copyWith(
+        offline: OfflineState(
+          lastExitUtcMs: nowMs, // Start with a fresh exit time
+          idleRateSnapshot: 2.0, // 2 points per second
+          capHours: 2,
+        ),
       );
-      lastReward = 0;
-      lastEffective = Duration.zero;
-
       service.init(
-        getIdlePerSec: () => state.offline.idleRateSnapshot,
         getGameState: () => state,
-        onPersist: (updated) async {
-          state = updated; // 模擬持久化後的狀態更新
-        },
-        onPendingReward: (r, d) {
+        getIdlePerSec: () => idlePerSec,
+        onPersist: (newState) async => state = newState,
+        onOfflineReward: (r, d, {required bool canDouble}) {
           lastReward = r;
           lastEffective = d;
+          lastCanDouble = canDouble;
         },
         nowUtcMsProvider: () => nowMs,
       );
     });
 
-    tearDown(() {
-      service.dispose();
-    });
+    tearDown(() => service.dispose());
 
-    test('no lastExit -> no reward (no auto-claim)', () async {
-      // 未曾離線
-      state = state.copyWith(
-        offline: state.offline.copyWith(
-          lastExitUtcMs: 0,
-          idleRateSnapshot: 2.0,
-        ),
-      );
-
-      // 直接回前台
-      await service.simulateAddSeconds(60);
-      expect(state.offline.pendingReward, 0);
-      expect(state.memePoints, 2 * 60);
-      expect(lastReward, 2 * 60);
-    });
-
-    test('basic 60s at 2/sec -> 120 auto-claimed', () async {
-      // 背景時刻
-      state = state.copyWith(
-        offline: state.offline.copyWith(
-          lastExitUtcMs: nowMs,
-          idleRateSnapshot: 2.0,
-        ),
-      );
-
-      // 模擬 +60s 離線
-      await service.simulateAddSeconds(60);
-
-      // 新規則：直接入帳，pendingReward 維持 0，並透過 callback 通知本次金額
-      expect(state.memePoints, closeTo(120.0, 1e-6));
-      expect(state.offline.pendingReward, 0);
-      expect(lastReward, closeTo(120.0, 1e-6));
-      expect(lastEffective.inSeconds, 60);
-    });
-
-    test('cap at 6h', () async {
-      // 7 小時離線，cap 應該以 6 小時計
-      state = state.copyWith(
-        offline: state.offline.copyWith(
-          lastExitUtcMs: nowMs - 7 * 3600 * 1000,
-          idleRateSnapshot: 2.0,
-        ),
-      );
-
-      // 觸發回前台結算
-      await service.simulateAddSeconds(1); // 任意值，觸發 _onResumed()
-
-      // 6h = 21600s, *2/sec = 43200，直接入帳
-      expect(state.memePoints, closeTo(43200.0, 1e-6));
-      expect(state.offline.pendingReward, 0);
-      expect(lastReward, closeTo(43200.0, 1e-6));
-      expect(lastEffective.inSeconds, 21600);
-    });
-
-    test('existing pendingReward does not recompute', () async {
-      // 兼容舊版本：若已有待領取，回前台時自動入帳並清空
-      state = state.copyWith(
-        offline: state.offline.copyWith(
-          lastExitUtcMs: nowMs - 60000,
-          idleRateSnapshot: 3.0,
-          pendingReward: 999.0,
-        ),
-      );
-
-      await service.simulateAddSeconds(60);
-
-      // 新規則：直接將 999 入帳，pending 清 0，callback 告知 999
-      expect(state.memePoints, closeTo(999.0, 1e-6));
-      expect(state.offline.pendingReward, 0);
-      expect(lastReward, 999.0);
-    });
-
-    test('clearPending clears reward', () async {
-      state = state.copyWith(
-        offline: state.offline.copyWith(
-          lastExitUtcMs: nowMs,
-          idleRateSnapshot: 1.0,
-        ),
-      );
+    test('no lastExit -> no reward', () async {
+      state = state.copyWith(offline: state.offline.copyWith(lastExitUtcMs: 0));
       await service.simulateAddSeconds(10);
-      // 新規則：已自動入帳，pendingReward 應為 0
-      expect(state.offline.pendingReward, 0);
-      expect(state.memePoints, closeTo(10.0, 1e-6));
+      expect(lastReward, idlePerSec * 10);
+    });
 
-      await service.clearPending();
-      expect(state.offline.pendingReward, 0);
+    test('short offline time -> correct reward', () async {
+      await service.simulateAddSeconds(10);
+      expect(lastReward, closeTo(idlePerSec * 10, 1e-6));
+      expect(lastEffective, const Duration(seconds: 10));
+      expect(lastCanDouble, isTrue);
+      expect(state.memePoints, closeTo(20.0, 1e-6));
+    });
+
+    test('long offline time -> capped reward', () async {
+      final threeHours = 3 * 3600;
+      final twoHours = 2 * 3600;
+      await service.simulateAddSeconds(threeHours);
+      expect(lastReward, closeTo(twoHours * 2.0, 1e-6));
+      expect(lastEffective, Duration(seconds: twoHours));
+    });
+  });
+
+  group('OfflineRewardService - Doubling', () {
+    late OfflineRewardService service;
+    late GameState state;
+    late int nowMs;
+    double lastDoubledAmount = 0;
+
+    setUp(() {
+      service = OfflineRewardService();
+      nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+      state = GameState.initial(1).copyWith(
+        memePoints: 1000,
+        offline: OfflineState(lastExitUtcMs: nowMs, idleRateSnapshot: 10.0, capHours: 1),
+      );
+      lastDoubledAmount = 0;
+      service.init(
+        getGameState: () => state,
+        getIdlePerSec: () => 10.0,
+        onPersist: (updated) async => state = updated,
+        nowUtcMsProvider: () => nowMs,
+        onOfflineReward: (r, d, {required bool canDouble}) {},
+        onOfflineDoubled: (amount) => lastDoubledAmount = amount,
+      );
+    });
+
+    tearDown(() => service.dispose());
+
+    test('can claim double reward', () async {
+      await service.simulateAddSeconds(60);
+      final rewardAmount = state.offline.lastReward;
+      final pointsAfterReward = state.memePoints;
+      expect(rewardAmount, closeTo(600, 1e-6)); // 60s * 10/s
+      expect(state.offline.lastRewardDoubled, isFalse);
+
+      await service.claimOfflineAdDouble();
+
+      expect(state.offline.lastRewardDoubled, isTrue);
+      expect(state.memePoints, pointsAfterReward + rewardAmount);
+      expect(lastDoubledAmount, rewardAmount);
+    });
+
+    test('cannot double twice', () async {
+      await service.simulateAddSeconds(60);
+      await service.claimOfflineAdDouble();
+      final pointsAfterFirstDouble = state.memePoints;
+
+      await service.claimOfflineAdDouble(); // Attempt second double
+      expect(state.memePoints, pointsAfterFirstDouble);
+    });
+
+    test('persists doubled state', () async {
+      await service.simulateAddSeconds(60);
+      await service.claimOfflineAdDouble();
+      expect(state.offline.lastRewardDoubled, isTrue);
+
+      final savedState = state;
+      final newService = OfflineRewardService();
+      newService.init(
+        getGameState: () => savedState,
+        getIdlePerSec: () => 10.0,
+        onPersist: (updated) async => state = updated,
+        nowUtcMsProvider: () => nowMs,
+        onOfflineReward: (r, d, {required bool canDouble}) {},
+        onOfflineDoubled: (amount) {},
+      );
+
+      final pointsBefore = state.memePoints;
+      await newService.claimOfflineAdDouble(); // Attempt to double again
+      expect(state.memePoints, pointsBefore);
     });
   });
 }
