@@ -46,16 +46,24 @@
       "name": "Dress"
     },
     "youtube": {
-      "name": "YouTube"
+      "name": "YouTube",
+      "desc": "Generates passive meme energy."
     },
     "btc": {
-      "name": "BTC"
+      "name": "BTC",
+      "desc": "Crypto hype boosts idle income."
     },
     "doge": {
-      "name": "DOGE"
+      "name": "DOGE",
+      "desc": "Such idle, very wow."
     },
     "lock": {
       "need_level": "Unlock after {name} Lv.{level}"
     }
+  },
+  "offline": {
+    "title": "Offline Reward",
+    "message": "You were away {time}, earned ≈ {points}",
+    "confirm": "Confirm"
   }
 }

@@ -57,5 +57,10 @@
     "lock": {
       "need_level": "需要 {name} 達到 Lv.{level} 解鎖"
     }
+  },
+  "offline": {
+    "title": "離線收益",
+    "message": "你離線了 {time}，共累積 ≈ {points}",
+    "confirm": "確認"
   }
 }

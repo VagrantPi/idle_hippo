@@ -9,8 +9,10 @@ class DebugPanel extends StatefulWidget {
   final GameState? gameState;
   final TapService? tapService;
   final Future<void> Function()? onResetAll;
+  final Future<void> Function()? onOfflineSimulate60s;
+  final Future<void> Function()? onOfflineClearPending;
   
-  const DebugPanel({super.key, this.gameState, this.tapService, this.onResetAll});
+  const DebugPanel({super.key, this.gameState, this.tapService, this.onResetAll, this.onOfflineSimulate60s, this.onOfflineClearPending});
 
   @override
   State<DebugPanel> createState() => _DebugPanelState();
@@ -86,6 +88,16 @@ class _DebugPanelState extends State<DebugPanel> {
               const SizedBox(height: 8),
             ],
 
+            // Offline Section
+            if (widget.gameState != null) ...[
+              _buildSectionTitle('Offline'),
+              _buildConfigRow('offline.lastExitUtcMs', widget.gameState!.offline.lastExitUtcMs),
+              _buildConfigRow('offline.idle_rate_snapshot', widget.gameState!.offline.idleRateSnapshot),
+              _buildConfigRow('offline.pendingReward', widget.gameState!.offline.pendingReward),
+              _buildConfigRow('offline.capHours', widget.gameState!.offline.capHours),
+              const SizedBox(height: 8),
+            ],
+
             // GameClock Section
             _buildSectionTitle('GameClock'),
             _buildGameClockStats(),
@@ -97,11 +109,11 @@ class _DebugPanelState extends State<DebugPanel> {
             const SizedBox(height: 8),
 
             // Tap Section
-            if (widget.tapService != null) ...[
-              _buildSectionTitle('Tap'),
-              _buildTapStats(),
-              const SizedBox(height: 8),
-            ],
+            // if (widget.tapService != null) ...[
+            //   _buildSectionTitle('Tap'),
+            //   _buildTapStats(),
+            //   const SizedBox(height: 8),
+            // ],
             
             // Actions
             _buildActions(),
@@ -248,6 +260,48 @@ class _DebugPanelState extends State<DebugPanel> {
         ),
 
         const SizedBox(height: 4),
+
+        // Offline: +60s
+        if (widget.onOfflineSimulate60s != null)
+          GestureDetector(
+            onTap: () async {
+              await widget.onOfflineSimulate60s!();
+              if (mounted) setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: Colors.purple.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                '+60s Offline',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
+
+        // Offline: Clear Pending
+        if (widget.onOfflineClearPending != null)
+          GestureDetector(
+            onTap: () async {
+              await widget.onOfflineClearPending!();
+              if (mounted) setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: Colors.purple.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Clear Pending',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
 
         // Reset All State Button
         GestureDetector(

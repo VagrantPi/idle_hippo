@@ -9,6 +9,7 @@ import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/tap_service.dart';
 import 'package:idle_hippo/services/daily_tap_service.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
+import 'package:idle_hippo/services/offline_reward_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -18,7 +19,8 @@ void main() {
 }
 
 class IdleHippoApp extends StatelessWidget {
-  const IdleHippoApp({super.key});
+  final bool testMode;
+  const IdleHippoApp({super.key, this.testMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +30,15 @@ class IdleHippoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const IdleHippoScreen(),
+      home: IdleHippoScreen(testMode: testMode),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class IdleHippoScreen extends StatefulWidget {
-  const IdleHippoScreen({super.key});
+  final bool testMode;
+  const IdleHippoScreen({super.key, this.testMode = false});
 
   @override
   State<IdleHippoScreen> createState() => _IdleHippoScreenState();
@@ -50,6 +53,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final TapService _tapService = TapService();
   final DailyTapService _dailyTap = DailyTapService();
   final EquipmentService _equipment = EquipmentService();
+  final OfflineRewardService _offline = OfflineRewardService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -76,9 +80,27 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     await _initializeFromConfig();
     await _initializeLocalization();
     await _loadGameState();
+    _initOfflineModule();
+    // 測試模式：若尚無離線基準，建立 baseline，讓 simulateAddSeconds 能立即結算
+    if (widget.testMode && _gameState.offline.lastExitUtcMs <= 0) {
+      final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+      final snapshot = _idleIncome.currentIdlePerSec;
+      setState(() {
+        _gameState = _gameState.copyWith(
+          offline: _gameState.offline.copyWith(
+            lastExitUtcMs: now,
+            idleRateSnapshot: snapshot,
+          ),
+        );
+      });
+      await _saveGameState();
+    }
     
-    // 確保 IdleIncome 初始化完成後再啟動時間系統
-    _gameClock.start();
+    // 測試模式下不啟動時間系統，避免測試 pumpAndSettle 永不穩定
+    if (!widget.testMode) {
+      // 確保 IdleIncome 初始化完成後再啟動時間系統
+      _gameClock.start();
+    }
   }
 
   Future<void> _initializeFromConfig() async {
@@ -113,19 +135,26 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _tapFracTimer?.cancel();
     _gameClock.dispose();
     _idleIncome.dispose();
+    _offline.dispose();
     super.dispose();
   }
 
   Future<void> _loadGameState() async {
-    try {
-      final loadedState = await _saveService.load();
+    if (widget.testMode) {
+      // 測試模式：不觸發 SecureSaveService，使用記憶體初始狀態
       setState(() {
-        _gameState = loadedState;
+        _gameState = GameState.initial(_saveService.currentVersion);
       });
-      
-      print('Game state loaded: ${_gameState.memePoints} meme points');
-    } catch (e) {
-      print('Failed to load game state: $e');
+    } else {
+      try {
+        final loadedState = await _saveService.load();
+        setState(() {
+          _gameState = loadedState;
+        });
+        print('Game state loaded: ${_gameState.memePoints} meme points');
+      } catch (e) {
+        print('Failed to load game state: $e');
+      }
     }
     
     // 統一在這裡初始化放置收益系統
@@ -149,7 +178,201 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _idleIncome.updateGameState(_gameState);
   }
 
+  void _initOfflineModule() {
+    _offline.init(
+      getIdlePerSec: () => _idleIncome.currentIdlePerSec,
+      getGameState: () => _gameState,
+      onPersist: (updated) async {
+        if (!mounted) return;
+        setState(() {
+          _gameState = updated;
+        });
+        if (!widget.testMode) {
+          await _saveGameState();
+        }
+      },
+      onPendingReward: (reward, effective) {
+        _showOfflineRewardDialog(reward: reward, effective: effective);
+      },
+    );
+  }
+
+  Future<void> _claimOfflineReward() async {
+    final pending = _gameState.offline.pendingReward;
+    if (pending <= 0) return;
+    setState(() {
+      _gameState = _gameState.copyWith(
+        memePoints: DecimalUtils.add(_gameState.memePoints, pending),
+        offline: _gameState.offline.copyWith(pendingReward: 0.0),
+      );
+    });
+    if (!widget.testMode) {
+      await _saveGameState();
+    }
+  }
+
+  void _showOfflineRewardDialog({required double reward, required Duration effective}) {
+    // 若已顯示或 reward 無效，略過
+    if (reward <= 0) return;
+    final title = _localization.getString('offline.title', defaultValue: 'Offline Reward');
+    final confirm = _localization.getString('offline.confirm', defaultValue: 'Claim');
+
+    String _formatDuration(Duration d) {
+      final h = d.inHours;
+      final m = d.inMinutes % 60;
+      final s = d.inSeconds % 60;
+      return '${h}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+
+    final timeStr = _formatDuration(effective);
+    final pointsStr = reward.toStringAsFixed(0);
+    final messageTemplate = _localization.getString('offline.message', defaultValue: 'You were away {time}, earned ≈ {points}');
+    final message = messageTemplate
+        .replaceAll('{time}', timeStr)
+        .replaceAll('{points}', pointsStr);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xCC110022),
+                  Color(0xCC2B0A56),
+                ],
+              ),
+              border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.8), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00FFD1).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                      ),
+                      child: const Icon(Icons.timer, color: Color(0xFF00FFD1)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 強調點數
+                      Row(
+                        children: [
+                          const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                          const SizedBox(width: 6),
+                          Text(
+                            pointsStr,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: Colors.yellow,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _localization.getCommon('memePoints'),
+                            style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // 補充描述（沿用原 message 模板）
+                      Text(
+                        message,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: SizedBox(
+                    width: 160,
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2B0A56),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        await _claimOfflineReward();
+                      },
+                      child: Text(
+                        confirm,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _startAutoSaveTimer() {
+    if (widget.testMode) {
+      // 測試模式：不啟動任何週期性計時器，避免測試一直不閒置
+      return;
+    }
     // 每 10 秒自動存檔一次，平衡效能與即時性
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _saveGameState();
@@ -164,6 +387,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   }
 
   Future<void> _saveGameState() async {
+    if (widget.testMode) {
+      // 測試模式：不進行任何持久化
+      return;
+    }
     try {
       // 直接存檔當前 GameState，不需要合併 IdleIncome
       await _saveService.save(_gameState);
@@ -277,7 +504,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 計算今日上限資訊
+    // 測試模式：避免渲染含 Ticker 的 MainScreen，以免 pumpAndSettle 超時
+    if (widget.testMode) {
+      return const Scaffold(
+        body: SizedBox.shrink(),
+      );
+    }
+
+    // 計算今日上限資訊（僅非測試模式顯示完整 UI）
     final stateWithDaily = _dailyTap.ensureDailyBlock(_gameState);
     final stats = _dailyTap.getStats(stateWithDaily);
 
@@ -304,6 +538,15 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
               gameState: _gameState,
               tapService: _tapService,
               onResetAll: _resetAllState,
+              onOfflineSimulate60s: () async {
+                await _offline.simulateAddSeconds(60);
+              },
+              onOfflineClearPending: () async {
+                await _offline.clearPending();
+                setState(() {
+                  _gameState = _gameState.copyWith();
+                });
+              },
             ),
         ],
       ),

@@ -58,10 +58,10 @@ class LocalizationService {
   }
 
   /// 取得本地化字串
-  String getString(String key, {String? defaultValue}) {
+  String getString(String key, {Map<String, String>? replacements, String? defaultValue}) {
     final keys = key.split('.');
     dynamic current = _localizedStrings;
-    
+
     for (final k in keys) {
       if (current is Map<String, dynamic> && current.containsKey(k)) {
         current = current[k];
@@ -69,8 +69,16 @@ class LocalizationService {
         return defaultValue ?? key;
       }
     }
-    
-    return current?.toString() ?? defaultValue ?? key;
+
+    String result = current?.toString() ?? defaultValue ?? key;
+
+    if (replacements != null) {
+      replacements.forEach((placeholder, value) {
+        result = result.replaceAll('{$placeholder}', value);
+      });
+    }
+
+    return result;
   }
 
   /// 便捷方法：取得頁面名稱

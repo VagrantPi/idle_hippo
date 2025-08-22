@@ -57,5 +57,10 @@
     "lock": {
       "need_level": "{name} Lv.{level} 달성 시 해제"
     }
+  },
+  "offline": {
+    "title": "오프라인 보상",
+    "message": "{time} 동안 오프라인, 약 {points} 획득",
+    "confirm": "확인"
   }
 }
