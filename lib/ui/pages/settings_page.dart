@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
-import 'package:idle_hippo/services/page_manager.dart'; // Add this line
+import 'package:idle_hippo/services/page_manager.dart';
+import 'package:idle_hippo/ui/pages/power_saver_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onLanguageChanged;

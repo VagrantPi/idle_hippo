@@ -64,5 +64,15 @@
     "confirm": "確認",
     "double_reward": "獎勵 x2",
     "doubled_success": "獎勵已翻倍！"
+  },
+  "settings": {
+    "power_save": "省電掛機"
+  },
+  "power_save": {
+    "tap_to_exit": "觸控退出",
+    "orientation": {
+      "portrait": "直式",
+      "landscape": "橫式"
+    }
   }
 }

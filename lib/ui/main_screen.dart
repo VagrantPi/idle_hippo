@@ -7,6 +7,7 @@ import 'package:idle_hippo/ui/components/animated_button.dart';
 import 'package:idle_hippo/ui/components/plus_meme_particle.dart';
 import 'package:idle_hippo/ui/pages/equipment_page.dart';
 import 'package:idle_hippo/ui/pages/pets_page.dart';
+import 'package:idle_hippo/ui/pages/power_saver_page.dart';
 import 'package:idle_hippo/ui/pages/shop_page.dart';
 import 'package:idle_hippo/ui/pages/titles_page.dart';
 import 'package:idle_hippo/ui/pages/quest_page.dart';
@@ -451,13 +452,58 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 8,
       right: 8,
-      child: AnimatedButton(
-        iconPath: 'assets/images/icon/Setting.png',
-        onTap: () => _pageManager.navigateToPage(PageType.settings),
-        size: 50,
+      child: Column(
+        children: [
+          AnimatedButton(
+            iconPath: 'assets/images/icon/Setting.png',
+            onTap: () => _pageManager.navigateToPage(PageType.settings),
+            size: 50,
+          ),
+          const SizedBox(height: 16),
+          if (_pageManager.isHomePage) _buildPowerSaverButton(),
+        ],
       ),
     );
   }
+
+
+  Widget _buildPowerSaverButton() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const PowerSaverPage(),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/icon/SavePower.png',
+                width: 24,
+                height: 24,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.power_settings_new,
+                    color: Colors.white,
+                    size: 24,
+                  );
+                },
+              ),
+            ],
+          ),
+      ),
+    );
+  }
+  
+
 
   Widget _buildRightSideButtons() {
     return Positioned(

@@ -67,5 +67,15 @@
     "confirm": "Confirm",
     "double_reward": "Double x2",
     "doubled_success": "Reward Doubled!"
+  },
+  "settings": {
+    "power_save": "Power Save"
+  },
+  "power_save": {
+    "tap_to_exit": "Tap anywhere to exit",
+    "orientation": {
+      "portrait": "Portrait",
+      "landscape": "Landscape"
+    }
   }
 }
