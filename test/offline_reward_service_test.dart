@@ -44,7 +44,7 @@ void main() {
         .setMockMessageHandler('flutter/assets', null);
   });
 
-  group('OfflineRewardService - Basic', () {
+  group('OfflineRewardService：基本功能', () {
     late OfflineRewardService service;
     late GameState state;
     late int nowMs;
@@ -79,13 +79,13 @@ void main() {
 
     tearDown(() => service.dispose());
 
-    test('no lastExit -> no reward', () async {
+    test('無 lastExit 時：不發放獎勵', () async {
       state = state.copyWith(offline: state.offline.copyWith(lastExitUtcMs: 0));
       await service.simulateAddSeconds(10);
       expect(lastReward, idlePerSec * 10);
     });
 
-    test('short offline time -> correct reward', () async {
+    test('短暫離線時間：應發放正確獎勵', () async {
       await service.simulateAddSeconds(10);
       expect(lastReward, closeTo(idlePerSec * 10, 1e-6));
       expect(lastEffective, const Duration(seconds: 10));
@@ -93,7 +93,7 @@ void main() {
       expect(state.memePoints, closeTo(20.0, 1e-6));
     });
 
-    test('long offline time -> capped reward', () async {
+    test('長時間離線：獎勵應受封頂', () async {
       final threeHours = 3 * 3600;
       final twoHours = 2 * 3600;
       await service.simulateAddSeconds(threeHours);
@@ -102,7 +102,7 @@ void main() {
     });
   });
 
-  group('OfflineRewardService - Doubling', () {
+  group('OfflineRewardService：雙倍獎勵', () {
     late OfflineRewardService service;
     late GameState state;
     late int nowMs;
@@ -128,7 +128,7 @@ void main() {
 
     tearDown(() => service.dispose());
 
-    test('can claim double reward', () async {
+    test('可以領取雙倍獎勵', () async {
       await service.simulateAddSeconds(60);
       final rewardAmount = state.offline.lastReward;
       final pointsAfterReward = state.memePoints;
@@ -142,7 +142,7 @@ void main() {
       expect(lastDoubledAmount, rewardAmount);
     });
 
-    test('cannot double twice', () async {
+    test('不可重複雙倍', () async {
       await service.simulateAddSeconds(60);
       await service.claimOfflineAdDouble();
       final pointsAfterFirstDouble = state.memePoints;
@@ -151,7 +151,7 @@ void main() {
       expect(state.memePoints, pointsAfterFirstDouble);
     });
 
-    test('persists doubled state', () async {
+    test('雙倍狀態應被持久化', () async {
       await service.simulateAddSeconds(60);
       await service.claimOfflineAdDouble();
       expect(state.offline.lastRewardDoubled, isTrue);

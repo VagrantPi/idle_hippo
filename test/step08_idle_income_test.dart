@@ -4,7 +4,7 @@ import 'package:idle_hippo/services/idle_income_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Step08 Idle Income Integration', () {
+  group('Step08 離線收益整合測試', () {
     late IdleIncomeService idle;
     double received = 0.0;
 

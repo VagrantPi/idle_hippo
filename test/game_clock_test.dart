@@ -5,7 +5,7 @@ import 'package:idle_hippo/services/idle_income_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('GameClock Service Tests', () {
+  group('GameClock 服務測試', () {
     late GameClockService gameClock;
 
     setUp(() {
@@ -17,13 +17,13 @@ void main() {
       gameClock.dispose();
     });
 
-    test('should initialize correctly', () {
+    test('應正確初始化', () {
       expect(gameClock.isRunning, false);
       expect(gameClock.isInForeground, true);
       expect(gameClock.subscribersCount, 0);
     });
 
-    test('should start and stop correctly', () {
+    test('應可正常啟動與停止', () {
       gameClock.start();
       expect(gameClock.isRunning, true);
 
@@ -31,7 +31,7 @@ void main() {
       expect(gameClock.isRunning, false);
     });
 
-    test('should handle subscription correctly', () {
+    test('應正確處理訂閱', () {
       int tickCount = 0;
       
       gameClock.subscribe('test', (delta) {
@@ -44,7 +44,7 @@ void main() {
       expect(gameClock.subscribersCount, 0);
     });
 
-    test('should handle multiple subscribers', () {
+    test('應能處理多個訂閱者', () {
       int tickCountA = 0;
       int tickCountB = 0;
       
@@ -60,7 +60,7 @@ void main() {
       expect(gameClock.subscribersCount, 0);
     });
 
-    test('should toggle fixed step mode', () {
+    test('應可切換固定步長模式', () {
       expect(gameClock.getStats()['isFixedStepMode'], false);
       
       gameClock.setFixedStepMode(true, fixedDelta: 0.05);
@@ -71,7 +71,7 @@ void main() {
       expect(gameClock.getStats()['isFixedStepMode'], false);
     });
 
-    test('should provide stats correctly', () {
+    test('應正確提供統計資訊', () {
       final stats = gameClock.getStats();
       
       expect(stats, isA<Map<String, dynamic>>());
@@ -83,7 +83,7 @@ void main() {
     });
   });
 
-  group('IdleIncome Service Tests', () {
+  group('IdleIncome 服務測試', () {
     late IdleIncomeService idleIncome;
     late GameClockService gameClock;
     double totalIncomeReceived = 0.0;
@@ -104,13 +104,13 @@ void main() {
       gameClock.dispose();
     });
 
-    test('should initialize correctly', () {
+    test('應正確初始化', () {
       expect(idleIncome.totalIdleTime, 0.0);
       expect(idleIncome.totalIdleIncome, 0.0);
       expect(idleIncome.currentIdlePerSec, greaterThan(0.0));
     });
 
-    test('should handle income callback correctly', () {
+    test('應可正確處理收益回呼', () {
       // 模擬手動觸發收益生成
       final testIncome = 5.0;
       
@@ -123,7 +123,7 @@ void main() {
       // 實際測試會在整合測試中進行
     });
 
-    test('should reset stats correctly', () {
+    test('應可正確重置統計', () {
       // 手動設定一些統計數據來測試重置
       // 由於統計數據是私有的，我們通過 getStats 來驗證
       
@@ -132,7 +132,7 @@ void main() {
       expect(idleIncome.totalIdleIncome, 0.0);
     });
 
-    test('should provide stats correctly', () {
+    test('應正確提供統計資訊', () {
       final stats = idleIncome.getStats();
       
       expect(stats, isA<Map<String, dynamic>>());
@@ -144,7 +144,7 @@ void main() {
     });
   });
 
-  group('Integration Tests - Time System', () {
+  group('整合測試 - 時間系統', () {
     late GameClockService gameClock;
     late IdleIncomeService idleIncome;
     double totalIncomeReceived = 0.0;
@@ -260,7 +260,7 @@ void main() {
       expect(receivedDelta, lessThanOrEqualTo(0.2)); // 最大 delta 限制
     });
 
-    test('should handle subscriber errors gracefully', () async {
+    test('應能優雅處理訂閱者錯誤', () async {
       // 訂閱一個會拋出錯誤的處理器
       gameClock.subscribe('error_handler', (delta) {
         throw Exception('Test error');
@@ -284,7 +284,7 @@ void main() {
     });
   });
 
-  group('Error Handling Tests', () {
+  group('錯誤處理測試', () {
     late GameClockService gameClock;
 
     setUp(() {
@@ -296,7 +296,7 @@ void main() {
       gameClock.dispose();
     });
 
-    test('should handle subscriber errors gracefully', () async {
+    test('應能優雅處理訂閱者錯誤', () async {
       bool errorThrown = false;
       
       // 訂閱一個會拋出錯誤的處理器
@@ -317,7 +317,7 @@ void main() {
       gameClock.stop();
     });
 
-    test('should handle multiple dispose calls', () {
+    test('應能處理多次 dispose 呼叫', () {
       gameClock.start();
       gameClock.dispose();
       
@@ -325,7 +325,7 @@ void main() {
       expect(() => gameClock.dispose(), returnsNormally);
     });
 
-    test('should handle start/stop multiple times', () {
+    test('應能多次 start/stop 並正常運作', () {
       expect(() {
         gameClock.start();
         gameClock.start(); // 重複啟動

@@ -4,15 +4,29 @@ import '../services/game_clock_service.dart';
 import '../services/idle_income_service.dart';
 import '../models/game_state.dart';
 import '../services/tap_service.dart';
+import '../services/daily_mission_service.dart';
 
 class DebugPanel extends StatefulWidget {
   final GameState? gameState;
   final TapService? tapService;
+  final DailyMissionService? dailyMissionService;
   final Future<void> Function()? onResetAll;
   final Future<void> Function()? onOfflineSimulate60s;
   final Future<void> Function()? onOfflineClearPending;
+  final VoidCallback? onForceCompleteMission;
+  final VoidCallback? onSimulateDayReset;
   
-  const DebugPanel({super.key, this.gameState, this.tapService, this.onResetAll, this.onOfflineSimulate60s, this.onOfflineClearPending});
+  const DebugPanel({
+    super.key,
+    this.gameState,
+    this.tapService,
+    this.dailyMissionService,
+    this.onResetAll,
+    this.onOfflineSimulate60s,
+    this.onOfflineClearPending,
+    this.onForceCompleteMission,
+    this.onSimulateDayReset,
+  });
 
   @override
   State<DebugPanel> createState() => _DebugPanelState();
@@ -40,10 +54,16 @@ class _DebugPanelState extends State<DebugPanel> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.green, width: 1),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            // 限制最大高度，內容過長時允許滾動
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -68,13 +88,48 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             const SizedBox(height: 8),
             
+            // Actions
+            ElevatedButton(
+              onPressed: widget.onResetAll,
+              child: const Text('Reset All'),
+            ),
+            const SizedBox(height: 4),
+            ElevatedButton(
+              onPressed: widget.onOfflineSimulate60s,
+              child: const Text('Offline +60s'),
+            ),
+            const SizedBox(height: 4),
+            ElevatedButton(
+              onPressed: widget.onOfflineClearPending,
+              child: const Text('Clear Offline'),
+            ),
+            const SizedBox(height: 4),
+            ElevatedButton(
+              onPressed: _resetIdleStats,
+              child: const Text('Reset Idle Stats'),
+            ),
+            if (widget.onForceCompleteMission != null) ...[
+              const SizedBox(height: 4),
+              ElevatedButton(
+                onPressed: widget.onForceCompleteMission,
+                child: const Text('Complete Mission'),
+              ),
+            ],
+            if (widget.onSimulateDayReset != null) ...[
+              const SizedBox(height: 4),
+              ElevatedButton(
+                onPressed: widget.onSimulateDayReset,
+                child: const Text('Simulate Day Reset'),
+              ),
+            ],
+            
             // Config Section
             if (_configService.isLoaded) ...[
               _buildSectionTitle('Config'),
               _buildConfigRow('tap.base', _configService.getValue('game.tap.base')),
               _buildConfigRow('tap.base_gain', _configService.getValue('game.tap.base_gain')),
+              _buildConfigRow('tap.daily_cap_base', _configService.getValue('game.tap.daily_cap_base')),
               _buildConfigRow('idle.base_per_sec', _configService.getValue('game.idle.base_per_sec')),
-              _buildConfigRow('dailyTapCap', _configService.getValue('game.dailyTapCap')),
               const SizedBox(height: 8),
             ],
             
@@ -108,16 +163,18 @@ class _DebugPanelState extends State<DebugPanel> {
             _buildIdleIncomeStats(),
             const SizedBox(height: 8),
 
-            // Tap Section
-            // if (widget.tapService != null) ...[
-            //   _buildSectionTitle('Tap'),
-            //   _buildTapStats(),
-            //   const SizedBox(height: 8),
-            // ],
+            // Daily Mission Section
+            if (widget.dailyMissionService != null && widget.gameState != null) ...[
+              _buildSectionTitle('Daily Mission'),
+              _buildDailyMissionStats(),
+              const SizedBox(height: 8),
+            ],
             
             // Actions
             _buildActions(),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -382,6 +439,29 @@ class _DebugPanelState extends State<DebugPanel> {
         ),
       );
     }
+  }
+
+  Widget _buildDailyMissionStats() {
+    if (widget.gameState?.dailyMission == null) {
+      return const Text(
+        'No mission data',
+        style: TextStyle(color: Colors.white70, fontSize: 10),
+      );
+    }
+
+    final mission = widget.gameState!.dailyMission!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildConfigRow('date', mission.date),
+        _buildConfigRow('index', mission.index),
+        _buildConfigRow('type', mission.type),
+        _buildConfigRow('progress', mission.progress.toStringAsFixed(0)),
+        _buildConfigRow('target', mission.target.toStringAsFixed(0)),
+        _buildConfigRow('snapshot', mission.idlePerSecSnapshot.toStringAsFixed(2)),
+        _buildConfigRow('completed', mission.todayCompleted),
+      ],
+    );
   }
 
   void _resetIdleStats() {

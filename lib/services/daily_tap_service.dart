@@ -20,9 +20,6 @@ class DailyTapService {
   int get dailyCapBase {
     final v = _config.getValue('game.tap.daily_cap_base', defaultValue: 200);
     if (v is num) return v.toInt();
-    // 兼容舊鍵
-    final legacy = _config.getValue('game.dailyTapCap', defaultValue: 200);
-    if (legacy is num) return legacy.toInt();
     return 200;
   }
 

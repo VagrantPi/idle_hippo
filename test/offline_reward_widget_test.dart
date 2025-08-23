@@ -17,8 +17,8 @@ Future<void> loadAssetAsRealRootBundle(String path) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('LocalizationService with mock assets', () {
-    testWidgets('correctly formats strings for multiple languages', (tester) async {
+  group('LocalizationService（使用模擬資產）', () {
+    testWidgets('應能正確格式化多語言字串', (tester) async {
       // runAsync 確保在穩定的環境中執行非同步操作
       await tester.runAsync(() async {
         await loadAssetAsRealRootBundle('assets/lang/en.json');

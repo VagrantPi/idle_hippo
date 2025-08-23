@@ -3,7 +3,7 @@ import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
 
 void main() {
-  group('Equipment dependencies (requires)', () {
+  group('裝備相依關係（requires）', () {
     final svc = EquipmentService();
 
     setUp(() {
@@ -34,7 +34,7 @@ void main() {
       svc.clearTestOverrides();
     });
 
-    test('locked when prerequisite not met', () {
+    test('未達前置條件時應為鎖定', () {
       var state = GameState.initial(1).copyWith(memePoints: 100.0);
       // prerequisite not met (rgb level 0)
       expect(svc.isUnlockedBy(state.equipments, 'faceMask'), false);
@@ -45,7 +45,7 @@ void main() {
       expect(next, state);
     });
 
-    test('unlocked after reaching prerequisite', () {
+    test('達到前置條件後應解鎖', () {
       var state = GameState.initial(1).copyWith(memePoints: 100.0);
       // upgrade rgb_keyboard to level 3: costs 10 + 20 + 30 = 60
       state = svc.upgrade(state, 'rgb_keyboard');

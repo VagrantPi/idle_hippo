@@ -9,7 +9,7 @@ import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 
 void main() {
-  group('MainScreen Widget Tests', () {
+  group('MainScreen 元件測試', () {
     late PageManager pageManager;
     late VoidCallback onCharacterTap;
     late ConfigService configService;
@@ -28,7 +28,7 @@ void main() {
       pageManager.navigateToPage(PageType.home);
     });
 
-    testWidgets('should display meme points in formatted style (e.g., 12.3K)', (WidgetTester tester) async {
+    testWidgets('應以格式化樣式顯示 meme points（例如 12.3K）', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -42,7 +42,7 @@ void main() {
       expect(find.text('12.3K'), findsOneWidget);
     });
 
-    testWidgets('should display meme points in formatted style (e.g., 1.2)', (WidgetTester tester) async {
+    testWidgets('應以格式化樣式顯示 meme points（例如 1.2）', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -56,7 +56,7 @@ void main() {
       expect(find.text('1.2'), findsOneWidget);
     });
 
-    testWidgets('should show character image', (WidgetTester tester) async {
+    testWidgets('應顯示角色圖片', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -70,7 +70,7 @@ void main() {
       expect(find.byType(Image), findsWidgets);
     });
 
-    testWidgets('should have navigation buttons', (WidgetTester tester) async {
+    testWidgets('應顯示導覽按鈕', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -86,7 +86,7 @@ void main() {
       expect(find.byType(GestureDetector), findsWidgets);
     });
 
-    testWidgets('should handle character tap', (WidgetTester tester) async {
+    testWidgets('應處理角色點擊事件', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -105,7 +105,7 @@ void main() {
       expect(tapCount, 1);
     });
 
-    testWidgets('should show settings button', (WidgetTester tester) async {
+    testWidgets('應顯示設定按鈕', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -133,7 +133,7 @@ void main() {
       expect(button.onTap, isNotNull, reason: 'Settings button onTap is null');
     });
 
-    testWidgets('should show resource display', (WidgetTester tester) async {
+    testWidgets('應顯示資源數值（格式化）', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(
@@ -149,7 +149,7 @@ void main() {
 
     // 預設 currentIdlePerSec 來自 ConfigService 未載入時的 default 0.1
     // 格式化後顯示應為 '0 /s'
-    testWidgets('should display idle income per second formatted (default 0.1 -> 0 /s)', (WidgetTester tester) async {
+    testWidgets('應以格式化顯示每秒離線收益（預設 0.1 → 顯示 0.0 /s）', (WidgetTester tester) async {
       configService.loadConfig();
 
       await tester.pumpWidget(
@@ -161,12 +161,6 @@ void main() {
         ),
       );
 
-      final allTextWidgets = find.byType(Text);
-      for (int i = 0; i < tester.widgetList(allTextWidgets).length; i++) {
-        final textWidget = tester.widget<Text>(allTextWidgets.at(i));
-        print(textWidget.data);
-      }
-      
       expect(find.text('0.0 /s'), findsOneWidget);
     });
   });

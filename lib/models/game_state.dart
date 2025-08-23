@@ -1,5 +1,160 @@
 import 'dart:convert';
 
+class CompletedMissionRecord {
+  final int index;
+  final String type;
+  final double progress;
+  final double target;
+
+  const CompletedMissionRecord({
+    required this.index,
+    required this.type,
+    required this.progress,
+    required this.target,
+  });
+
+  factory CompletedMissionRecord.fromMap(Map<String, dynamic> map) {
+    return CompletedMissionRecord(
+      index: (map['index'] ?? 1) as int,
+      type: (map['type'] ?? 'tapX') as String,
+      progress: (map['progress'] ?? 0.0).toDouble(),
+      target: (map['target'] ?? 0.0).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'index': index,
+        'type': type,
+        'progress': progress,
+        'target': target,
+      };
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CompletedMissionRecord &&
+        other.index == index &&
+        other.type == type &&
+        other.progress == progress &&
+        other.target == target;
+  }
+
+  @override
+  int get hashCode => index.hashCode ^ type.hashCode ^ progress.hashCode ^ target.hashCode;
+}
+
+class DailyMissionState {
+  final String date; // YYYY-MM-DD in Asia/Taipei
+  final int index; // 今日第幾個任務(1~10)
+  final String type; // "tapX" | "accumulateX"
+  final double progress; // 目前進度（A: 次數, B: 點數）
+  final double target; // 目標（A: 50, B: X）
+  final double idlePerSecSnapshot; // 僅 B 類使用
+  final int todayCompleted; // 今日已完成任務數(0~10)
+  final List<CompletedMissionRecord> completed; // 今日已完成任務的快照（跨日清空）
+
+  const DailyMissionState({
+    required this.date,
+    required this.index,
+    required this.type,
+    required this.progress,
+    required this.target,
+    required this.idlePerSecSnapshot,
+    required this.todayCompleted,
+    this.completed = const [],
+  });
+
+  factory DailyMissionState.fromMap(Map<String, dynamic> map) {
+    return DailyMissionState(
+      date: (map['date'] ?? '') as String,
+      index: (map['index'] ?? 1) as int,
+      type: (map['type'] ?? 'tapX') as String,
+      progress: (map['progress'] ?? 0.0).toDouble(),
+      target: (map['target'] ?? 50.0).toDouble(),
+      idlePerSecSnapshot: (map['idlePerSecSnapshot'] ?? 0.0).toDouble(),
+      todayCompleted: (map['todayCompleted'] ?? 0) as int,
+      completed: map.containsKey('completed') && map['completed'] is List
+          ? List<Map<String, dynamic>>.from(map['completed'] as List)
+              .map(CompletedMissionRecord.fromMap)
+              .toList()
+          : const [],
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'date': date,
+        'index': index,
+        'type': type,
+        'progress': progress,
+        'target': target,
+        'idlePerSecSnapshot': idlePerSecSnapshot,
+        'todayCompleted': todayCompleted,
+        'completed': completed.map((e) => e.toMap()).toList(),
+      };
+
+  DailyMissionState copyWith({
+    String? date,
+    int? index,
+    String? type,
+    double? progress,
+    double? target,
+    double? idlePerSecSnapshot,
+    int? todayCompleted,
+    List<CompletedMissionRecord>? completed,
+  }) {
+    return DailyMissionState(
+      date: date ?? this.date,
+      index: index ?? this.index,
+      type: type ?? this.type,
+      progress: progress ?? this.progress,
+      target: target ?? this.target,
+      idlePerSecSnapshot: idlePerSecSnapshot ?? this.idlePerSecSnapshot,
+      todayCompleted: todayCompleted ?? this.todayCompleted,
+      completed: completed ?? List<CompletedMissionRecord>.from(this.completed),
+    );
+  }
+
+  @override
+  String toString() {
+    return 'DailyMissionState(date: $date, index: $index, type: $type, '
+           'progress: $progress, target: $target, todayCompleted: $todayCompleted)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DailyMissionState &&
+        other.date == date &&
+        other.index == index &&
+        other.type == type &&
+        other.progress == progress &&
+        other.target == target &&
+        other.idlePerSecSnapshot == idlePerSecSnapshot &&
+        other.todayCompleted == todayCompleted &&
+        _listCompletedEquals(other.completed, completed);
+  }
+
+  @override
+  int get hashCode {
+    return date.hashCode ^
+        index.hashCode ^
+        type.hashCode ^
+        progress.hashCode ^
+        target.hashCode ^
+        idlePerSecSnapshot.hashCode ^
+        todayCompleted.hashCode ^
+        completed.hashCode;
+  }
+
+  static bool _listCompletedEquals(List<CompletedMissionRecord> a, List<CompletedMissionRecord> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+}
+
 class DailyTapState {
   final String date; // YYYY-MM-DD in Asia/Taipei
   final int todayGained;
@@ -153,6 +308,7 @@ class GameState {
   final int lastTs;
   final DailyTapState? dailyTap;
   final OfflineState offline;
+  final DailyMissionState? dailyMission;
 
   const GameState({
     required this.saveVersion,
@@ -161,6 +317,7 @@ class GameState {
     required this.lastTs,
     this.dailyTap,
     this.offline = const OfflineState(),
+    this.dailyMission,
   });
 
   /// 建立初始狀態
@@ -172,6 +329,7 @@ class GameState {
       lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
       dailyTap: null,
       offline: const OfflineState(),
+      dailyMission: null,
     );
   }
 
@@ -198,6 +356,9 @@ class GameState {
       offline: map.containsKey('offline') && map['offline'] is Map<String, dynamic>
           ? OfflineState.fromMap(map['offline'] as Map<String, dynamic>)
           : const OfflineState(),
+      dailyMission: map.containsKey('dailyMission') && map['dailyMission'] is Map<String, dynamic>
+          ? DailyMissionState.fromMap(map['dailyMission'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -215,6 +376,7 @@ class GameState {
       'lastTs': lastTs,
       if (dailyTap != null) 'dailyTap': dailyTap!.toMap(),
       'offline': offline.toMap(),
+      if (dailyMission != null) 'dailyMission': dailyMission!.toMap(),
     };
   }
 
@@ -249,6 +411,7 @@ class GameState {
     int? lastTs,
     DailyTapState? dailyTap,
     OfflineState? offline,
+    DailyMissionState? dailyMission,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -257,6 +420,7 @@ class GameState {
       lastTs: lastTs ?? this.lastTs,
       dailyTap: dailyTap ?? this.dailyTap,
       offline: offline ?? this.offline,
+      dailyMission: dailyMission ?? this.dailyMission,
     );
   }
 
@@ -282,7 +446,8 @@ class GameState {
         _mapEquals(other.equipments, equipments) &&
         other.lastTs == lastTs &&
         _dailyTapEquals(other.dailyTap, dailyTap) &&
-        other.offline == offline;
+        other.offline == offline &&
+        _dailyMissionEquals(other.dailyMission, dailyMission);
   }
 
   @override
@@ -292,7 +457,8 @@ class GameState {
         equipments.hashCode ^
         lastTs.hashCode ^
         (dailyTap?.hashCode ?? 0) ^
-        offline.hashCode;
+        offline.hashCode ^
+        (dailyMission?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {
@@ -307,5 +473,11 @@ class GameState {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
     return a.date == b.date && a.todayGained == b.todayGained && a.adDoubledToday == b.adDoubledToday;
+  }
+
+  bool _dailyMissionEquals(DailyMissionState? a, DailyMissionState? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    return a == b;
   }
 }

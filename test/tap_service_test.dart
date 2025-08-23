@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/services/tap_service.dart';
 
 void main() {
-  group('TapService - Step 5 spec', () {
+  group('TapService - 第 5 步規格', () {
     late DateTime now;
     late TapService tapService;
 

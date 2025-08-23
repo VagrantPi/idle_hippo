@@ -24,7 +24,8 @@
     "bonus": "ボーナス",
     "requires": "必要",
     "toLevel": "まで Lv",
-    "locked": "未解放"
+    "locked": "未解放",
+    "claim": "受け取る"
   },
   "tab": {
     "equip": {
@@ -74,5 +75,15 @@
       "portrait": "縦向き",
       "landscape": "横向き"
     }
+  },
+  "mission": {
+    "bar": {
+      "title": {
+        "tap": "{target}回タップ",
+        "acc": "ポイント累積 ≥ {points}"
+      },
+      "done_today": "本日の10個ミッションは完了"
+    },
+    "dailyMissions": "デイリーミッション"
   }
 }

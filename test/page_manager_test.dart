@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 
 void main() {
-  group('PageManager Tests', () {
+  group('PageManager 測試', () {
     late PageManager pageManager;
 
     setUp(() {
@@ -11,11 +11,11 @@ void main() {
       pageManager.navigateToPage(PageType.home);
     });
 
-    test('should initialize with home page', () {
+    test('應以首頁初始化', () {
       expect(pageManager.currentPage, equals(PageType.home));
     });
 
-    test('should change page correctly', () {
+    test('應可正確切換頁面', () {
       pageManager.navigateToPage(PageType.equipment);
       expect(pageManager.currentPage, equals(PageType.equipment));
       
@@ -26,7 +26,7 @@ void main() {
       expect(pageManager.currentPage, equals(PageType.shop));
     });
 
-    test('should notify listeners when page changes', () {
+    test('頁面變更時應通知監聽者', () {
       bool listenerCalled = false;
       
       pageManager.addListener(() {
@@ -37,7 +37,7 @@ void main() {
       expect(listenerCalled, isTrue);
     });
 
-    test('should return correct localization keys for pages', () {
+    test('應回傳正確的頁面本地化鍵', () {
       expect(pageManager.getPageKey(PageType.home), equals('home'));
       expect(pageManager.getPageKey(PageType.equipment), equals('equipment'));
       expect(pageManager.getPageKey(PageType.pets), equals('pets'));
@@ -49,7 +49,7 @@ void main() {
       expect(pageManager.getPageKey(PageType.noAds), equals('noAds'));
     });
 
-    test('should return correct icon paths for pages', () {
+    test('應回傳正確的頁面圖示路徑', () {
       expect(pageManager.getPageIconPath(PageType.home), equals('assets/images/icon/Home.png'));
       expect(pageManager.getPageIconPath(PageType.equipment), equals('assets/images/icon/Equipment.png'));
       expect(pageManager.getPageIconPath(PageType.pets), equals('assets/images/icon/Pet.png'));
@@ -61,7 +61,7 @@ void main() {
       expect(pageManager.getPageIconPath(PageType.noAds), equals('assets/images/icon/NOADS.png'));
     });
 
-    test('should handle page navigation correctly', () {
+    test('應能正確處理頁面導航', () {
       // 測試從首頁導航到其他頁面
       pageManager.navigateToPage(PageType.home);
       expect(pageManager.currentPage, equals(PageType.home));

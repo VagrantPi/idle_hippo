@@ -13,12 +13,12 @@ void main() {
     localizationService.init(language: 'en');
   });
 
-  group('LocalizationService Tests', () {
-    test('should initialize with default language (en)', () {
+  group('LocalizationService 測試', () {
+    test('應以預設語言（en）初始化', () {
       expect(localizationService.currentLanguage, equals('en'));
     });
 
-    test('should change language correctly', () {
+    test('應可正確切換語言', () {
       localizationService.init(language: 'zh');
       expect(localizationService.currentLanguage, equals('zh'));
       
@@ -29,13 +29,13 @@ void main() {
       expect(localizationService.currentLanguage, equals('ko'));
     });
 
-    test('should return fallback text for missing keys', () {
+    test('缺少鍵時應回傳後備文字', () {
       const testKey = 'non_existent_key';
       final result = localizationService.getString(testKey);
       expect(result, equals(testKey)); // 應該返回 key 本身作為 fallback
     });
 
-    test('should handle invalid language gracefully', () async {
+    test('遇到無效語言應優雅處理', () async {
       // 儲存當前語言
       final originalLanguage = localizationService.currentLanguage;
       

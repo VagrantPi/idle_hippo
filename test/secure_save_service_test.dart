@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
 
 void main() {
-  group('GameState Model Tests', () {
-    test('should create initial state correctly', () {
+  group('GameState 模型測試', () {
+    test('應正確建立初始狀態', () {
       final state = GameState.initial(1);
       
       expect(state.saveVersion, 1);
@@ -13,7 +13,7 @@ void main() {
       expect(state.validate(), true);
     });
 
-    test('should serialize and deserialize correctly', () {
+    test('應能正確序列化與還原', () {
       final originalState = GameState(
         saveVersion: 1,
         memePoints: 123.0,
@@ -27,7 +27,7 @@ void main() {
       expect(deserializedState, equals(originalState));
     });
 
-    test('should validate correctly', () {
+    test('應能正確驗證', () {
       // Valid state
       final validState = GameState(
         saveVersion: 1,
@@ -55,7 +55,7 @@ void main() {
       expect(invalidEquipment.validate(), false);
     });
 
-    test('should update timestamp correctly', () async {
+    test('應能正確更新時間戳', () async {
       final originalState = GameState.initial(1);
       
       // 加入小延遲確保時間戳不同
@@ -68,7 +68,7 @@ void main() {
       expect(updatedState.memePoints, originalState.memePoints);
     });
 
-    test('should copy with new values correctly', () {
+    test('copyWith 應能正確套用新值', () {
       final originalState = GameState.initial(1);
       final copiedState = originalState.copyWith(
         memePoints: 100.0,
@@ -81,14 +81,14 @@ void main() {
       expect(copiedState.lastTs, originalState.lastTs);
     });
 
-    test('should handle JSON parsing errors gracefully', () {
+    test('遇到 JSON 解析錯誤應優雅處理', () {
       expect(
         () => GameState.fromJson('invalid json'),
         throwsA(isA<FormatException>()),
       );
     });
 
-    test('should maintain data integrity through serialization cycles', () {
+    test('多次序列化循環後應維持資料完整性', () {
       final originalState = GameState(
         saveVersion: 2,
         memePoints: 999.0,
@@ -107,7 +107,7 @@ void main() {
       expect(currentState.validate(), true);
     });
 
-    test('should handle edge case values', () {
+    test('邊界值應能正確處理', () {
       final edgeState = GameState(
         saveVersion: 0,
         memePoints: 0.0,
