@@ -64,5 +64,15 @@
     "confirm": "確認",
     "double_reward": "報酬 x2",
     "doubled_success": "報酬が2倍になりました！"
+  },
+  "settings": {
+    "power_save": "省電モード"
+  },
+  "power_save": {
+    "tap_to_exit": "画面をタップして終了",
+    "orientation": {
+      "portrait": "縦向き",
+      "landscape": "横向き"
+    }
   }
 }

@@ -10,6 +10,7 @@ enum PageType {
   settings,
   musicGame,
   noAds,
+  powerSaver,
 }
 
 class PageManager extends ChangeNotifier {
@@ -60,6 +61,8 @@ class PageManager extends ChangeNotifier {
         return 'musicGame';
       case PageType.noAds:
         return 'noAds';
+      case PageType.powerSaver:
+        return 'powerSaver';
     }
   }
 
@@ -84,6 +87,8 @@ class PageManager extends ChangeNotifier {
         return 'assets/images/icon/MusicGame.png';
       case PageType.noAds:
         return 'assets/images/icon/NOADS.png';
+      case PageType.powerSaver:
+        return 'assets/images/icon/PowerSaver.png';
     }
   }
 }
