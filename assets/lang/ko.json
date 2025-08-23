@@ -24,7 +24,8 @@
     "bonus": "보너스",
     "requires": "필요",
     "toLevel": "까지 Lv",
-    "locked": "잠김"
+    "locked": "잠김",
+    "claim": "수령"
   },
   "tab": {
     "equip": {
@@ -74,5 +75,15 @@
       "portrait": "세로",
       "landscape": "가로"
     }
+  },
+  "mission": {
+    "bar": {
+      "title": {
+        "tap": "{target}회 탭",
+        "acc": "포인트 누적 ≥ {points}"
+      },
+      "done_today": "오늘 10개 미션 완료"
+    },
+    "dailyMissions": "일일 미션"
   }
 }

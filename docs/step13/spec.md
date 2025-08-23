@@ -60,7 +60,7 @@
   "dailyMission": {
     "date": "2025-08-24",        // Asia/Taipei 今日字串
     "index": 1,                  // 今日第幾個任務(1~10)
-    "type": "tap50|accumulateX", // 當前任務型別
+    "type": "tapX|accumulateX", // 當前任務型別
     "progress": 0.0,             // 目前進度（A: 次數, B: 點數）
     "target": 0.0,               // 目標（A: 50, B: X）
     "idlePerSecSnapshot": 0.0,   // 僅 B 類使用

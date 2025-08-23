@@ -24,7 +24,8 @@
     "bonus": "加成",
     "requires": "需要",
     "toLevel": "至 Lv",
-    "locked": "未解鎖"
+    "locked": "未解鎖",
+    "claim": "領取"
   },
   "tab": {
     "equip": {
@@ -74,5 +75,15 @@
       "portrait": "直式",
       "landscape": "橫式"
     }
+  },
+  "mission": {
+    "bar": {
+      "title": {
+        "tap": "點擊 {target} 次",
+        "acc": "累積點數 ≥ {points}"
+      },
+      "done_today": "今日 10 個任務已完成"
+    },
+    "dailyMissions": "每日任務"
   }
 }

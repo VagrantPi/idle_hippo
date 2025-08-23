@@ -10,6 +10,7 @@ import 'package:idle_hippo/services/tap_service.dart';
 import 'package:idle_hippo/services/daily_tap_service.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
 import 'package:idle_hippo/services/offline_reward_service.dart';
+import 'package:idle_hippo/services/daily_mission_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -55,6 +56,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final DailyTapService _dailyTap = DailyTapService();
   final EquipmentService _equipment = EquipmentService();
   final OfflineRewardService _offline = OfflineRewardService();
+  final DailyMissionService _dailyMission = DailyMissionService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -82,6 +84,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     await _initializeLocalization();
     await _loadGameState();
     _initOfflineModule();
+    _initDailyMissionModule();
     // 測試模式：若尚無離線基準，建立 baseline，讓 simulateAddSeconds 能立即結算
     if (widget.testMode && _gameState.offline.lastExitUtcMs <= 0) {
       final now = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -160,16 +163,17 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     
     // 統一在這裡初始化放置收益系統
     _idleIncome.init(onIncomeGenerated: (double points) {
-      _accumulatedIdleIncome = DecimalUtils.add(_accumulatedIdleIncome, points);
-      
-      // 當累積收益 >= 1 時才更新 GameState
-      if (_accumulatedIdleIncome >= 1.0) {
-        final pointsToAdd = _accumulatedIdleIncome.floor();
-        _accumulatedIdleIncome = DecimalUtils.subtract(_accumulatedIdleIncome, pointsToAdd);
+      if (!mounted) return;
+      final pointsToAdd = points;
+      if (pointsToAdd > 0) {
+        _accumulatedIdleIncome = DecimalUtils.add(_accumulatedIdleIncome, pointsToAdd);
+        
+        // 處理每日任務進度（資源獲得）
+        GameState updatedState = _dailyMission.onEarnPoints(_gameState, pointsToAdd);
         
         setState(() {
-          _gameState = _gameState.copyWith(
-            memePoints: DecimalUtils.add(_gameState.memePoints, pointsToAdd),
+          _gameState = updatedState.copyWith(
+            memePoints: DecimalUtils.add(updatedState.memePoints, pointsToAdd),
           );
         });
       }
@@ -193,6 +197,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         }
       },
       onOfflineReward: (reward, effective, {required bool canDouble}) {
+        // 將離線獎勵納入每日任務的累積進度（不重複加分，只更新任務狀態）
+        if (reward > 0) {
+          if (mounted) {
+            setState(() {
+              _gameState = _dailyMission.onEarnPoints(_gameState, reward);
+            });
+          }
+        }
         _showOfflineRewardDialog(
           reward: reward,
           effective: effective,
@@ -201,6 +213,12 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       },
       onOfflineDoubled: (amount) {
         if (!mounted) return;
+        // 翻倍加發的獎勵同樣計入每日任務的累積進度
+        if (amount > 0) {
+          setState(() {
+            _gameState = _dailyMission.onEarnPoints(_gameState, amount);
+          });
+        }
         final title = _localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!');
         final confirm = _localization.getOffline('confirm');
         final points = amount.toStringAsFixed(0);
@@ -331,6 +349,22 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     );
   }
 
+  void _initDailyMissionModule() {
+    // 設定獎勵回調
+    _dailyMission.setRewardCallback((points) {
+      if (!mounted) return;
+      setState(() {
+        _gameState = _gameState.copyWith(
+          memePoints: DecimalUtils.add(_gameState.memePoints, points),
+        );
+      });
+    });
+
+    // 確保每日任務區塊初始化
+    setState(() {
+      _gameState = _dailyMission.ensureDailyMissionBlock(_gameState);
+    });
+  }
 
   void _showOfflineRewardDialog({
     required double reward,
@@ -582,24 +616,34 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
   void _onCharacterTap() {
     final gained = _tapService.tryTap();
-    // 套用每日上限（即使 gained==0 也維持 UI 動效由 MainScreen 播放）
-    if (gained >= 0) {
-      // 若通過冷卻（gained>0），以裝備加成覆寫實際得分
-      final effectiveGain = gained > 0 ? _equipment.computeTapGain(_gameState) : 0.0;
-      _lastTapDisplayValue = effectiveGain.toDouble();
-      final result = _dailyTap.applyTap(_gameState, effectiveGain);
-      if (result.allowedGain > 0) {
-        setState(() {
-          _gameState = result.state.copyWith(
-            memePoints: DecimalUtils.add(result.state.memePoints, result.allowedGain),
-          );
-        });
-      } else {
-        // 僅更新狀態以確保 dailyTap block 初始化/維持
-        setState(() {
-          _gameState = result.state;
-        });
+    if (gained <= 0) {
+      // 冷卻中：確保 dailyTap block 初始化但不加分
+      final ensured = _dailyTap.ensureDailyBlock(_gameState);
+      if (!identical(ensured, _gameState)) {
+        setState(() => _gameState = ensured);
       }
+      return;
+    }
+    // 通過冷卻，以裝備加成覆寫實際得分
+    final effectiveGain = _equipment.computeTapGain(_gameState);
+    final result = _dailyTap.applyTap(_gameState, effectiveGain);
+    
+    // 處理每日任務進度（有效點擊）
+    GameState updatedState = result.state;
+    updatedState = _dailyMission.onValidTap(updatedState);
+    
+    if (result.allowedGain > 0) {
+      // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
+      setState(() {
+        _gameState = updatedState.copyWith(
+          memePoints: DecimalUtils.add(updatedState.memePoints, result.allowedGain),
+        );
+      });
+    } else {
+      // 僅更新狀態以確保 dailyTap block 初始化/維持
+      setState(() {
+        _gameState = updatedState;
+      });
     }
   }
 
@@ -619,17 +663,22 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     final effectiveGain = _equipment.computeTapGain(_gameState);
     _lastTapDisplayValue = effectiveGain.toDouble();
     final result = _dailyTap.applyTap(_gameState, effectiveGain);
+    // 先處理每日任務：有效點擊計數
+    GameState updatedState = result.state;
+    updatedState = _dailyMission.onValidTap(updatedState);
+
     if (result.allowedGain > 0) {
+      // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
       setState(() {
-        _gameState = result.state.copyWith(
-          memePoints: DecimalUtils.add(result.state.memePoints, result.allowedGain),
+        _gameState = updatedState.copyWith(
+          memePoints: DecimalUtils.add(updatedState.memePoints, result.allowedGain),
         );
       });
       return result.allowedGain.floor();
     } else {
-      // 已達每日上限：更新狀態但不加分
+      // 已達每日上限：僅更新狀態（保留任務可能的變更）
       setState(() {
-        _gameState = result.state;
+        _gameState = updatedState;
       });
       return 0;
     }
@@ -655,6 +704,11 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 計算今日上限資訊（僅非測試模式顯示完整 UI）
     final stateWithDaily = _dailyTap.ensureDailyBlock(_gameState);
     final stats = _dailyTap.getStats(stateWithDaily);
+    
+    // 獲取每日任務資訊
+    final missionParams = _dailyMission.getDisplayParams(_gameState);
+    final missionPlan = _dailyMission.getTodayPlan(_gameState);
+    final missionStats = _dailyMission.getStats(_gameState);
 
     return Scaffold(
       body: Stack(
@@ -673,11 +727,132 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             onToggleDebug: () => setState(() => _showDebugPanel = !_showDebugPanel),
             lastTapDisplayValue: _lastTapDisplayValue,
             displayMemePoints: DecimalUtils.add(_gameState.memePoints, _accumulatedIdleIncome),
+            // 每日任務參數
+            missionType: missionParams['type'] as String?,
+            missionProgress: missionParams['progress'] as int?,
+            missionTarget: missionParams['target'] as int?,
+            missionPoints: missionParams['points'] as int?,
+            onMissionTap: () {
+              // 點擊每日任務條：嘗試推進 tap 類型任務進度
+              setState(() {
+                _gameState = _dailyMission.onValidTap(_gameState);
+              });
+            },
+            missionPlan: missionPlan,
+            missionsTodayCompleted: missionStats['todayCompleted'] as int,
+            onClaimCurrentMission: () {
+              // 計算即將領取的獎勵（以當前任務 index 為準）
+              final currentIndex = _gameState.dailyMission?.index ?? 1;
+              final reward = _dailyMission.getRewardForIndex(currentIndex).toInt();
+              // 領取並推進任務
+              setState(() {
+                _gameState = _dailyMission.claimIfReady(_gameState);
+              });
+              // 顯示領取彈窗
+              final pointsStr = reward.toString();
+              final title = _localization.getString('mission.dailyMissions', defaultValue: '每日任務');
+              showTopSlideDialog(
+                context,
+                barrierDismissible: true,
+                child: Builder(
+                  builder: (ctx) {
+                    final theme = Theme.of(ctx);
+                    return GestureDetector(
+                      onTap: () => Navigator.of(ctx).pop(),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xCC112200),
+                              Color(0xCCE89A00),
+                            ],
+                          ),
+                          border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.8), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.5),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00FFD1).withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                                  ),
+                                  child: const Icon(Icons.card_giftcard, color: Color(0xFF00FFD1)),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.35),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '+$pointsStr',
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      color: Colors.yellow,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _localization.getCommon('memePoints'),
+                                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+              // 可選：非測試模式下立即存檔
+              _saveGameState();
+            },
           ),
           if (_showDebugPanel)
             DebugPanel(
               gameState: _gameState,
               tapService: _tapService,
+              dailyMissionService: _dailyMission,
               onResetAll: _resetAllState,
               onOfflineSimulate60s: () async {
                 await _offline.simulateAddSeconds(60);
@@ -686,6 +861,16 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                 await _offline.clearPending();
                 setState(() {
                   _gameState = _gameState.copyWith();
+                });
+              },
+              onForceCompleteMission: () {
+                setState(() {
+                  _gameState = _dailyMission.forceCompleteMission(_gameState);
+                });
+              },
+              onSimulateDayReset: () {
+                setState(() {
+                  _gameState = _dailyMission.simulateDayReset(_gameState);
                 });
               },
             ),

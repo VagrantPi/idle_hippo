@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/ui/components/daily_cap_progress_bar.dart';
+import 'package:idle_hippo/ui/components/daily_mission_bar.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 import 'package:idle_hippo/ui/components/animated_button.dart';
@@ -31,6 +32,18 @@ class MainScreen extends StatefulWidget {
   final VoidCallback? onToggleDebug; // optional: toggle debug panel from parent
   final double? lastTapDisplayValue; // optional: display base+bonus value for particle
   final double? displayMemePoints; // optional: for UI display only (includes fractional idle accumulation)
+  
+  // Daily Mission parameters
+  final String? missionType; // 'tapX', 'accumulateX', 'completed'
+  final int? missionProgress;
+  final int? missionTarget;
+  final int? missionPoints; // for accumulateX display
+  final VoidCallback? onMissionTap;
+  
+  // Daily Mission list for QuestPage
+  final List<Map<String, dynamic>>? missionPlan;
+  final int? missionsTodayCompleted;
+  final VoidCallback? onClaimCurrentMission;
 
   const MainScreen({
     super.key,
@@ -47,6 +60,14 @@ class MainScreen extends StatefulWidget {
     this.onToggleDebug,
     this.lastTapDisplayValue,
     this.displayMemePoints,
+    this.missionType,
+    this.missionProgress,
+    this.missionTarget,
+    this.missionPoints,
+    this.onMissionTap,
+    this.missionPlan,
+    this.missionsTodayCompleted,
+    this.onClaimCurrentMission,
   });
 
   @override
@@ -375,6 +396,38 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildDailyMissionBar() {
+    // 若今日已完成 10 個任務，顯示完成狀態（mission.done_today）
+    if ((widget.missionsTodayCompleted ?? 0) >= 10) {
+      return GestureDetector(
+        onTap: () => _pageManager.navigateToPage(PageType.quest),
+        child: DailyMissionBar(
+          type: 'completed',
+          progress: 1,
+          target: 1,
+          completedCount: widget.missionsTodayCompleted ?? 10,
+        ),
+      );
+    }
+
+    // 如果沒有任務資料，不顯示任務條
+    if (widget.missionType == null || widget.missionProgress == null || widget.missionTarget == null) {
+      return const SizedBox.shrink();
+    }
+
+    // 在右上角 Column 中直接回傳普通 Widget，避免 Positioned 插入 Row/Column 造成 ParentDataWidget 錯誤
+    return GestureDetector(
+      onTap: () => _pageManager.navigateToPage(PageType.quest),
+      child: DailyMissionBar(
+        type: widget.missionType!,
+        progress: widget.missionProgress!,
+        target: widget.missionTarget!,
+        points: widget.missionPoints,
+        completedCount: widget.missionsTodayCompleted,
+      ),
+    );
+  }
+
   Widget _buildResourceDisplay() {
     return Positioned(
       // 放在日常點數顯示之下，避免重疊
@@ -451,16 +504,25 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   Widget _buildTopRightSideButtons() {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 8,
-      right: 8,
-      child: Column(
+      right: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          AnimatedButton(
-            iconPath: 'assets/images/icon/Setting.png',
-            onTap: () => _pageManager.navigateToPage(PageType.settings),
-            size: 50,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              AnimatedButton(
+                iconPath: 'assets/images/icon/Setting.png',
+                onTap: () => _pageManager.navigateToPage(PageType.settings),
+                size: 50,
+              ),
+              const SizedBox(height: 5),
+              if (_pageManager.isHomePage) _buildPowerSaverButton(),
+              const SizedBox(height: 5),
+              if (_pageManager.isHomePage) _buildDailyMissionBar(),
+            ],
           ),
-          const SizedBox(height: 16),
-          if (_pageManager.isHomePage) _buildPowerSaverButton(),
+          // 每日任務條
         ],
       ),
     );
@@ -674,7 +736,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         pageContent = const TitlesPage();
         break;
       case PageType.quest:
-        pageContent = const QuestPage();
+        pageContent = QuestPage(
+          missionPlan: widget.missionPlan ?? const [],
+          missionsTodayCompleted: widget.missionsTodayCompleted ?? 0,
+          onClaimCurrentMission: widget.onClaimCurrentMission,
+        );
         break;
       case PageType.settings:
         pageContent = SettingsPage(

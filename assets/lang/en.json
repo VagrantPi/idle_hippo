@@ -27,7 +27,8 @@
     "bonus": "Bonus",
     "requires": "Requires",
     "toLevel": "to Lv",
-    "locked": "Locked"
+    "locked": "Locked",
+    "claim": "Claim"
   },
   "tab": {
     "equip": {
@@ -77,5 +78,15 @@
       "portrait": "Portrait",
       "landscape": "Landscape"
     }
+  },
+  "mission": {
+    "bar": {
+      "title": {
+        "tap": "Tap {target} times",
+        "acc": "Gain ≥ {points}"
+      },
+      "done_today": "All 10 daily missions completed"
+    },
+    "dailyMissions": "Daily Missions"
   }
 }
