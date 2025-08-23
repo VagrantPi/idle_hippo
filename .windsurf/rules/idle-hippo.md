@@ -32,6 +32,7 @@ trigger: always_on
 - **自動測試**：跑 `flutter test`，必須綠燈才可合併  
 - **Lint**：必須通過 `flutter analyze` 無錯誤  
 - **README 更新**：每完成一階段需補充使用說明與資產規範  
+- test 案例的描述都使用繁體中文
 
 ## 5. Pin 與上下文
 - **必 Pin 檔案**：`main.dart`、`hippo_game.dart`、`router.dart`、`pubspec.yaml`  
@@ -63,7 +64,9 @@ trigger: always_on
 ## 9. 文件規範
 - **README.md**：安裝、啟動、資產規範、場景擴充方式  
 - **CHANGELOG.md**：每一階段完成後更新  
-- **docs/**：可額外存放 PM spec、遊戲設計圖  
+- **docs/**：可額外存放 PM spec、遊戲設計圖
+- 每次實作需求前都需要查看 assets/config 內參數，是否新需求有可以共用的，那就不需要再新增而外變數
+- 每當有新增新增數於 assets/config 內，則需要更新 docs/config.md 文件
 
 ## 10. UI 上顯示
 - 當有顯示上的實作時，都需要實作多國語系

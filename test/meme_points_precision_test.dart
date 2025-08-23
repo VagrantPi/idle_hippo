@@ -4,8 +4,8 @@ import 'package:idle_hippo/services/daily_tap_service.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
 
 void main() {
-  group('MemePoints decimal precision', () {
-    test('tap_gain=0.2 twice accumulates to 0.1 exactly to 0.3 decimals', () {
+  group('MemePoints 小數精度', () {
+    test('tap_gain=0.2 與 0.1 累積後小數應精確為 0.3', () {
       final svc = DailyTapService();
       var state = GameState.initial(1);
 

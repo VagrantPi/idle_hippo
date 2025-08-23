@@ -73,8 +73,8 @@ class _DebugPanelState extends State<DebugPanel> {
               _buildSectionTitle('Config'),
               _buildConfigRow('tap.base', _configService.getValue('game.tap.base')),
               _buildConfigRow('tap.base_gain', _configService.getValue('game.tap.base_gain')),
+              _buildConfigRow('tap.daily_cap_base', _configService.getValue('game.tap.daily_cap_base')),
               _buildConfigRow('idle.base_per_sec', _configService.getValue('game.idle.base_per_sec')),
-              _buildConfigRow('dailyTapCap', _configService.getValue('game.dailyTapCap')),
               const SizedBox(height: 8),
             ],
             

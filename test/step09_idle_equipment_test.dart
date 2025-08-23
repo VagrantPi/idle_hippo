@@ -6,7 +6,7 @@ import 'package:idle_hippo/services/idle_income_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  group('Step 9 - Idle Equipment Integration Tests', () {
+  group('Step09 放置裝備整合測試', () {
     late ConfigService configService;
     late EquipmentService equipmentService;
     late IdleIncomeService idleIncomeService;

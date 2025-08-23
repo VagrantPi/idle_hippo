@@ -124,12 +124,6 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
             ),
             // 主要內容
             _buildMainContent(),
-            // 最上層深度黑遮罩（極致省電）
-            IgnorePointer(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.7),
-              ),
-            ),
             // 右上角旋轉按鈕（在最上層）
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,

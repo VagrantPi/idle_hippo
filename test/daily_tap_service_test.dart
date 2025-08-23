@@ -3,7 +3,7 @@ import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/daily_tap_service.dart';
 
 void main() {
-  group('DailyTapService', () {
+  group('每日點擊服務（DailyTapService）', () {
     DateTime baseUtc = DateTime.utc(2025, 8, 20, 15, 59, 50); // = 2025-08-21 23:59:50+08
     DateTime now() => baseUtc;
 
@@ -15,7 +15,7 @@ void main() {
       state = GameState.initial(1);
     });
 
-    test('initial applyTap initializes daily block and increments gain', () {
+    test('首次 applyTap 應初始化每日區塊並增加收益', () {
       final result = svc.applyTap(state, 1);
       final gained = result.allowedGain.floor();
       expect(gained, 1);
@@ -24,7 +24,7 @@ void main() {
       expect(stats['effectiveCap'], 200);
     });
 
-    test('cap enforcement clamps allowed gain to remaining', () {
+    test('上限規則：允許收益應被夾制到剩餘值', () {
       // Set today gained to 199 by applying 199
       var st = state;
       var res = svc.applyTap(st, 199);
@@ -41,7 +41,7 @@ void main() {
       expect(res2.allowedGain, 0);
     });
 
-    test('ad doubled increases effective cap to 400', () {
+    test('廣告加倍將有效上限提升至 400', () {
       // Reach base cap 200 first
       var st = state;
       var total = 0;
@@ -68,7 +68,7 @@ void main() {
       expect(res2.allowedGain, 0);
     });
 
-    test('day rollover resets todayGained (Asia/Taipei)', () {
+    test('跨日重置 todayGained（Asia/Taipei）', () {
       // gain 5 before midnight +08
       var res = svc.applyTap(state, 5);
       expect(res.allowedGain, 5);
@@ -88,7 +88,7 @@ void main() {
       expect(stats2['todayGained'], 3);
     });
 
-    test('negative requested gain is clamped to 0 and does not change state', () {
+    test('負值請求應被夾到 0 並且不改變狀態', () {
       final s0 = svc.ensureDailyBlock(state);
       final res = svc.applyTap(s0, -5);
       expect(res.allowedGain, 0);
@@ -96,7 +96,7 @@ void main() {
       expect(stats['todayGained'], 0);
     });
 
-    test('setAdDoubled is idempotent when setting same value', () {
+    test('setAdDoubled 設定相同值應具冪等性', () {
       final s0 = svc.ensureDailyBlock(state);
       final s1 = svc.setAdDoubled(s0, enabled: true);
       final s2 = svc.setAdDoubled(s1, enabled: true);

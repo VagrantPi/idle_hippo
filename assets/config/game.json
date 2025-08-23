@@ -8,10 +8,8 @@
   "idle": {
     "base_per_sec": 0.0
   },
-  "dailyTapCap": 200,
   "ui": {
     "theme": "green",
     "showDebugPanel": true
-  },
-  "version": "1.0.0"
+  }
 }

@@ -108,8 +108,8 @@ class _TestIdleHippoScreenState extends State<TestIdleHippoScreen> {
 }
 
 void main() {
-  group('Idle Hippo Widget Tests', () {
-    testWidgets('Idle Hippo main screen displays title and initial value', (WidgetTester tester) async {
+  group('Idle Hippo 元件測試', () {
+    testWidgets('主畫面應顯示標題與初始值', (WidgetTester tester) async {
       // Build our test app and trigger a frame.
       await tester.pumpWidget(const TestIdleHippoApp());
       await tester.pumpAndSettle(); // Wait for async operations
@@ -125,7 +125,7 @@ void main() {
       expect(scaffold.backgroundColor, Colors.lightGreen[50]);
     });
 
-    testWidgets('Debug toggle button exists', (WidgetTester tester) async {
+    testWidgets('應存在 Debug 切換按鈕', (WidgetTester tester) async {
       await tester.pumpWidget(const TestIdleHippoApp());
       await tester.pumpAndSettle();
 

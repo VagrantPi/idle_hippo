@@ -5,7 +5,7 @@ import 'package:idle_hippo/ui/pages/power_saver_page.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 
 void main() {
-  group('PowerSaverPage Tests', () {
+  group('PowerSaverPage 測試', () {
     late LocalizationService localizationService;
 
     setUpAll(() async {

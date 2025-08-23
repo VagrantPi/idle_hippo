@@ -10,8 +10,7 @@ assets/config/
 ├── equipments.json    # 裝備資料配置
 ├── pets.json          # 寵物資料配置
 ├── titles.json        # 稱號資料配置
-├── quests.json        # 任務資料配置
-└── game_config.json   # 遊戲動態配置
+└── quests.json        # 任務資料配置
 ```
 
 ---
@@ -23,13 +22,12 @@ assets/config/
 | 參數 | 類型 | 說明 | 預設值 |
 |------|------|------|--------|
 | `tap.base` | number | 基礎點擊收益 | 1 |
-| `idle.base_per_sec` | number | 基礎放置收益（每秒） | 0.1 |
-| `dailyTapCap` | number | 每日點擊上限（舊鍵，仍支援以保相容） | 200 |
+| `tap.base_gain` | number | 基礎點擊增益倍率 | 0.5 |
 | `tap.daily_cap_base` | number | 每日點擊上限（基礎值） | 200 |
 | `tap.daily_cap_ad_multiplier` | number | 廣告翻倍倍率（影響當日上限） | 2 |
+| `idle.base_per_sec` | number | 基礎放置收益（每秒） | 0.0 |
 | `ui.theme` | string | UI 主題色彩 | "green" |
 | `ui.showDebugPanel` | boolean | 是否顯示除錯面板 | true |
-| `version` | string | 配置版本號 | "1.0.0" |
 | `character.animation` | object | 角色動畫設定 | - |
 | `character.animation.swing` | object | 搖擺動畫設定 | - |
 | `character.animation.swing.duration` | number | 動畫持續時間(毫秒) | 300 |
@@ -48,75 +46,16 @@ assets/config/
 {
   "tap": {
     "base": 1,
+    "base_gain": 0.5,
     "daily_cap_base": 200,
     "daily_cap_ad_multiplier": 2
   },
   "idle": {
-    "base_per_sec": 0.1
+    "base_per_sec": 0.0
   },
-  "dailyTapCap": 200,
   "ui": {
     "theme": "green",
     "showDebugPanel": true
-  },
-  "character": {
-    "animation": {
-      "swing": {
-        "duration": 300,
-        "angle": 0.5
-      },
-      "move": {
-        "duration": {
-          "min": 2,
-          "max": 5
-        },
-        "range": {
-          "x": 80,
-          "y": 80
-        }
-      }
-    }
-  },
-  "version": "1.1.0"
-}
-```
-
----
-
-## ⚙️ game_config.json - 遊戲動態配置
-
-### 參數說明
-
-| 參數 | 類型 | 說明 | 範例值 |
-|------|------|------|--------|
-| `enable_ads` | boolean | 是否啟用廣告 | true |
-| `iap_products` | array | 應用內購買商品列表 | - |
-| `iap_products[].id` | string | 商品ID | "no_ads" |
-| `iap_products[].type` | string | 商品類型 | "consumable", "non_consumable" |
-| `iap_products[].price` | string | 顯示價格 | "$2.99" |
-| `iap_products[].reward` | string | 獎勵描述 | "移除所有廣告" |
-| `server_time` | string | 伺服器時間 | "2025-08-20T13:30:00Z" |
-| `maintenance` | object | 維護設定 | - |
-| `maintenance.enabled` | boolean | 是否在維護中 | false |
-| `maintenance.message` | string | 維護訊息 | "系統維護中..." |
-
-### 範例配置
-
-```json
-{
-  "enable_ads": true,
-  "iap_products": [
-    {
-      "id": "no_ads",
-      "type": "non_consumable",
-      "price": "$2.99",
-      "reward": "移除所有廣告"
-    }
-  ],
-  "server_time": "2025-08-20T13:30:00Z",
-  "maintenance": {
-    "enabled": false,
-    "message": "系統維護中..."
   }
 }
 ```
@@ -321,10 +260,11 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 
 ```json
 {
-  "tap": {"base": 2},           // 提高點擊收益
-  "idle": {"base_per_sec": 0.2}, // 提高放置收益
-  "tap": {"daily_cap_base": 300}, // 增加每日點擊上限（新鍵）
-  "dailyTapCap": 300              // 舊鍵，保相容
+  "tap": {
+    "base": 2,                  // 提高點擊收益
+    "daily_cap_base": 300       // 增加每日點擊上限
+  },
+  "idle": {"base_per_sec": 0.2} // 提高放置收益
 }
 ```
 
@@ -366,7 +306,6 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 
 - `tap.daily_cap_base`：定義當日可由點擊獲得的基礎上限。
 - `tap.daily_cap_ad_multiplier`：當日一次性看廣告後的上限倍率（例如 2 → 上限翻倍）。
-- 舊鍵 `dailyTapCap` 仍被 `DailyTapService` 讀取，用於向後相容；若同時存在，將以新鍵為主。
 
 範例：
 
@@ -374,13 +313,13 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 {
   "tap": {
     "base": 1,
+    "base_gain": 0.5,
     "daily_cap_base": 200,
     "daily_cap_ad_multiplier": 2
-  },
-  "dailyTapCap": 200
+  }
 }
 ```
 
 ---
 
-*最後更新: 2025-08-20*
+*最後更新: 2025-08-24*

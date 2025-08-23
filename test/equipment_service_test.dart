@@ -26,12 +26,12 @@ void main() {
     equipment.clearTestOverrides();
   });
 
-  test('computeTapGain: base(1) + sumTapBonus(0) = 1 when no equipment', () {
+  test('computeTapGain：無裝備時 base(1) + sumTapBonus(0) = 1', () {
     final state = GameState.initial(1);
     expect(equipment.computeTapGain(state), 1); // base=1 from assets/config/game.json
   });
 
-  test('upgrade success: deduct cost and increase level', () {
+  test('升級成功：扣除成本並提升等級', () {
     var state = GameState.initial(1).copyWith(memePoints: 15.0);
     expect(equipment.canUpgrade(state, 'rgb_keyboard'), true);
 
@@ -44,7 +44,7 @@ void main() {
     expect(equipment.computeTapGain(state), 1 + 1);
   });
 
-  test('chain upgrades to Lv.3', () {
+  test('連續升級至 Lv.3', () {
     var state = GameState.initial(1).copyWith(memePoints: 100.0);
     state = equipment.upgrade(state, 'rgb_keyboard'); // cost 10 -> lv1
     state = equipment.upgrade(state, 'rgb_keyboard'); // cost 20 -> lv2
@@ -55,7 +55,7 @@ void main() {
     expect(equipment.computeTapGain(state), 1 + 6);
   });
 
-  test('insufficient funds: cannot upgrade', () {
+  test('資源不足：無法升級', () {
     var state = GameState.initial(1).copyWith(memePoints: 19.0);
     // first ensure at level 1 already (so next cost is 20)
     state = equipment.upgrade(state.copyWith(memePoints: 29.0), 'rgb_keyboard'); // lv1, mp=19
@@ -65,7 +65,7 @@ void main() {
     expect(next, state); // unchanged
   });
 
-  test('max level: cannot upgrade beyond max', () {
+  test('達最大等級：無法繼續升級', () {
     // make to level 5 quickly
     var state = GameState.initial(1).copyWith(memePoints: 1000.0);
     for (int i = 0; i < 5; i++) {
