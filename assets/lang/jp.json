@@ -25,7 +25,9 @@
     "requires": "必要",
     "toLevel": "まで Lv",
     "locked": "未解放",
-    "claim": "受け取る"
+    "claim": "受け取る",
+    "equip": "装備",
+    "unequip": "解除"
   },
   "tab": {
     "equip": {
@@ -131,6 +133,31 @@
       "system": "{rewardId} システムを解放！",
       "skin": "新しいスキンを解放：{rewardId}！",
       "unknown": "神秘的な報酬を獲得！"
+    }
+  },
+  "pets": {
+    "title": "ペットシステム",
+    "equipped_title": "装備中のペット",
+    "equipped": "装備中",
+    "not_equipped": "未装備",
+    "tap_to_equip": "タップで装備",
+    "tap_to_unequip": "タップで解除",
+    "upgrade_points": "アップグレードポイント",
+    "idle_income": "放置収益",
+    "next_level": "次レベルに必要",
+    "no_pets_available": "利用可能なペットがありません",
+    "upgrade_success": "強化しました！",
+    "max_level_reached": "最大レベル達成",
+    "rarity": {
+      "RR": "コモン",
+      "R": "レア",
+      "S": "スーパーレア",
+      "SR": "エピック",
+      "SSR": "レジェンダリー"
+    },
+    "MooDeng": {
+      "name": "バウンシングピッグ MooDeng",
+      "description": "放置収益ボーナスを提供する可愛いバウンシングピッグ"
     }
   }
 }

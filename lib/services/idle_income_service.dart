@@ -1,6 +1,7 @@
 import '../services/config_service.dart';
 import '../services/game_clock_service.dart';
 import '../services/equipment_service.dart';
+import '../services/pet_service.dart';
 import '../services/decimal_utils.dart';
 import '../models/game_state.dart';
 
@@ -12,6 +13,7 @@ class IdleIncomeService {
   final ConfigService _configService = ConfigService();
   final GameClockService _gameClock = GameClockService();
   final EquipmentService _equipmentService = EquipmentService();
+  final PetService _petService = PetService();
   
   // 狀態變數
   bool _isSubscribed = false;
@@ -46,7 +48,15 @@ class IdleIncomeService {
       equipmentBonus = _equipmentService.sumIdleBonus(_currentGameState!);
     }
     
-    return DecimalUtils.add(base, equipmentBonus);
+    // 寵物加成：始終以 PetService 的即時狀態為準
+    // 若尚未有任何寵物（例如從舊存檔載入），且 GameState 帶有 petState，僅初始化一次
+    double petBonus = 0.0;
+    if (_petService.currentState.pets.isEmpty && _currentGameState?.petState != null) {
+      _petService.initialize(_currentGameState!.petState);
+    }
+    petBonus = _petService.getCurrentPetIdlePerSec();
+    
+    return DecimalUtils.add(DecimalUtils.add(base, equipmentBonus), petBonus);
   }
 
   /// 測試用途：設定 idle_per_sec 覆寫（傳入 null 以清除）

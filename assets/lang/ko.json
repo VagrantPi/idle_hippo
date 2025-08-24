@@ -25,7 +25,9 @@
     "requires": "필요",
     "toLevel": "까지 Lv",
     "locked": "잠김",
-    "claim": "수령"
+    "claim": "수령",
+    "equip": "장착",
+    "unequip": "해제"
   },
   "tab": {
     "equip": {
@@ -131,6 +133,31 @@
       "system": "{rewardId} 시스템 해제!",
       "skin": "새로운 스킨 해제: {rewardId}!",
       "unknown": "신비한 보상 획득!"
+    }
+  },
+  "pets": {
+    "title": "펫 시스템",
+    "equipped_title": "장착 중인 펫",
+    "equipped": "장착됨",
+    "not_equipped": "미장착",
+    "tap_to_equip": "탭하여 장착",
+    "tap_to_unequip": "탭하여 해제",
+    "upgrade_points": "업그레이드 포인트",
+    "idle_income": "방치 수익",
+    "next_level": "다음 레벨 필요",
+    "no_pets_available": "사용 가능한 펫이 없습니다",
+    "upgrade_success": "업그레이드 완료!",
+    "max_level_reached": "최대 레벨 달성",
+    "rarity": {
+      "RR": "일반",
+      "R": "레어",
+      "S": "슈퍼 레어",
+      "SR": "에픽",
+      "SSR": "레전더리"
+    },
+    "MooDeng": {
+      "name": "바운싱 피그 MooDeng",
+      "description": "방치 수익 보너스를 제공하는 귀여운 바운싱 피그"
     }
   }
 }

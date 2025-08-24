@@ -35,7 +35,7 @@ trigger: always_on
 - test 案例的描述都使用繁體中文
 
 ## 5. Pin 與上下文
-- **必 Pin 檔案**：`main.dart`、`hippo_game.dart`、`router.dart`、`pubspec.yaml`  
+- **必 Pin 檔案**：`main.dart`、`hippo_game.dart`、`router.dart`、`pubspec.yaml`、 `docs/config.md`、`lib/models/game_state.dart`
 - **可 Pin 檔案**：當前開發中的 component/service  
 - AI 回答必須檢查 pinned files，避免改錯或漏 context  
 
