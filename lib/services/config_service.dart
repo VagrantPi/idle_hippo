@@ -29,9 +29,7 @@ class ConfigService {
       };
 
       _isLoaded = true;
-      print('ConfigService: All config files loaded successfully');
     } catch (e) {
-      print('ConfigService: Error loading config files: $e');
       _isLoaded = false;
       rethrow;
     }
@@ -43,7 +41,6 @@ class ConfigService {
       final String jsonString = await rootBundle.loadString(path);
       return json.decode(jsonString) as Map<String, dynamic>;
     } catch (e) {
-      print('ConfigService: Error loading $path: $e');
       rethrow;
     }
   }
@@ -51,7 +48,6 @@ class ConfigService {
   /// 取得配置值，支援路徑格式如 "game.tap.base"
   dynamic getValue(String path, {dynamic defaultValue}) {
     if (!_isLoaded) {
-      print('ConfigService: Config not loaded yet');
       return defaultValue;
     }
 
@@ -63,14 +59,12 @@ class ConfigService {
         if (current is Map<String, dynamic> && current.containsKey(key)) {
           current = current[key];
         } else {
-          print('ConfigService: Key not found: $path');
           return defaultValue;
         }
       }
 
       return current;
     } catch (e) {
-      print('ConfigService: Error getting value for $path: $e');
       return defaultValue;
     }
   }

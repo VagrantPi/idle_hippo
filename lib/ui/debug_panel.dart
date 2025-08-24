@@ -50,7 +50,7 @@ class _DebugPanelState extends State<DebugPanel> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.black.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.green, width: 1),
         ),
@@ -237,19 +237,6 @@ class _DebugPanelState extends State<DebugPanel> {
     );
   }
 
-  Widget _buildTapStats() {
-    final stats = widget.tapService!.getStats();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildConfigRow('basePoints', stats['basePoints']),
-        _buildConfigRow('cooldownSeconds', stats['cooldownSeconds']),
-        _buildConfigRow('tap.total', stats['totalTapEvents']),
-        _buildConfigRow('tap.accepted', stats['acceptedTapEvents']),
-      ],
-    );
-  }
-
   Widget _buildActions() {
     return Column(
       children: [
@@ -260,7 +247,7 @@ class _DebugPanelState extends State<DebugPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.3),
+              color: Colors.green.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
@@ -281,8 +268,8 @@ class _DebugPanelState extends State<DebugPanel> {
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
               color: _gameClock.getStats()['isFixedStepMode'] == true 
-                  ? Colors.orange.withOpacity(0.3)
-                  : Colors.blue.withOpacity(0.3),
+                  ? Colors.orange.withValues(alpha: 0.3)
+                  : Colors.blue.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -303,7 +290,7 @@ class _DebugPanelState extends State<DebugPanel> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.3),
+              color: Colors.red.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
@@ -329,7 +316,7 @@ class _DebugPanelState extends State<DebugPanel> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.3),
+                color: Colors.purple.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
@@ -350,7 +337,7 @@ class _DebugPanelState extends State<DebugPanel> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.6),
+                color: Colors.purple.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
@@ -379,7 +366,7 @@ class _DebugPanelState extends State<DebugPanel> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.6),
+              color: Colors.red.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
@@ -499,7 +486,7 @@ class _DebugToggleButtonState extends State<DebugToggleButton> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.7),
+            color: Colors.green.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Icon(

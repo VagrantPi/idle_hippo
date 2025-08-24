@@ -56,7 +56,8 @@
       "desc": "如此放置，非常哇。"
     },
     "lock": {
-      "need_level": "需要 {name} 達到 Lv.{level} 解鎖"
+      "need_level": "需要 {name} 達到 Lv.{level} 解鎖",
+      "need_main_quest_stage1": "需要完成主線第一章解鎖"
     }
   },
   "offline": {
@@ -85,5 +86,51 @@
       "done_today": "今日 10 個任務已完成"
     },
     "dailyMissions": "每日任務"
+  },
+  "quest": {
+    "stage1": {
+      "title": "新生階段"
+    },
+    "stage2": {
+      "title": "迷因小菜鳥階段"
+    },
+    "stage3": {
+      "title": "動物迷因階段"
+    },
+    "stage4": {
+      "title": "梗圖河馬階段"
+    },
+    "stage5": {
+      "title": "迷因巨星階段"
+    },
+    "stage6": {
+      "title": "宇宙級迷因之神"
+    },
+    "completed": {
+      "title": "任務完成！",
+      "confirm": "確認"
+    },
+    "main_quest": "主線任務",
+    "current_stage": "目前階段 {n}",
+    "requirement": {
+      "title": {
+        "tap": "累積點擊次數",
+        "meme": "累積迷因點數"
+      },
+      "text": {
+        "tap": "需求：點擊 {progress} / {target} 次",
+        "meme": "需求：累積 {progress} / {target} 迷因點數"
+      }
+    },
+    "reward": {
+      "label": "獎勵：",
+      "none": "—",
+      "equipment": "解鎖 {rewardId} 裝備！",
+      "title_system": "解鎖稱號系統！",
+      "pet_system": "解鎖寵物系統！",
+      "system": "解鎖 {rewardId} 系統！",
+      "skin": "解鎖新造型：{rewardId}！",
+      "unknown": "獲得神秘獎勵！"
+    }
   }
 }

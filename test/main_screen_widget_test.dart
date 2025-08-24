@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/services/config_service.dart';
@@ -7,6 +5,7 @@ import 'package:idle_hippo/ui/components/animated_button.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
+import 'package:idle_hippo/models/game_state.dart';
 
 void main() {
   group('MainScreen 元件測試', () {
@@ -34,6 +33,7 @@ void main() {
           home: MainScreen(
             memePoints: 12345.0,
             onCharacterTap: onCharacterTap,
+            gameState: GameState.initial(1),
           ),
         ),
       );
@@ -48,6 +48,7 @@ void main() {
           home: MainScreen(
             memePoints: 1.23,
             onCharacterTap: onCharacterTap,
+            gameState: GameState.initial(1),
           ),
         ),
       );
@@ -62,6 +63,7 @@ void main() {
           home: MainScreen(
             memePoints: 1000.0,
             onCharacterTap: onCharacterTap,
+            gameState: GameState.initial(1),
           ),
         ),
       );
@@ -78,6 +80,7 @@ void main() {
             onCharacterTap: onCharacterTap,
             equipments: {},
             onEquipmentUpgrade: (equipmentId) {},
+            gameState: GameState.initial(1),
           ),
         ),
       );
@@ -92,6 +95,7 @@ void main() {
           home: MainScreen(
             memePoints: 1000,
             onCharacterTap: onCharacterTap,
+            gameState: GameState.initial(1),
           ),
         ),
       );
@@ -111,12 +115,11 @@ void main() {
           home: MainScreen(
             memePoints: 1000,
             onCharacterTap: onCharacterTap,
+            gameState: GameState.initial(1),
           ),
         ),
       );
 
-      // 找到所有 AnimatedButton 組件
-      final animatedButtons = find.byType(AnimatedButton);
       
       // 找出設置按鈕（圖標路徑包含 'Setting' 或 'setting' 的按鈕）
       final settingsButton = find.byWidgetPredicate(
@@ -139,6 +142,7 @@ void main() {
           home: MainScreen(
             memePoints: 12345,
             onCharacterTap: onCharacterTap,
+            gameState: GameState.initial(1),
           ),
         ),
       );
@@ -157,6 +161,7 @@ void main() {
           home: MainScreen(
             memePoints: 0.0,
             onCharacterTap: () {},
+            gameState: GameState.initial(1),
           ),
         ),
       );

@@ -11,6 +11,7 @@ import 'package:idle_hippo/services/daily_tap_service.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
 import 'package:idle_hippo/services/offline_reward_service.dart';
 import 'package:idle_hippo/services/daily_mission_service.dart';
+import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -57,6 +58,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final EquipmentService _equipment = EquipmentService();
   final OfflineRewardService _offline = OfflineRewardService();
   final DailyMissionService _dailyMission = DailyMissionService();
+  final MainQuestService _mainQuest = MainQuestService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -85,6 +87,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     await _loadGameState();
     _initOfflineModule();
     _initDailyMissionModule();
+    _initMainQuestModule();
     // 測試模式：若尚無離線基準，建立 baseline，讓 simulateAddSeconds 能立即結算
     if (widget.testMode && _gameState.offline.lastExitUtcMs <= 0) {
       final now = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -110,7 +113,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   Future<void> _initializeFromConfig() async {
     try {
       await _configService.loadConfig();
-      print('Config loaded successfully');
       // 初始值可由設定檔控制是否顯示 DebugPanel
       final initialShow = _configService.getValue('game.ui.showDebugPanel', defaultValue: false);
       if (mounted && initialShow is bool) {
@@ -119,16 +121,15 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         });
       }
     } catch (e) {
-      print('Failed to load config: $e');
+      throw Exception('Failed to load config: $e');
     }
   }
 
   Future<void> _initializeLocalization() async {
     try {
       await _localization.init(language: 'zh'); // 預設使用繁體中文
-      print('Localization initialized');
     } catch (e) {
-      print('Failed to initialize localization: $e');
+      throw Exception('Failed to initialize localization: $e');
     }
   }
 
@@ -155,9 +156,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         setState(() {
           _gameState = loadedState;
         });
-        print('Game state loaded: ${_gameState.memePoints} meme points');
       } catch (e) {
-        print('Failed to load game state: $e');
+        throw Exception('Failed to load game state: $e');
       }
     }
     
@@ -170,6 +170,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         
         // 處理每日任務進度（資源獲得）
         GameState updatedState = _dailyMission.onEarnPoints(_gameState, pointsToAdd);
+        
+        // 處理主線任務進度（點數獲得）
+        updatedState = _mainQuest.onEarnPoints(updatedState, pointsToAdd);
         
         setState(() {
           _gameState = updatedState.copyWith(
@@ -201,7 +204,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         if (reward > 0) {
           if (mounted) {
             setState(() {
-              _gameState = _dailyMission.onEarnPoints(_gameState, reward);
+              GameState updatedState = _dailyMission.onEarnPoints(_gameState, reward);
+              updatedState = _mainQuest.onEarnPoints(updatedState, reward);
+              _gameState = updatedState;
             });
           }
         }
@@ -216,7 +221,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         // 翻倍加發的獎勵同樣計入每日任務的累積進度
         if (amount > 0) {
           setState(() {
-            _gameState = _dailyMission.onEarnPoints(_gameState, amount);
+            GameState updatedState = _dailyMission.onEarnPoints(_gameState, amount);
+            updatedState = _mainQuest.onEarnPoints(updatedState, amount);
+            _gameState = updatedState;
           });
         }
         final title = _localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!');
@@ -243,10 +250,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         Color(0xCC1F5E1F),
                       ],
                     ),
-                    border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.8), width: 2),
+                    border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
@@ -263,7 +270,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00FFD1).withOpacity(0.15),
+                              color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: const Color(0xFF00FFD1), width: 1),
                             ),
@@ -285,9 +292,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.35),
+                          color: Colors.black.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
@@ -366,6 +373,185 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     });
   }
 
+  void _initMainQuestModule() {
+    // 設定任務完成回調
+    _mainQuest.setQuestCompletedCallback((questId, rewardType, rewardId) {
+      if (!mounted) return;
+
+      print('questId: $questId, rewardType: $rewardType, rewardId: $rewardId'); 
+      // 顯示任務完成彈窗
+      _showQuestCompletedDialog(questId, rewardType, rewardId);
+    });
+
+    // 確保主線任務狀態初始化
+    setState(() {
+      _gameState = _mainQuest.ensureMainQuestState(_gameState);
+    });
+  }
+
+  void _showQuestCompletedDialog(String questId, String rewardType, String rewardId) {
+    final title = _localization.getString('quest.completed.title', defaultValue: '任務完成！');
+    final confirm = _localization.getString('quest.completed.confirm', defaultValue: '確認');
+    
+    // 根據 questId 獲取任務標題
+    final questTitle = _localization.getString('quest.$questId.title', defaultValue: questId);
+    
+    print('questId: $questId | rewardType: $rewardType | rewardId: $rewardId');
+    // 根據獎勵類型生成獎勵描述
+    String rewardDescription;
+    switch (rewardType) {
+      case 'equip':
+        final equipmentName =_localization.getString('equip.$rewardId.name', defaultValue: '特殊');
+        rewardDescription = _localization.getString('quest.reward.equipment', 
+            defaultValue: '解鎖特殊裝備！');
+        rewardDescription = rewardDescription.replaceFirst('{rewardId}', equipmentName);
+        break;
+      case 'system':
+        if (rewardId == 'title') {
+          rewardDescription = _localization.getString('quest.reward.title_system', 
+              defaultValue: '解鎖稱號系統！');
+        } else if (rewardId == 'pet') {
+          rewardDescription = _localization.getString('quest.reward.pet_system', 
+              defaultValue: '解鎖寵物系統！');
+        } else {
+          rewardDescription = _localization.getString('quest.reward.system', 
+              defaultValue: '解鎖 $rewardId 系統！');
+        }
+        break;
+      case 'hippo':
+        rewardDescription = _localization.getString('quest.reward.skin', 
+            defaultValue: '解鎖新造型：$rewardId！');
+        break;
+      default:
+        rewardDescription = _localization.getString('quest.reward.unknown', 
+            defaultValue: '獲得神秘獎勵！');
+    }
+
+    showTopSlideDialog(
+      context,
+      barrierDismissible: true,
+      child: Builder(
+        builder: (ctx) {
+          final theme = Theme.of(ctx);
+          return GestureDetector(
+            onTap: () => Navigator.of(ctx).pop(),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xCC220011),
+                    Color(0xCCE89A00),
+                  ],
+                ),
+                border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                        ),
+                        child: const Icon(Icons.emoji_events, color: Color(0xFF00FFD1)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '完成【$questTitle】',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          rewardDescription,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.yellow,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE89A00),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(
+                            confirm,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _showOfflineRewardDialog({
     required double reward,
     required Duration effective,
@@ -376,14 +562,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     final title = _localization.getString('offline.title', defaultValue: 'Offline Reward');
     final confirm = _localization.getString('offline.confirm', defaultValue: 'Claim');
 
-    String _formatDuration(Duration d) {
+    String formatDuration(Duration d) {
       final h = d.inHours;
       final m = d.inMinutes % 60;
       final s = d.inSeconds % 60;
-      return '${h}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
     }
 
-    final timeStr = _formatDuration(effective);
+    final timeStr = formatDuration(effective);
     final pointsStr = reward.toStringAsFixed(0);
     final messageTemplate = _localization.getString('offline.message', defaultValue: 'You were away {time}, earned ≈ {points}');
     final message = messageTemplate
@@ -408,10 +594,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                   Color(0xCC2B0A56),
                 ],
               ),
-              border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.8), width: 2),
+              border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -428,7 +614,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00FFD1).withOpacity(0.15),
+                        color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: const Color(0xFF00FFD1), width: 1),
                       ),
@@ -450,9 +636,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.35),
+                    color: Colors.black.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,7 +665,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                       Text(
                         message,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           height: 1.3,
                         ),
                       ),
@@ -570,7 +756,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       // 直接存檔當前 GameState，不需要合併 IdleIncome
       await _saveService.save(_gameState);
     } catch (e) {
-      print('Failed to save game state: $e');
+      rethrow;
     }
   }
 
@@ -632,6 +818,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     GameState updatedState = result.state;
     updatedState = _dailyMission.onValidTap(updatedState);
     
+    // 處理主線任務進度（點擊計數）
+    updatedState = _mainQuest.onTap(updatedState);
+    
     if (result.allowedGain > 0) {
       // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
       setState(() {
@@ -666,6 +855,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 先處理每日任務：有效點擊計數
     GameState updatedState = result.state;
     updatedState = _dailyMission.onValidTap(updatedState);
+    
+    // 處理主線任務進度（點擊計數）
+    updatedState = _mainQuest.onTap(updatedState);
 
     if (result.allowedGain > 0) {
       // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
@@ -717,6 +909,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             memePoints: _gameState.memePoints,
             equipments: _gameState.equipments,
             onCharacterTap: _onCharacterTap,
+            gameState: _gameState,
             onCharacterTapWithResult: _onCharacterTapWithResult,
             dailyCapTodayGained: stats['todayGained'] as int,
             dailyCapEffective: stats['effectiveCap'] as int,
@@ -726,7 +919,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             onIdleEquipmentUpgrade: _onIdleEquipmentUpgrade,
             onToggleDebug: () => setState(() => _showDebugPanel = !_showDebugPanel),
             lastTapDisplayValue: _lastTapDisplayValue,
-            displayMemePoints: DecimalUtils.add(_gameState.memePoints, _accumulatedIdleIncome),
+            displayMemePoints: _gameState.memePoints,
             // 每日任務參數
             missionType: missionParams['type'] as String?,
             missionProgress: missionParams['progress'] as int?,
@@ -771,10 +964,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                               Color(0xCCE89A00),
                             ],
                           ),
-                          border: Border.all(color: const Color(0xFF00FFD1).withOpacity(0.8), width: 2),
+                          border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.5),
+                              color: Colors.black.withValues(alpha: 0.5),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
@@ -791,7 +984,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF00FFD1).withOpacity(0.15),
+                                    color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: const Color(0xFF00FFD1), width: 1),
                                   ),
@@ -813,9 +1006,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.35),
+                                color: Colors.black.withValues(alpha: 0.35),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -845,6 +1038,13 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                 ),
               );
               // 可選：非測試模式下立即存檔
+              _saveGameState();
+            },
+            onClaimCurrentStage: () {
+              // 主線任務領取並推進到下一階段，包含更新 unlockedRewards
+              setState(() {
+                _gameState = _mainQuest.claimCurrentQuest(_gameState);
+              });
               _saveGameState();
             },
           ),

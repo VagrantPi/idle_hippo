@@ -180,26 +180,36 @@ assets/config/
 
 ---
 
-## 📋 quests.json - 任務資料配置
+## 📋 quests.json - 主線任務配置
 
 ### 參數說明
 
 | 參數 | 類型 | 說明 | 範例值 |
 |------|------|------|--------|
-| `id` | string | 任務唯一識別碼 | "quest_001" |
-| `name` | string | 任務顯示名稱 | "首次點擊" |
-| `description` | string | 任務描述 | "點擊河馬 10 次" |
-| `target_condition.type` | string | 目標條件類型 | "tap_count", "idle_income_total" |
-| `target_condition.value` | number | 目標條件數值 | 10 |
-| `rewards.coins` | number | 獎勵金幣 | 50 |
-| `rewards.experience` | number | 獎勵經驗值 | 10 |
+| `id` | string | 任務唯一識別碼 | "stage1" |
+| `title` | string | 任務階段標題 | "新生階段" |
+| `requirements.tapCount` | number | 累積點擊次數需求 | 10 |
+| `requirements.memePoints` | number | 累積迷因點數需求 | 50 |
+| `rewards` | array | 獎勵陣列 | - |
+| `rewards[].type` | string | 獎勵類型 | "equipment", "system", "skin" |
+| `rewards[].id` | string | 獎勵識別碼 | "youtube", "title", "skin1" |
 
-### 目標條件類型
+### 獎勵類型說明
 
-- `tap_count`: 點擊次數
-- `idle_income_total`: 放置收益總額
-- `equipment_upgrades`: 裝備升級次數
-- `pets_collected`: 收集寵物數量
+- `equipment`: 解鎖裝備，id 對應裝備識別碼
+- `system`: 解鎖系統功能，id 可為 "title"（稱號系統）或 "pet"（寵物系統）
+- `skin`: 解鎖河馬造型，id 對應造型識別碼
+
+### 主線任務階段
+
+主線任務共分為 6 個階段，每個階段都有累積性的要求：
+
+1. **新生階段**: 10 次點擊 + 50 迷因點數 → 解鎖 YouTube 裝備
+2. **迷因小菜鳥階段**: 50 次點擊 + 500 迷因點數 → 解鎖稱號系統
+3. **動物迷因階段**: 300 次點擊 + 5000 迷因點數 → 解鎖寵物系統
+4. **梗圖河馬階段**: 1000 次點擊 + 20000 迷因點數 → 解鎖造型 1
+5. **迷因巨星階段**: 3000 次點擊 + 50000 迷因點數 → 解鎖造型 2
+6. **宇宙級迷因之神**: 5000 次點擊 + 100000 迷因點數 → 解鎖造型 3
 
 ### 範例配置
 
@@ -207,21 +217,45 @@ assets/config/
 {
   "quests": [
     {
-      "id": "quest_001",
-      "name": "首次點擊",
-      "description": "點擊河馬 10 次",
-      "target_condition": {
-        "type": "tap_count",
-        "value": 10
+      "id": "stage1",
+      "title": "新生階段",
+      "requirements": {
+        "tapCount": 10,
+        "memePoints": 50
       },
-      "rewards": {
-        "coins": 50,
-        "experience": 10
-      }
+      "rewards": [
+        {
+          "type": "equipment",
+          "id": "youtube"
+        }
+      ]
+    },
+    {
+      "id": "stage2",
+      "title": "迷因小菜鳥階段",
+      "requirements": {
+        "tapCount": 50,
+        "memePoints": 500
+      },
+      "rewards": [
+        {
+          "type": "system",
+          "id": "title"
+        }
+      ]
     }
   ]
 }
 ```
+
+### 進度追蹤
+
+主線任務進度會持久化保存在 GameState 中：
+
+- `mainQuest.currentStage`: 當前階段（1-6）
+- `mainQuest.tapCountProgress`: 累積點擊次數
+- `mainQuest.memePointsEarned`: 累積迷因點數
+- `mainQuest.unlockedRewards`: 已解鎖獎勵列表
 
 ---
 

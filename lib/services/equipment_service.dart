@@ -256,6 +256,9 @@ class EquipmentService {
 
   /// 檢查放置裝備是否可升級
   bool canUpgradeIdle(GameState state, String id) {
+    // 需先完成主線對應解鎖（例如：idle.youtube）
+    final questUnlocked = state.mainQuest?.unlockedRewards.contains('idle.$id') ?? false;
+    if (!questUnlocked) return false;
     final currentLevel = state.equipments[id] ?? 0;
     final cost = getIdleNextCost(id, currentLevel);
     if (cost == null) return false;
@@ -281,6 +284,9 @@ class EquipmentService {
 
   /// 升級放置裝備
   GameState upgradeIdle(GameState state, String id) {
+    // 未完成主線解鎖前不可升級
+    final questUnlocked = state.mainQuest?.unlockedRewards.contains('idle.$id') ?? false;
+    if (!questUnlocked) return state;
     final currentLevel = state.equipments[id] ?? 0;
     final cost = getIdleNextCost(id, currentLevel);
     if (cost == null) return state; // 已滿級或裝備不存在

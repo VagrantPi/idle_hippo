@@ -1,43 +1,40 @@
 {
-  "quests": [
+  "mainline": [
     {
-      "id": "quest_001",
-      "name": "首次點擊",
-      "description": "點擊河馬 10 次",
-      "target_condition": {
-        "type": "tap_count",
-        "value": 10
-      },
-      "rewards": {
-        "coins": 50,
-        "experience": 10
-      }
+      "id": "stage1",
+      "title_key": "quest.stage1.title",
+      "requirement": { "type": "tap_count", "value": 10 },
+      "reward": { "unlock": "idle.youtube" }
     },
     {
-      "id": "quest_002",
-      "name": "放置收益",
-      "description": "透過放置獲得 100 金幣",
-      "target_condition": {
-        "type": "idle_income_total",
-        "value": 100
-      },
-      "rewards": {
-        "coins": 200,
-        "experience": 25
-      }
+      "id": "stage2",
+      "title_key": "quest.stage2.title",
+      "requirement": { "type": "meme_points", "value": 100 },
+      "reward": { "unlock": "system.title" }
     },
     {
-      "id": "quest_003",
-      "name": "裝備升級",
-      "description": "升級任意裝備 1 次",
-      "target_condition": {
-        "type": "equipment_upgrades",
-        "value": 1
-      },
-      "rewards": {
-        "coins": 150,
-        "experience": 20
-      }
+      "id": "stage3",
+      "title_key": "quest.stage3.title",
+      "requirement": { "type": "meme_points", "value": 1000 },
+      "reward": { "unlock": "system.pet" }
+    },
+    {
+      "id": "stage4",
+      "title_key": "quest.stage4.title",
+      "requirement": { "type": "meme_points", "value": 50000 },
+      "reward": { "unlock": "hippo.skin1" }
+    },
+    {
+      "id": "stage5",
+      "title_key": "quest.stage5.title",
+      "requirement": { "type": "meme_points", "value": 100000 },
+      "reward": { "unlock": "hippo.skin2" }
+    },
+    {
+      "id": "stage6",
+      "title_key": "quest.stage6.title",
+      "requirement": { "type": "meme_points", "value": 500000 },
+      "reward": { "unlock": "hippo.skin3" }
     }
   ]
 }

@@ -69,7 +69,6 @@ class IdleIncomeService {
     if (!_testingMode && !_isSubscribed) {
       _gameClock.subscribe('idle_income', _onTick);
       _isSubscribed = true;
-      print('IdleIncomeService: Initialized and subscribed to GameClock');
     }
   }
   
@@ -78,7 +77,6 @@ class IdleIncomeService {
     if (_isSubscribed) {
       _gameClock.unsubscribe('idle_income');
       _isSubscribed = false;
-      print('IdleIncomeService: Disposed and unsubscribed from GameClock');
     }
   }
   

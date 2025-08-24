@@ -49,29 +49,38 @@ void main() {
     });
 
     test('放置裝備解鎖條件驗證', () {
-      // 初始狀態：所有裝備都未解鎖
+      // 初始狀態：所有裝備都未解鎖（含主線 gating）
       final initialState = GameState.initial(1);
       
-      // youtube 無解鎖條件（unlock=null），預設已解鎖
+      // 僅從 config 規則角度檢查（不受主線 gating 影響）
       expect(equipmentService.isIdleEquipmentUnlocked(initialState.equipments, 'youtube'), true);
       expect(equipmentService.isIdleEquipmentUnlocked(initialState.equipments, 'btc'), false);
       expect(equipmentService.isIdleEquipmentUnlocked(initialState.equipments, 'doge'), false);
       
-      // 升級點擊裝備到足夠等級（若有依賴）
-      var state = initialState;
+      // 升級前先用主線獎勵解鎖 youtube（符合 step14 規格：第一個 idle 受主線鎖定）
+      var state = initialState.copyWith(
+        memePoints: 1e9,
+        mainQuest: (initialState.mainQuest ?? const MainQuestState()).copyWith(
+          unlockedRewards: const ['idle.youtube'],
+        ),
+      );
       
-      // 解鎖 BTC 的條件需 youtube Lv.3（依 config）
-      // 先補足資源，再升級 youtube 到 Lv.3
-      state = state.copyWith(memePoints: 1e9);
+      // 升級 youtube 到 Lv.3 以滿足 BTC 的 config 解鎖條件
       for (int i = 0; i < 3; i++) {
         state = equipmentService.upgradeIdle(state, 'youtube');
       }
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'youtube'), true);
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'btc'), true);
       
+      // 先不解鎖 DOGE（需 BTC Lv.3，且後續升級時再用主線解鎖）
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'doge'), false);
       
-      // 升級 BTC 到 3 級解鎖 DOGE
+      // 升級 BTC 到 3 級以滿足 DOGE 的 config 解鎖條件（先授予主線獎勵）
+      state = state.copyWith(
+        mainQuest: state.mainQuest!.copyWith(
+          unlockedRewards: const ['idle.youtube', 'idle.btc'],
+        ),
+      );
       for (int i = 0; i < 3; i++) {
         state = equipmentService.upgradeIdle(state, 'btc');
       }
@@ -81,8 +90,13 @@ void main() {
     test('放置裝備升級與成本計算', () {
       var state = GameState.initial(1);
       
-      // youtube 無解鎖條件；補資源以便升級
-      state = state.copyWith(memePoints: 1e9);
+      // 先用主線獎勵解鎖 youtube，再補資源
+      state = state.copyWith(
+        memePoints: 1e9,
+        mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
+          unlockedRewards: const ['idle.youtube'],
+        ),
+      );
       
       // 驗證 Youtube 初始成本
       final initialCost = equipmentService.getIdleNextCost('youtube', 0);
@@ -104,8 +118,13 @@ void main() {
     test('放置裝備加成整合到 IdleIncomeService', () {
       var state = GameState.initial(1);
       
-      // 補資源並升級 Youtube
-      state = state.copyWith(memePoints: 1e9);
+      // 先解鎖 youtube 再補資源並升級
+      state = state.copyWith(
+        memePoints: 1e9,
+        mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
+          unlockedRewards: const ['idle.youtube'],
+        ),
+      );
       state = equipmentService.upgradeIdle(state, 'youtube');
       
       // 更新 IdleIncomeService 的 GameState 參考
@@ -126,17 +145,34 @@ void main() {
     test('多個放置裝備加成累積', () {
       var state = GameState.initial(1);
       
-      // 補資源並解鎖 BTC（需 youtube Lv.3）
-      state = state.copyWith(memePoints: 1e9);
+      // 先解鎖 youtube，並補資源
+      state = state.copyWith(
+        memePoints: 1e9,
+        mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
+          unlockedRewards: const ['idle.youtube'],
+        ),
+      );
       for (int i = 0; i < 3; i++) {
         state = equipmentService.upgradeIdle(state, 'youtube');
       }
       
-      // 升級所有放置裝備（先確保 BTC 達 Lv.3 才能升 DOGE）
+      // 解鎖 BTC 的主線 gating，並升級至 Lv.3（以解鎖 DOGE 的 config 條件）
+      state = state.copyWith(
+        mainQuest: state.mainQuest!.copyWith(
+          unlockedRewards: const ['idle.youtube', 'idle.btc'],
+        ),
+      );
       state = equipmentService.upgradeIdle(state, 'youtube');
       for (int i = 0; i < 3; i++) {
         state = equipmentService.upgradeIdle(state, 'btc');
       }
+      
+      // 解鎖 DOGE 的主線 gating，再升級 DOGE Lv.1
+      state = state.copyWith(
+        mainQuest: state.mainQuest!.copyWith(
+          unlockedRewards: const ['idle.youtube', 'idle.btc', 'idle.doge'],
+        ),
+      );
       state = equipmentService.upgradeIdle(state, 'doge');
       
       // 驗證總加成
@@ -152,8 +188,13 @@ void main() {
     test('放置裝備收益隨時間累積', () {
       var state = GameState.initial(1);
       
-      // 補資源並升級 Youtube Lv.1
-      state = state.copyWith(memePoints: 1e6);
+      // 解鎖 youtube 並升級 Lv.1
+      state = state.copyWith(
+        memePoints: 1e6,
+        mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
+          unlockedRewards: const ['idle.youtube'],
+        ),
+      );
       state = equipmentService.upgradeIdle(state, 'youtube');
       
       idleIncomeService.updateGameState(state);
@@ -173,8 +214,13 @@ void main() {
     test('放置裝備最大等級限制', () {
       var state = GameState.initial(1);
       
-      // 解鎖 Youtube
-      state = state.copyWith(memePoints: 1e9);
+      // 透過主線解鎖 Youtube 並補資源
+      state = state.copyWith(
+        memePoints: 1e9,
+        mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
+          unlockedRewards: const ['idle.youtube'],
+        ),
+      );
       
       // 升級到最大等級
       final maxLevel = 10; // 根據設定檔

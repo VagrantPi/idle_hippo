@@ -59,7 +59,8 @@
       "desc": "Such idle, very wow."
     },
     "lock": {
-      "need_level": "Unlock after {name} Lv.{level}"
+      "need_level": "Unlock after {name} Lv.{level}",
+      "need_main_quest_stage1": "Requires completing Main Quest Stage 1"
     }
   },
   "offline": {
@@ -88,5 +89,51 @@
       "done_today": "All 10 daily missions completed"
     },
     "dailyMissions": "Daily Missions"
+  },
+  "quest": {
+    "stage1": {
+      "title": "Newborn Stage"
+    },
+    "stage2": {
+      "title": "Meme Rookie"
+    },
+    "stage3": {
+      "title": "Animal Meme Stage"
+    },
+    "stage4": {
+      "title": "Hippo Meme Stage"
+    },
+    "stage5": {
+      "title": "Meme Superstar"
+    },
+    "stage6": {
+      "title": "Cosmic Meme God"
+    },
+    "completed": {
+      "title": "Quest Completed!",
+      "confirm": "Confirm"
+    },
+    "main_quest": "Main Quest",
+    "current_stage": "Current Stage {n}",
+    "requirement": {
+      "title": {
+        "tap": "Total Tap Count",
+        "meme": "Total Meme Points"
+      },
+      "text": {
+        "tap": "Requirement: Tap {progress} / {target}",
+        "meme": "Requirement: Gain {progress} / {target} meme points"
+      }
+    },
+    "reward": {
+      "label": "Reward: ",
+      "none": "—",
+      "equipment": "Unlocked {rewardId} Equipment!",
+      "title_system": "Unlocked Title System!",
+      "pet_system": "Unlocked Pet System!",
+      "system": "Unlocked {rewardId} System!",
+      "skin": "Unlocked New Skin: {rewardId}!",
+      "unknown": "Received Mystery Reward!"
+    }
   }
 }

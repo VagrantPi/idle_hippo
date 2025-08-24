@@ -2,7 +2,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/ui/components/daily_cap_progress_bar.dart';
 import 'package:idle_hippo/ui/components/daily_mission_bar.dart';
+import 'package:idle_hippo/ui/components/main_quest_bar.dart';
 import 'package:idle_hippo/services/localization_service.dart';
+import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 import 'package:idle_hippo/ui/components/animated_button.dart';
 import 'package:idle_hippo/ui/components/plus_meme_particle.dart';
@@ -16,6 +18,7 @@ import 'package:idle_hippo/ui/pages/settings_page.dart';
 import 'package:idle_hippo/ui/pages/music_game_page.dart';
 import 'package:idle_hippo/ui/pages/no_ads_page.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
+import 'package:idle_hippo/models/game_state.dart';
 
 class MainScreen extends StatefulWidget {
   final double memePoints;
@@ -44,6 +47,10 @@ class MainScreen extends StatefulWidget {
   final List<Map<String, dynamic>>? missionPlan;
   final int? missionsTodayCompleted;
   final VoidCallback? onClaimCurrentMission;
+  final VoidCallback? onClaimCurrentStage;
+  
+  // GameState for MainQuest
+  final GameState gameState;
 
   const MainScreen({
     super.key,
@@ -68,6 +75,8 @@ class MainScreen extends StatefulWidget {
     this.missionPlan,
     this.missionsTodayCompleted,
     this.onClaimCurrentMission,
+    this.onClaimCurrentStage,
+    required this.gameState,
   });
 
   @override
@@ -89,12 +98,14 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   final List<Widget> _particles = [];
   static const int _maxParticles = 10;
+  int _equipmentInitialTabIndex = 0; // 0: tap, 1: idle
+  int _questInitialTabIndex = 0; // 0: 每日任務, 1: 主線任務
 
   String _formatNumber(num value) {
     final v = value.toDouble();
-    if (v.abs() >= 1e9) return (v / 1e9).toStringAsFixed(1) + 'B';
-    if (v.abs() >= 1e6) return (v / 1e6).toStringAsFixed(1) + 'M';
-    if (v.abs() >= 1e3) return (v / 1e3).toStringAsFixed(1) + 'K';
+    if (v.abs() >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B';
+    if (v.abs() >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M';
+    if (v.abs() >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K';
     // 對於迷因點數顯示，只保留一位小數以避免過多小數位
     return v.toStringAsFixed(1);
   }
@@ -285,9 +296,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.7),
+            color: Colors.green.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1),
           ),
           child: const Icon(
             Icons.bug_report,
@@ -359,7 +370,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         constraints: const BoxConstraints(minWidth: 260),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
+          color: Colors.black.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -400,7 +411,12 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     // 若今日已完成 10 個任務，顯示完成狀態（mission.done_today）
     if ((widget.missionsTodayCompleted ?? 0) >= 10) {
       return GestureDetector(
-        onTap: () => _pageManager.navigateToPage(PageType.quest),
+        onTap: () {
+          setState(() {
+            _questInitialTabIndex = 0; // 0 = 每日任務 tab
+            _pageManager.navigateToPage(PageType.quest);
+          });
+        },
         child: DailyMissionBar(
           type: 'completed',
           progress: 1,
@@ -417,7 +433,12 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     // 在右上角 Column 中直接回傳普通 Widget，避免 Positioned 插入 Row/Column 造成 ParentDataWidget 錯誤
     return GestureDetector(
-      onTap: () => _pageManager.navigateToPage(PageType.quest),
+      onTap: () {
+        setState(() {
+          _questInitialTabIndex = 0; // 0 = 每日任務 tab
+          _pageManager.navigateToPage(PageType.quest);
+        });
+      },
       child: DailyMissionBar(
         type: widget.missionType!,
         progress: widget.missionProgress!,
@@ -437,7 +458,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         constraints: const BoxConstraints(minWidth: 160),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
+          color: Colors.black.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -520,10 +541,46 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               if (_pageManager.isHomePage) _buildPowerSaverButton(),
               const SizedBox(height: 5),
               if (_pageManager.isHomePage) _buildDailyMissionBar(),
+              const SizedBox(height: 5),
+              // 主線任務條（橘色），顯示當前進度/目標值
+              if (_pageManager.isHomePage) _buildMainQuestBar(),
             ],
           ),
           // 每日任務條
         ],
+      ),
+    );
+  }
+
+  Widget _buildMainQuestBar() {
+    final stats = MainQuestService().getStats(widget.gameState);
+    // 轉換文字進度/目標為整數顯示
+    int toInt(dynamic v) {
+      if (v is int) return v;
+      if (v is String) {
+        final parsed = int.tryParse(v);
+        if (parsed != null) return parsed;
+      }
+      if (v is num) return v.toInt();
+      return 0;
+    }
+
+    final progress = toInt(stats['progressText']);
+    final target = toInt(stats['targetText']);
+
+    // 若無效，則不顯示
+    if (target <= 0) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _questInitialTabIndex = 1; // 1 = 主線任務 tab
+          _pageManager.navigateToPage(PageType.quest);
+        });
+      },
+      child: MainQuestBar(
+        progress: progress.clamp(0, target),
+        target: target,
       ),
     );
   }
@@ -569,7 +626,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   Widget _buildRightSideButtons() {
     return Positioned(
-      top: MediaQuery.of(context).size.height * 0.25,
+      top: MediaQuery.of(context).size.height * 0.4,
       right: 8,
       child: Column(
         children: [
@@ -606,7 +663,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           color: const Color(0xFF2B0A56),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -724,6 +781,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           equipments: widget.equipments,
           onUpgrade: widget.onEquipmentUpgrade ?? (_){},
           onUpgradeIdle: widget.onIdleEquipmentUpgrade ?? (_){},
+          unlockedRewards: widget.gameState.mainQuest?.unlockedRewards ?? const [],
+          initialTabIndex: _equipmentInitialTabIndex,
         );
         break;
       case PageType.pets:
@@ -740,6 +799,17 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           missionPlan: widget.missionPlan ?? const [],
           missionsTodayCompleted: widget.missionsTodayCompleted ?? 0,
           onClaimCurrentMission: widget.onClaimCurrentMission,
+          onClaimCurrentStage: () {
+            // 先請父層更新全域 GameState（包含 unlockedRewards 與 currentStage 前進）
+            widget.onClaimCurrentStage?.call();
+            // 然後導向到裝備頁的放置分頁
+            setState(() {
+              _equipmentInitialTabIndex = 1;
+              _pageManager.navigateToPage(PageType.equipment);
+            });
+          },
+          gameState: widget.gameState,
+          initialTabIndex: _questInitialTabIndex,
         );
         break;
       case PageType.settings:

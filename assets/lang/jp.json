@@ -56,7 +56,8 @@
       "desc": "そんな放置、すごいワオ。"
     },
     "lock": {
-      "need_level": "{name} Lv.{level} で解放"
+      "need_level": "{name} Lv.{level} で解放",
+      "need_main_quest_stage1": "メインクエスト第1章の完了が必要"
     }
   },
   "offline": {
@@ -85,5 +86,51 @@
       "done_today": "本日の10個ミッションは完了"
     },
     "dailyMissions": "デイリーミッション"
+  },
+  "quest": {
+    "stage1": {
+      "title": "新生ステージ"
+    },
+    "stage2": {
+      "title": "ミーム初心者ステージ"
+    },
+    "stage3": {
+      "title": "動物ミームステージ"
+    },
+    "stage4": {
+      "title": "ネタ画像カバステージ"
+    },
+    "stage5": {
+      "title": "ミームスーパースター"
+    },
+    "stage6": {
+      "title": "宇宙級ミームの神"
+    },
+    "completed": {
+      "title": "クエスト完了！",
+      "confirm": "確認"
+    },
+    "main_quest": "主線クエスト",
+    "current_stage": "現在のステージ {n}",
+    "requirement": {
+      "title": {
+        "tap": "累積タップ回数",
+        "meme": "累積ミームポイント"
+      },
+      "text": {
+        "tap": "要件：{progress} / {target} 回タップ",
+        "meme": "要件：ミームポイント {progress} / {target}"
+      }
+    },
+    "reward": {
+      "label": "報酬：",
+      "none": "—",
+      "equipment": "{rewardId} 装備を解放！",
+      "title_system": "称号システムを解放！",
+      "pet_system": "ペットシステムを解放！",
+      "system": "{rewardId} システムを解放！",
+      "skin": "新しいスキンを解放：{rewardId}！",
+      "unknown": "神秘的な報酬を獲得！"
+    }
   }
 }

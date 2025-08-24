@@ -32,11 +32,7 @@ void main() {
     });
 
     test('應正確處理訂閱', () {
-      int tickCount = 0;
-      
-      gameClock.subscribe('test', (delta) {
-        tickCount++;
-      });
+      gameClock.subscribe('test', (_) {});
       
       expect(gameClock.subscribersCount, 1);
       
@@ -86,16 +82,13 @@ void main() {
   group('IdleIncome 服務測試', () {
     late IdleIncomeService idleIncome;
     late GameClockService gameClock;
-    double totalIncomeReceived = 0.0;
 
     setUp(() {
       gameClock = GameClockService();
       gameClock.init();
       
-      totalIncomeReceived = 0.0;
       idleIncome = IdleIncomeService();
       idleIncome.init(onIncomeGenerated: (double points) {
-        totalIncomeReceived += points;
       });
     });
 
@@ -147,16 +140,13 @@ void main() {
   group('整合測試 - 時間系統', () {
     late GameClockService gameClock;
     late IdleIncomeService idleIncome;
-    double totalIncomeReceived = 0.0;
 
     setUp(() {
       gameClock = GameClockService();
       gameClock.init();
       
-      totalIncomeReceived = 0.0;
       idleIncome = IdleIncomeService();
       idleIncome.init(onIncomeGenerated: (double points) {
-        totalIncomeReceived += points;
       });
     });
 
@@ -297,7 +287,6 @@ void main() {
     });
 
     test('應能優雅處理訂閱者錯誤', () async {
-      bool errorThrown = false;
       
       // 訂閱一個會拋出錯誤的處理器
       gameClock.subscribe('error_handler', (delta) {
@@ -305,9 +294,7 @@ void main() {
       });
       
       // 訂閱一個正常的處理器
-      gameClock.subscribe('normal_handler', (delta) {
-        errorThrown = false; // 如果執行到這裡，說明沒有因為前面的錯誤而中斷
-      });
+      gameClock.subscribe('normal_handler', (delta) {});
       
       gameClock.start();
       
