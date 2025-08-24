@@ -27,7 +27,7 @@ class _DailyMissionBarState extends State<DailyMissionBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<Color?> _colorAnimation;
+  
 
   @override
   void initState() {
@@ -43,14 +43,6 @@ class _DailyMissionBarState extends State<DailyMissionBar>
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.elasticOut,
-    ));
-
-    _colorAnimation = ColorTween(
-      begin: Colors.blue.shade600,
-      end: Colors.green.shade600,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
     ));
   }
 
@@ -127,9 +119,7 @@ class _DailyMissionBarState extends State<DailyMissionBar>
   @override
   Widget build(BuildContext context) {
     final isCompleted = widget.progress >= widget.target;
-    final progressRatio = widget.target > 0 
-        ? (widget.progress / widget.target).clamp(0.0, 1.0) 
-        : 0.0;
+    // progressRatio 目前未使用，移除以通過 analyzer
 
     return AnimatedBuilder(
       animation: _animationController,
@@ -142,7 +132,7 @@ class _DailyMissionBarState extends State<DailyMissionBar>
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _getProgressColor(),
@@ -150,7 +140,7 @@ class _DailyMissionBarState extends State<DailyMissionBar>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: _getProgressColor().withOpacity(0.3),
+                    color: _getProgressColor().withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -190,15 +180,6 @@ class _DailyMissionBarState extends State<DailyMissionBar>
                               fontWeight: FontWeight.w500,
                             ),
                             overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '(${(widget.completedCount ?? 0).clamp(0, 10)}/10)',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],

@@ -55,7 +55,6 @@ class GameClockService with WidgetsBindingObserver {
     if (!_stopwatch.isRunning) {
       _stopwatch.start();
     }
-    print('GameClock: Initialized');
   }
 
   /// 啟動時間系統
@@ -69,8 +68,6 @@ class GameClockService with WidgetsBindingObserver {
     if (_isInForeground) {
       _startTimer();
     }
-    
-    print('GameClock: Started');
   }
 
   /// 停止時間系統
@@ -79,7 +76,6 @@ class GameClockService with WidgetsBindingObserver {
     
     _isRunning = false;
     _stopTimer();
-    print('GameClock: Stopped');
   }
 
   /// 清理資源
@@ -87,13 +83,11 @@ class GameClockService with WidgetsBindingObserver {
     stop();
     WidgetsBinding.instance.removeObserver(this);
     _subscribers.clear();
-    print('GameClock: Disposed');
   }
 
   /// 訂閱時間更新
   void subscribe(String id, void Function(double deltaSeconds) handler) {
     _subscribers[id] = handler;
-    print('GameClock: Subscribed $id (total: ${_subscribers.length})');
   }
 
   /// 取消訂閱
@@ -109,7 +103,6 @@ class GameClockService with WidgetsBindingObserver {
     if (fixedDelta != null) {
       _fixedDelta = fixedDelta;
     }
-    print('GameClock: Fixed step mode ${enabled ? 'enabled' : 'disabled'} (delta: $_fixedDelta)');
   }
 
   /// 啟動計時器
@@ -144,7 +137,6 @@ class GameClockService with WidgetsBindingObserver {
 
     // 處理異常值
     if (rawDelta.isNaN || rawDelta.isInfinite || rawDelta < 0) {
-      print('GameClock: Invalid delta detected, skipping frame');
       return;
     }
 
@@ -194,7 +186,8 @@ class GameClockService with WidgetsBindingObserver {
       try {
         handler(deltaSeconds);
       } catch (e) {
-        print('GameClock: Error in subscriber handler: $e');
+        // 優雅處理訂閱者錯誤：記錄並持續廣播，不中斷計時迴圈
+        debugPrint('GameClock: subscriber error: $e');
       }
     }
   }
@@ -224,8 +217,6 @@ class GameClockService with WidgetsBindingObserver {
     
     final wasInForeground = _isInForeground;
     _isInForeground = state == AppLifecycleState.resumed;
-    
-    print('GameClock: Lifecycle changed to $state (foreground: $_isInForeground)');
     
     if (_isInForeground && !wasInForeground) {
       // 回到前台 - 重置時間基準避免大 delta

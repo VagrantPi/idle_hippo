@@ -120,7 +120,7 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
           children: [
             // 基礎黑遮罩
             Container(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
             ),
             // 主要內容
             _buildMainContent(),

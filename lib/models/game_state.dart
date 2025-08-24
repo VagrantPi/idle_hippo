@@ -301,6 +301,91 @@ class OfflineState {
       lastRewardDoubled.hashCode;
 }
 
+class MainQuestState {
+  final int currentStage; // 當前階段 (1-6)
+  final int tapCountProgress; // 累積點擊次數
+  final double memePointsEarned; // 歷史累積獲得點數
+  final List<String> unlockedRewards; // 已解鎖的獎勵列表
+  final bool claimable; // 是否已達成、待確認領取
+
+  const MainQuestState({
+    this.currentStage = 1,
+    this.tapCountProgress = 0,
+    this.memePointsEarned = 0.0,
+    this.unlockedRewards = const [],
+    this.claimable = false,
+  });
+
+  factory MainQuestState.fromMap(Map<String, dynamic> map) {
+    return MainQuestState(
+      currentStage: (map['currentStage'] ?? 1) as int,
+      tapCountProgress: (map['tapCountProgress'] ?? 0) as int,
+      memePointsEarned: (map['memePointsEarned'] ?? 0.0).toDouble(),
+      unlockedRewards: map.containsKey('unlockedRewards') && map['unlockedRewards'] is List
+          ? List<String>.from(map['unlockedRewards'] as List)
+          : const [],
+      claimable: (map['claimable'] ?? false) as bool,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'currentStage': currentStage,
+        'tapCountProgress': tapCountProgress,
+        'memePointsEarned': memePointsEarned,
+        'unlockedRewards': unlockedRewards,
+        'claimable': claimable,
+      };
+
+  MainQuestState copyWith({
+    int? currentStage,
+    int? tapCountProgress,
+    double? memePointsEarned,
+    List<String>? unlockedRewards,
+    bool? claimable,
+  }) {
+    return MainQuestState(
+      currentStage: currentStage ?? this.currentStage,
+      tapCountProgress: tapCountProgress ?? this.tapCountProgress,
+      memePointsEarned: memePointsEarned ?? this.memePointsEarned,
+      unlockedRewards: unlockedRewards ?? List<String>.from(this.unlockedRewards),
+      claimable: claimable ?? this.claimable,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is MainQuestState &&
+        other.currentStage == currentStage &&
+        other.tapCountProgress == tapCountProgress &&
+        other.memePointsEarned == memePointsEarned &&
+        _listStringEquals(other.unlockedRewards, unlockedRewards) &&
+        other.claimable == claimable;
+  }
+
+  @override
+  int get hashCode =>
+      currentStage.hashCode ^
+      tapCountProgress.hashCode ^
+      memePointsEarned.hashCode ^
+      unlockedRewards.hashCode ^
+      claimable.hashCode;
+
+  static bool _listStringEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  String toString() {
+    return 'MainQuestState(currentStage: $currentStage, tapCountProgress: $tapCountProgress, '
+           'memePointsEarned: $memePointsEarned, unlockedRewards: $unlockedRewards, claimable: $claimable)';
+  }
+}
+
 class GameState {
   final int saveVersion;
   final double memePoints;
@@ -309,6 +394,7 @@ class GameState {
   final DailyTapState? dailyTap;
   final OfflineState offline;
   final DailyMissionState? dailyMission;
+  final MainQuestState? mainQuest;
 
   const GameState({
     required this.saveVersion,
@@ -318,6 +404,7 @@ class GameState {
     this.dailyTap,
     this.offline = const OfflineState(),
     this.dailyMission,
+    this.mainQuest,
   });
 
   /// 建立初始狀態
@@ -330,6 +417,7 @@ class GameState {
       dailyTap: null,
       offline: const OfflineState(),
       dailyMission: null,
+      mainQuest: const MainQuestState(),
     );
   }
 
@@ -359,6 +447,10 @@ class GameState {
       dailyMission: map.containsKey('dailyMission') && map['dailyMission'] is Map<String, dynamic>
           ? DailyMissionState.fromMap(map['dailyMission'] as Map<String, dynamic>)
           : null,
+      // 保持與原始資料一致：若未提供 mainQuest，維持為 null
+      mainQuest: map.containsKey('mainQuest') && map['mainQuest'] is Map<String, dynamic>
+          ? MainQuestState.fromMap(map['mainQuest'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -377,6 +469,7 @@ class GameState {
       if (dailyTap != null) 'dailyTap': dailyTap!.toMap(),
       'offline': offline.toMap(),
       if (dailyMission != null) 'dailyMission': dailyMission!.toMap(),
+      if (mainQuest != null) 'mainQuest': mainQuest!.toMap(),
     };
   }
 
@@ -412,6 +505,7 @@ class GameState {
     DailyTapState? dailyTap,
     OfflineState? offline,
     DailyMissionState? dailyMission,
+    MainQuestState? mainQuest,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -421,6 +515,7 @@ class GameState {
       dailyTap: dailyTap ?? this.dailyTap,
       offline: offline ?? this.offline,
       dailyMission: dailyMission ?? this.dailyMission,
+      mainQuest: mainQuest ?? this.mainQuest,
     );
   }
 
@@ -447,7 +542,8 @@ class GameState {
         other.lastTs == lastTs &&
         _dailyTapEquals(other.dailyTap, dailyTap) &&
         other.offline == offline &&
-        _dailyMissionEquals(other.dailyMission, dailyMission);
+        _dailyMissionEquals(other.dailyMission, dailyMission) &&
+        _mainQuestEquals(other.mainQuest, mainQuest);
   }
 
   @override
@@ -458,7 +554,8 @@ class GameState {
         lastTs.hashCode ^
         (dailyTap?.hashCode ?? 0) ^
         offline.hashCode ^
-        (dailyMission?.hashCode ?? 0);
+        (dailyMission?.hashCode ?? 0) ^
+        (mainQuest?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {
@@ -476,6 +573,12 @@ class GameState {
   }
 
   bool _dailyMissionEquals(DailyMissionState? a, DailyMissionState? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    return a == b;
+  }
+
+  bool _mainQuestEquals(MainQuestState? a, MainQuestState? b) {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
     return a == b;

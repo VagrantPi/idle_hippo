@@ -13,6 +13,6 @@
   },
   "ui": {
     "theme": "green",
-    "showDebugPanel": true
+    "showDebugPanel": false
   }
 }

@@ -32,7 +32,6 @@ class PageManager extends ChangeNotifier {
     _previousPage = _currentPage;
     _currentPage = page;
     notifyListeners();
-    print('PageManager: Navigated to ${page.name}');
   }
 
   /// 回到主頁

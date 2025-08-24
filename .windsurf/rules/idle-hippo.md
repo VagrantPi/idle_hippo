@@ -69,6 +69,9 @@ trigger: always_on
 - 每當有新增新增數於 assets/config 內，則需要更新 docs/config.md 文件
 
 ## 10. UI 上顯示
-- 當有顯示上的實作時，都需要實作多國語系
+- 當有顯示上的實作時，都需要實作多國語系，並且更新所有語系包 assets/lang/*
+
+## 11. flutter 語法
+- withOpacity 都改用 withValues 方法
 
 ---

@@ -7,6 +7,8 @@ class EquipmentPage extends StatefulWidget {
   final Map<String, int> equipments;
   final void Function(String id) onUpgrade;
   final void Function(String id) onUpgradeIdle;
+  final List<String> unlockedRewards;
+  final int initialTabIndex;
 
   const EquipmentPage({
     super.key,
@@ -14,6 +16,8 @@ class EquipmentPage extends StatefulWidget {
     required this.equipments,
     required this.onUpgrade,
     required this.onUpgradeIdle,
+    required this.unlockedRewards,
+    this.initialTabIndex = 0,
   });
 
   @override
@@ -26,7 +30,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex.clamp(0, 1));
   }
 
   @override
@@ -62,7 +66,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
           // Tab Bar
           Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: TabBar(
@@ -127,7 +131,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.45),
+                color: Colors.black.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white12),
               ),
@@ -231,7 +235,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -284,7 +288,10 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
         final currentLevel = widget.equipments[id] ?? 0;
         final nextCost = equipmentService.getIdleNextCost(id, currentLevel);
         final unlocked = equipmentService.isIdleEquipmentUnlocked(widget.equipments, id);
-        final canUpgrade = nextCost != null && unlocked && widget.memePoints >= nextCost;
+        // 需同時滿足主線解鎖（僅針對 youtube）
+        final questUnlocked = widget.unlockedRewards.contains('idle.$id');
+        final uiUnlocked = unlocked && (id != 'youtube' || questUnlocked);
+        final canUpgrade = nextCost != null && uiUnlocked && widget.memePoints >= nextCost;
         final isMax = nextCost == null;
 
         final currentBonus = equipmentService.cumulativeIdleBonusFor(id, currentLevel);
@@ -295,7 +302,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.45),
+                color: Colors.black.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white12),
               ),
@@ -309,16 +316,31 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                       alignment: Alignment.topCenter,
                       child: FractionallySizedBox(
                         widthFactor: 0.5,
-                        child: Image.asset(
-                          icon,
-                          fit: BoxFit.contain,
-                          alignment: Alignment.topCenter,
-                          errorBuilder: (c, e, s) => Container(
+                        child: () {
+                          final img = Image.asset(
+                            icon,
+                            fit: BoxFit.contain,
                             alignment: Alignment.topCenter,
-                            color: Colors.white10,
-                            child: const Icon(Icons.auto_awesome, color: Colors.white54),
-                          ),
-                        ),
+                            errorBuilder: (c, e, s) => Container(
+                              alignment: Alignment.topCenter,
+                              color: Colors.white10,
+                              child: const Icon(Icons.auto_awesome, color: Colors.white54),
+                            ),
+                          );
+                          if (!uiUnlocked) {
+                            // 鎖定時套用灰階
+                            return ColorFiltered(
+                              colorFilter: const ColorFilter.matrix(<double>[
+                                0.2126, 0.7152, 0.0722, 0, 0,
+                                0.2126, 0.7152, 0.0722, 0, 0,
+                                0.2126, 0.7152, 0.0722, 0, 0,
+                                0, 0, 0, 1, 0,
+                              ]),
+                              child: img,
+                            );
+                          }
+                          return img;
+                        }(),
                       ),
                     ),
                   ),
@@ -395,11 +417,11 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                 ],
               ),
             ),
-            if (!unlocked)
+            if (!uiUnlocked)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -407,6 +429,13 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         () {
+                          // 若為 youtube 且尚未完成主線第一章解鎖，顯示專屬提示
+                          if (id == 'youtube' && !questUnlocked) {
+                            return localization.getString(
+                              'equip.lock.need_main_quest_stage1',
+                              defaultValue: '需要完成主線第一章解鎖',
+                            );
+                          }
                           final unlock = e['unlock'] as Map<String, dynamic>?;
                           if (unlock == null) return localization.getUI('locked');
                           final reqId = unlock['id'] as String? ?? '';

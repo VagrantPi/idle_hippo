@@ -7,9 +7,9 @@ import 'package:idle_hippo/services/localization_service.dart';
 Future<void> loadAssetAsRealRootBundle(String path) async {
   final bytes = await File(path).readAsBytes();
   rootBundle.evict(path);
-  await ServicesBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+  ServicesBinding.instance.channelBuffers.push(
     'flutter/assets',
-    ByteData.sublistView(bytes).buffer.asByteData(),
+    ByteData.sublistView(bytes),
     (data) {},
   );
 }

@@ -44,7 +44,7 @@
       "name": "드레스"
     },
     "youtube": {
-      "name": "틱톡",
+      "name": "YouTube",
       "desc": "방치 미믹 에너지를 생성."
     },
     "btc": {
@@ -56,7 +56,8 @@
       "desc": "이런 방치, 대단 Wow."
     },
     "lock": {
-      "need_level": "{name} Lv.{level} 달성 시 해제"
+      "need_level": "{name} Lv.{level} 달성 시 해제",
+      "need_main_quest_stage1": "메인 퀘스트 1장 완료 필요"
     }
   },
   "offline": {
@@ -85,5 +86,51 @@
       "done_today": "오늘 10개 미션 완료"
     },
     "dailyMissions": "일일 미션"
+  },
+  "quest": {
+    "stage1": {
+      "title": "신생 단계"
+    },
+    "stage2": {
+      "title": "밈 초보자 단계"
+    },
+    "stage3": {
+      "title": "동물 밈 단계"
+    },
+    "stage4": {
+      "title": "짤방 하마 단계"
+    },
+    "stage5": {
+      "title": "밈 슈퍼스타"
+    },
+    "stage6": {
+      "title": "우주급 밈의 신"
+    },
+    "completed": {
+      "title": "퀘스트 완료!",
+      "confirm": "확인"
+    },
+    "main_quest": "주선 퀘스트",
+    "current_stage": "현재 단계 {n}",
+    "requirement": {
+      "title": {
+        "tap": "누적 탭 횟수",
+        "meme": "누적 밈 포인트"
+      },
+      "text": {
+        "tap": "요구: {progress} / {target}회 탭",
+        "meme": "요구: 밈 포인트 {progress} / {target}"
+      }
+    },
+    "reward": {
+      "label": "보상: ",
+      "none": "—",
+      "equipment": "{rewardId} 장비 해제!",
+      "title_system": "칭호 시스템 해제!",
+      "pet_system": "펫 시스템 해제!",
+      "system": "{rewardId} 시스템 해제!",
+      "skin": "새로운 스킨 해제: {rewardId}!",
+      "unknown": "신비한 보상 획득!"
+    }
   }
 }

@@ -37,7 +37,6 @@ class SecureSaveService {
           await migrateIfNeeded(storedVersion, currentVersion);
         } else if (storedVersion > currentVersion) {
           // 版本過新，回退初始狀態並保留原始資料
-          print('SecureSaveService: Version too new ($storedVersion > $currentVersion), falling back to initial state');
           await _backupCurrentData();
           await _setInitialState();
         }
@@ -46,7 +45,6 @@ class SecureSaveService {
         await _storage.write(key: _versionKey, value: currentVersion.toString());
       }
     } catch (e) {
-      print('SecureSaveService: Init error: $e, falling back to initial state');
       await _setInitialState();
     }
   }
@@ -61,7 +59,6 @@ class SecureSaveService {
         if (state.validate()) {
           return state;
         }
-        print('SecureSaveService: Main save validation failed, trying backup');
       }
 
       // 主要存檔失敗，嘗試備份
@@ -69,19 +66,15 @@ class SecureSaveService {
       if (backupData != null) {
         final state = GameState.fromJson(backupData);
         if (state.validate()) {
-          print('SecureSaveService: Restored from backup');
           // 立即將備份寫回主要存檔
           await _atomicWrite(state);
           return state;
         }
-        print('SecureSaveService: Backup validation failed');
       }
 
       // 所有存檔都失敗，回傳初始狀態
-      print('SecureSaveService: All saves failed, returning initial state');
       return GameState.initial(_currentVersion);
     } catch (e) {
-      print('SecureSaveService: Load error: $e, returning initial state');
       return GameState.initial(_currentVersion);
     }
   }
@@ -99,10 +92,7 @@ class SecureSaveService {
       
       // 原子寫入
       await _atomicWrite(updatedState);
-      
-      print('SecureSaveService: Save successful');
     } catch (e) {
-      print('SecureSaveService: Save error: $e');
       rethrow;
     }
   }
@@ -135,8 +125,6 @@ class SecureSaveService {
       await _storage.write(key: _versionKey, value: _currentVersion.toString());
       
     } catch (e) {
-      // 寫入失敗，嘗試從備份恢復
-      print('SecureSaveService: Atomic write failed: $e, attempting recovery');
       await _recoverFromBackup();
       rethrow;
     }
@@ -148,10 +136,9 @@ class SecureSaveService {
       final backupData = await _storage.read(key: _backupKey);
       if (backupData != null) {
         await _storage.write(key: _mainKey, value: backupData);
-        print('SecureSaveService: Recovered from backup');
       }
     } catch (e) {
-      print('SecureSaveService: Recovery failed: $e');
+      rethrow;
     }
   }
 
@@ -175,18 +162,13 @@ class SecureSaveService {
         await _storage.delete(key: 'game_state_v$version');
         await _storage.delete(key: 'game_state_v${version}_bak');
       }
-
-      print('SecureSaveService: Reset completed');
     } catch (e) {
-      print('SecureSaveService: Reset error: $e');
       rethrow;
     }
   }
 
   /// 版本遷移
   Future<void> migrateIfNeeded(int fromVersion, int toVersion) async {
-    print('SecureSaveService: Migrating from v$fromVersion to v$toVersion');
-    
     try {
       for (int version = fromVersion; version < toVersion; version++) {
         await _migrateVersion(version, version + 1);
@@ -194,23 +176,18 @@ class SecureSaveService {
       
       // 更新版本號
       await _storage.write(key: _versionKey, value: toVersion.toString());
-      print('SecureSaveService: Migration completed');
     } catch (e) {
-      print('SecureSaveService: Migration failed: $e');
       rethrow;
     }
   }
 
   /// 單一版本遷移
   Future<void> _migrateVersion(int from, int to) async {
-    print('SecureSaveService: Migrating v$from -> v$to');
-    
     // 讀取舊版本資料
     final oldKey = 'game_state_v$from';
     final oldData = await _storage.read(key: oldKey);
     
     if (oldData == null) {
-      print('SecureSaveService: No data found for v$from, skipping migration');
       return;
     }
 
@@ -239,9 +216,7 @@ class SecureSaveService {
       final newKey = 'game_state_v$to';
       await _storage.write(key: newKey, value: newState.toJson());
       
-      print('SecureSaveService: Migration v$from -> v$to completed');
     } catch (e) {
-      print('SecureSaveService: Migration v$from -> v$to failed: $e');
       rethrow;
     }
   }
@@ -272,7 +247,7 @@ class SecureSaveService {
         await _storage.write(key: '${_mainKey}_legacy', value: currentData);
       }
     } catch (e) {
-      print('SecureSaveService: Backup current data failed: $e');
+      rethrow;
     }
   }
 
@@ -283,7 +258,7 @@ class SecureSaveService {
       await _storage.write(key: _mainKey, value: initialState.toJson());
       await _storage.write(key: _versionKey, value: _currentVersion.toString());
     } catch (e) {
-      print('SecureSaveService: Set initial state failed: $e');
+      rethrow;
     }
   }
 

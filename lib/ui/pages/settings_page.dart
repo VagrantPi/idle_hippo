@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
-import 'package:idle_hippo/ui/pages/power_saver_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onLanguageChanged;
@@ -39,7 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
               height: MediaQuery.of(context).size.height * 0.5,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Colors.blue, width: 2),
               ),
@@ -92,7 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
+                          color: Colors.black.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -123,8 +122,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? Colors.blue.withOpacity(0.8)
-                                          : Colors.grey.withOpacity(0.3),
+                                          ? Colors.blue.withValues(alpha: 0.8)
+                                          : Colors.grey.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                         color: isSelected ? Colors.blue : Colors.grey,
