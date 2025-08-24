@@ -25,7 +25,9 @@
     "requires": "需要",
     "toLevel": "至 Lv",
     "locked": "未解鎖",
-    "claim": "領取"
+    "claim": "領取",
+    "equip": "裝備",
+    "unequip": "卸下"
   },
   "tab": {
     "equip": {
@@ -131,6 +133,31 @@
       "system": "解鎖 {rewardId} 系統！",
       "skin": "解鎖新造型：{rewardId}！",
       "unknown": "獲得神秘獎勵！"
+    }
+  },
+  "pets": {
+    "title": "寵物系統",
+    "equipped_title": "已裝備寵物",
+    "equipped": "已裝備",
+    "not_equipped": "未裝備",
+    "tap_to_equip": "點擊裝備",
+    "tap_to_unequip": "點擊卸下",
+    "upgrade_points": "升級點數",
+    "idle_income": "放置收益",
+    "next_level": "下一級需要",
+    "no_pets_available": "暫無可用寵物",
+    "upgrade_success": "升級成功！",
+    "max_level_reached": "已達最高等級",
+    "rarity": {
+      "RR": "普通",
+      "R": "稀有",
+      "S": "超稀有",
+      "SR": "史詩",
+      "SSR": "傳說"
+    },
+    "MooDeng": {
+      "name": "彈跳豬 MooDeng",
+      "description": "可愛的彈跳豬，提供放置收益加成"
     }
   }
 }

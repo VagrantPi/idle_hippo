@@ -28,7 +28,9 @@
     "requires": "Requires",
     "toLevel": "to Lv",
     "locked": "Locked",
-    "claim": "Claim"
+    "claim": "Claim",
+    "equip": "Equip",
+    "unequip": "Unequip"
   },
   "tab": {
     "equip": {
@@ -134,6 +136,31 @@
       "system": "Unlocked {rewardId} System!",
       "skin": "Unlocked New Skin: {rewardId}!",
       "unknown": "Received Mystery Reward!"
+    }
+  },
+  "pets": {
+    "title": "Pet System",
+    "equipped_title": "Equipped Pet",
+    "equipped": "Equipped",
+    "not_equipped": "Not Equipped",
+    "tap_to_equip": "Tap to Equip",
+    "tap_to_unequip": "Tap to Unequip",
+    "upgrade_points": "Upgrade Points",
+    "idle_income": "Idle Income",
+    "next_level": "Next Level Requires",
+    "no_pets_available": "No pets available",
+    "upgrade_success": "Upgraded!",
+    "max_level_reached": "Max Level Reached",
+    "rarity": {
+      "RR": "Common",
+      "R": "Rare",
+      "S": "Super Rare",
+      "SR": "Epic",
+      "SSR": "Legendary"
+    },
+    "MooDeng": {
+      "name": "Bouncing Pig MooDeng",
+      "description": "Cute bouncing pig that provides idle income bonus"
     }
   }
 }

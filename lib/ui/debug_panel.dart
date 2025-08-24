@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/config_service.dart';
 import '../services/game_clock_service.dart';
 import '../services/idle_income_service.dart';
+import '../services/pet_service.dart';
 import '../models/game_state.dart';
 import '../services/tap_service.dart';
 import '../services/daily_mission_service.dart';
@@ -36,6 +37,7 @@ class _DebugPanelState extends State<DebugPanel> {
   final ConfigService _configService = ConfigService();
   final GameClockService _gameClock = GameClockService();
   final IdleIncomeService _idleIncome = IdleIncomeService();
+  final PetService _petService = PetService();
   bool _isVisible = true;
 
   @override
@@ -167,6 +169,15 @@ class _DebugPanelState extends State<DebugPanel> {
             if (widget.dailyMissionService != null && widget.gameState != null) ...[
               _buildSectionTitle('Daily Mission'),
               _buildDailyMissionStats(),
+              const SizedBox(height: 8),
+            ],
+
+            // Pet Section
+            if (widget.gameState?.petState != null) ...[
+              _buildSectionTitle('Pets'),
+              _buildPetStats(),
+              const SizedBox(height: 8),
+              _buildPetActions(),
               const SizedBox(height: 8),
             ],
             
@@ -449,6 +460,89 @@ class _DebugPanelState extends State<DebugPanel> {
         _buildConfigRow('completed', mission.todayCompleted),
       ],
     );
+  }
+
+  Widget _buildPetStats() {
+    final petState = widget.gameState?.petState;
+    if (petState == null) return const SizedBox.shrink();
+
+    final equippedPet = petState.pets.where((pet) => pet.isEquipped).firstOrNull;
+    final totalUpgradePoints = petState.pets.fold<int>(0, (sum, pet) => sum + pet.upgradePoints);
+    final petIdleIncome = _petService.getCurrentPetIdlePerSec();
+
+    return Column(
+      children: [
+        _buildConfigRow('Total Pets', '${petState.pets.length}'),
+        _buildConfigRow('Equipped Pet', equippedPet?.name ?? 'None'),
+        if (equippedPet != null) ...[
+          _buildConfigRow('Pet Level', '${equippedPet.level}'),
+          _buildConfigRow('Pet Idle Income', '${petIdleIncome.toStringAsFixed(2)}/s'),
+        ],
+        _buildConfigRow('Total Upgrade Points', '$totalUpgradePoints'),
+      ],
+    );
+  }
+
+  Widget _buildPetActions() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => _addPetUpgradePoints(100),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('+100 Pet Points'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => _addPetUpgradePoints(1000),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('+1000 Pet Points'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _upgradeAllPets,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Upgrade All Pets'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _addPetUpgradePoints(int points) {
+    _petService.addUpgradePointsToAll(points);
+  }
+
+  void _upgradeAllPets() {
+    final petState = widget.gameState?.petState;
+    if (petState == null) return;
+
+    for (final pet in petState.pets) {
+      while (pet.upgradePoints >= pet.nextLevelRequirement) {
+        _petService.upgradePet(pet);
+      }
+    }
   }
 
   void _resetIdleStats() {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'pet.dart';
 
 class CompletedMissionRecord {
   final int index;
@@ -395,6 +396,7 @@ class GameState {
   final OfflineState offline;
   final DailyMissionState? dailyMission;
   final MainQuestState? mainQuest;
+  final PetState? petState;
 
   const GameState({
     required this.saveVersion,
@@ -405,6 +407,7 @@ class GameState {
     this.offline = const OfflineState(),
     this.dailyMission,
     this.mainQuest,
+    this.petState,
   });
 
   /// 建立初始狀態
@@ -451,6 +454,9 @@ class GameState {
       mainQuest: map.containsKey('mainQuest') && map['mainQuest'] is Map<String, dynamic>
           ? MainQuestState.fromMap(map['mainQuest'] as Map<String, dynamic>)
           : null,
+      petState: map.containsKey('petState') && map['petState'] is Map<String, dynamic>
+          ? PetState.fromMap(map['petState'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -470,6 +476,7 @@ class GameState {
       'offline': offline.toMap(),
       if (dailyMission != null) 'dailyMission': dailyMission!.toMap(),
       if (mainQuest != null) 'mainQuest': mainQuest!.toMap(),
+      if (petState != null) 'petState': petState!.toMap(),
     };
   }
 
@@ -506,6 +513,7 @@ class GameState {
     OfflineState? offline,
     DailyMissionState? dailyMission,
     MainQuestState? mainQuest,
+    PetState? petState,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -516,6 +524,7 @@ class GameState {
       offline: offline ?? this.offline,
       dailyMission: dailyMission ?? this.dailyMission,
       mainQuest: mainQuest ?? this.mainQuest,
+      petState: petState ?? this.petState,
     );
   }
 
@@ -543,7 +552,8 @@ class GameState {
         _dailyTapEquals(other.dailyTap, dailyTap) &&
         other.offline == offline &&
         _dailyMissionEquals(other.dailyMission, dailyMission) &&
-        _mainQuestEquals(other.mainQuest, mainQuest);
+        _mainQuestEquals(other.mainQuest, mainQuest) &&
+        _petStateEquals(other.petState, petState);
   }
 
   @override
@@ -555,7 +565,8 @@ class GameState {
         (dailyTap?.hashCode ?? 0) ^
         offline.hashCode ^
         (dailyMission?.hashCode ?? 0) ^
-        (mainQuest?.hashCode ?? 0);
+        (mainQuest?.hashCode ?? 0) ^
+        (petState?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {
@@ -579,6 +590,12 @@ class GameState {
   }
 
   bool _mainQuestEquals(MainQuestState? a, MainQuestState? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    return a == b;
+  }
+
+  bool _petStateEquals(PetState? a, PetState? b) {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
     return a == b;
