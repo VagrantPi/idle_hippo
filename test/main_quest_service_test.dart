@@ -73,7 +73,7 @@ void main() {
       state = service.claimCurrentQuest(state);
       expect(questCompleted, isTrue);
       expect(completedQuestId, equals('stage1'));
-      expect(rewardType, equals('equipment'));
+      expect(rewardType, equals('equip'));
       expect(rewardId, equals('youtube'));
       expect(state.mainQuest!.currentStage, equals(2));
       expect(state.mainQuest!.unlockedRewards, contains('equip.youtube'));

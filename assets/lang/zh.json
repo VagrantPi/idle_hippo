@@ -136,6 +136,7 @@
     }
   },
   "pets": {
+    "ticket": "寵物抽獎券",
     "title": "寵物系統",
     "equipped_title": "已裝備寵物",
     "equipped": "已裝備",
@@ -158,6 +159,12 @@
     "MooDeng": {
       "name": "彈跳豬 MooDeng",
       "description": "可愛的彈跳豬，提供放置收益加成"
+    },
+    "quest": {
+      "ticket": {
+        "title": "寵物抽獎券任務",
+        "desc": "累積點數"
+      }
     }
   }
 }

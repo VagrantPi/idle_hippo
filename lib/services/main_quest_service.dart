@@ -153,19 +153,8 @@ class MainQuestService {
       unlockedRewards: newUnlockedRewards,
       claimable: false,
     );
-    
-    switch (quest.currentStage) {
-      case 1:
-        rewardType = 'equip';
-        rewardId = 'youtube';
-        break;
-    }
 
-    // 觸發完成回調（rewardType 正規化給外部呼叫）
-    String mappedType = rewardType;
-    if (mappedType == 'equip') mappedType = 'equipment';
-    if (mappedType == 'hippo') mappedType = 'skin';
-    _onQuestCompleted?.call(questId, mappedType, rewardId);
+    _onQuestCompleted?.call(questId, rewardType, rewardId);
 
     return state.copyWith(mainQuest: updatedQuest);
   }

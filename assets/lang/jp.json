@@ -136,6 +136,7 @@
     }
   },
   "pets": {
+    "ticket": "ペット抽選券",
     "title": "ペットシステム",
     "equipped_title": "装備中のペット",
     "equipped": "装備中",
@@ -158,6 +159,12 @@
     "MooDeng": {
       "name": "バウンシングピッグ MooDeng",
       "description": "放置収益ボーナスを提供する可愛いバウンシングピッグ"
+    },
+    "quest": {
+      "ticket": {
+        "title": "ペットチケットクエスト",
+        "desc": "ポイントを累積"
+      }
     }
   }
 }

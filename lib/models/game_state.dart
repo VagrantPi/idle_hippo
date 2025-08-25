@@ -1,6 +1,76 @@
 import 'dart:convert';
 import 'pet.dart';
 
+class PetTicketQuest {
+  final double k;
+  final double target;
+  final double progress;
+  final double idleSnapshot;
+  final bool available;
+
+  const PetTicketQuest({
+    this.k = 0.0,
+    this.target = 0.0,
+    this.progress = 0.0,
+    this.idleSnapshot = 0.0,
+    this.available = false,
+  });
+
+  factory PetTicketQuest.fromMap(Map<String, dynamic> map) {
+    return PetTicketQuest(
+      k: (map['k'] ?? 0.0).toDouble(),
+      target: (map['target'] ?? 0.0).toDouble(),
+      progress: (map['progress'] ?? 0.0).toDouble(),
+      idleSnapshot: (map['idleSnapshot'] ?? 0.0).toDouble(),
+      available: (map['available'] ?? false) as bool,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'k': k,
+        'target': target,
+        'progress': progress,
+        'idleSnapshot': idleSnapshot,
+        'available': available,
+      };
+
+  PetTicketQuest copyWith({
+    double? k,
+    double? target,
+    double? progress,
+    double? idleSnapshot,
+    bool? available,
+  }) {
+    return PetTicketQuest(
+      k: k ?? this.k,
+      target: target ?? this.target,
+      progress: progress ?? this.progress,
+      idleSnapshot: idleSnapshot ?? this.idleSnapshot,
+      available: available ?? this.available,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is PetTicketQuest &&
+        other.k == k &&
+        other.target == target &&
+        other.progress == progress &&
+        other.idleSnapshot == idleSnapshot &&
+        other.available == available;
+  }
+
+  @override
+  int get hashCode =>
+      k.hashCode ^
+      target.hashCode ^
+      progress.hashCode ^
+      idleSnapshot.hashCode ^
+      available.hashCode;
+}
+
+
 class CompletedMissionRecord {
   final int index;
   final String type;
@@ -397,6 +467,8 @@ class GameState {
   final DailyMissionState? dailyMission;
   final MainQuestState? mainQuest;
   final PetState? petState;
+  final PetTicketQuest? petTicketQuest;
+  final int petTickets;
 
   const GameState({
     required this.saveVersion,
@@ -408,6 +480,8 @@ class GameState {
     this.dailyMission,
     this.mainQuest,
     this.petState,
+    this.petTicketQuest,
+    this.petTickets = 0,
   });
 
   /// 建立初始狀態
@@ -421,6 +495,8 @@ class GameState {
       offline: const OfflineState(),
       dailyMission: null,
       mainQuest: const MainQuestState(),
+      petTicketQuest: null,
+      petTickets: 0,
     );
   }
 
@@ -457,6 +533,11 @@ class GameState {
       petState: map.containsKey('petState') && map['petState'] is Map<String, dynamic>
           ? PetState.fromMap(map['petState'] as Map<String, dynamic>)
           : null,
+      petTicketQuest:
+          map.containsKey('petTicketQuest') && map['petTicketQuest'] is Map<String, dynamic>
+              ? PetTicketQuest.fromMap(map['petTicketQuest'] as Map<String, dynamic>)
+              : null,
+      petTickets: (map['petTickets'] ?? 0) as int,
     );
   }
 
@@ -477,6 +558,8 @@ class GameState {
       if (dailyMission != null) 'dailyMission': dailyMission!.toMap(),
       if (mainQuest != null) 'mainQuest': mainQuest!.toMap(),
       if (petState != null) 'petState': petState!.toMap(),
+      if (petTicketQuest != null) 'petTicketQuest': petTicketQuest!.toMap(),
+      'petTickets': petTickets,
     };
   }
 
@@ -514,6 +597,8 @@ class GameState {
     DailyMissionState? dailyMission,
     MainQuestState? mainQuest,
     PetState? petState,
+    PetTicketQuest? petTicketQuest,
+    int? petTickets,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -525,6 +610,8 @@ class GameState {
       dailyMission: dailyMission ?? this.dailyMission,
       mainQuest: mainQuest ?? this.mainQuest,
       petState: petState ?? this.petState,
+      petTicketQuest: petTicketQuest ?? this.petTicketQuest,
+      petTickets: petTickets ?? this.petTickets,
     );
   }
 
@@ -553,7 +640,9 @@ class GameState {
         other.offline == offline &&
         _dailyMissionEquals(other.dailyMission, dailyMission) &&
         _mainQuestEquals(other.mainQuest, mainQuest) &&
-        _petStateEquals(other.petState, petState);
+        _petStateEquals(other.petState, petState) &&
+        other.petTicketQuest == petTicketQuest &&
+        other.petTickets == petTickets;
   }
 
   @override
@@ -566,7 +655,9 @@ class GameState {
         offline.hashCode ^
         (dailyMission?.hashCode ?? 0) ^
         (mainQuest?.hashCode ?? 0) ^
-        (petState?.hashCode ?? 0);
+        (petState?.hashCode ?? 0) ^
+        (petTicketQuest?.hashCode ?? 0) ^
+        petTickets.hashCode;
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

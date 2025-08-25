@@ -139,6 +139,7 @@
     }
   },
   "pets": {
+    "ticket": "Pet Ticket",
     "title": "Pet System",
     "equipped_title": "Equipped Pet",
     "equipped": "Equipped",
@@ -161,6 +162,12 @@
     "MooDeng": {
       "name": "Bouncing Pig MooDeng",
       "description": "Cute bouncing pig that provides idle income bonus"
+    },
+    "quest": {
+      "ticket": {
+        "title": "Pet Ticket Quest",
+        "desc": "Accumulate points"
+      }
     }
   }
 }

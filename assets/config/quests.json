@@ -4,7 +4,7 @@
       "id": "stage1",
       "title_key": "quest.stage1.title",
       "requirement": { "type": "tap_count", "value": 10 },
-      "reward": { "unlock": "idle.youtube" }
+      "reward": { "unlock": "equipment.youtube" }
     },
     {
       "id": "stage2",
