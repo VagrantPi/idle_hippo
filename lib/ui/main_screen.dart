@@ -98,6 +98,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   late AnimationController _randomMoveController;
   late Animation<Offset> _randomMoveAnimation;
   final math.Random _random = math.Random();
+  // 右上角任務紅點脈動動畫
+  late AnimationController _badgePulseController;
+  late Animation<double> _badgePulseAnimation;
 
   final List<Widget> _particles = [];
   static const int _maxParticles = 10;
@@ -165,6 +168,18 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     // 監聽頁面切換
     _pageManager.addListener(_onPageChanged);
+
+    // 紅點脈動動畫（持續往返放大縮小）
+    _badgePulseController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..repeat(reverse: true);
+    _badgePulseAnimation = Tween<double>(begin: 0.9, end: 1.2).animate(
+      CurvedAnimation(
+        parent: _badgePulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
 
@@ -196,6 +211,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _swingController.dispose();
     _randomMoveController.dispose();
     _characterController.dispose();
+    _badgePulseController.dispose();
     _pageManager.removeListener(_onPageChanged);
     super.dispose();
   }
@@ -652,6 +668,15 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     );
   }
   
+  // 判斷是否需要顯示「寵物抽獎任務完成」紅點
+  bool _isPetTicketQuestCompleted() {
+    final q = widget.gameState.petTicketQuest;
+    if (q == null) return false;
+    if (!q.available) return false;
+    if (q.target <= 0) return false;
+    return q.progress >= q.target;
+  }
+
 
 
   Widget _buildRightSideButtons() {
@@ -661,10 +686,37 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       child: Column(
         children: [
           const SizedBox(height: 16),
-          AnimatedButton(
-            iconPath: 'assets/images/icon/Quest.png',
-            onTap: () => _pageManager.navigateToPage(PageType.quest),
-            size: 80,
+          SizedBox(
+            width: 80,
+            height: 80,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: AnimatedButton(
+                    iconPath: 'assets/images/icon/Quest.png',
+                    onTap: () => _pageManager.navigateToPage(PageType.quest),
+                    size: 80,
+                  ),
+                ),
+                if (_isPetTicketQuestCompleted())
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: ScaleTransition(
+                      scale: _badgePulseAnimation,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           AnimatedButton(
