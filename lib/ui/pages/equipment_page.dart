@@ -289,7 +289,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
         final nextCost = equipmentService.getIdleNextCost(id, currentLevel);
         final unlocked = equipmentService.isIdleEquipmentUnlocked(widget.equipments, id);
         // 需同時滿足主線解鎖（僅針對 youtube）
-        final questUnlocked = widget.unlockedRewards.contains('idle.$id');
+        final questUnlocked = widget.unlockedRewards.contains('equipment.$id');
         final uiUnlocked = unlocked && (id != 'youtube' || questUnlocked);
         final canUpgrade = nextCost != null && uiUnlocked && widget.memePoints >= nextCost;
         final isMax = nextCost == null;

@@ -61,7 +61,7 @@ void main() {
       var state = initialState.copyWith(
         memePoints: 1e9,
         mainQuest: (initialState.mainQuest ?? const MainQuestState()).copyWith(
-          unlockedRewards: const ['idle.youtube'],
+          unlockedRewards: const ['equipment.youtube'],
         ),
       );
       
@@ -78,7 +78,7 @@ void main() {
       // 升級 BTC 到 3 級以滿足 DOGE 的 config 解鎖條件（先授予主線獎勵）
       state = state.copyWith(
         mainQuest: state.mainQuest!.copyWith(
-          unlockedRewards: const ['idle.youtube', 'idle.btc'],
+          unlockedRewards: const ['equipment.youtube', 'equipment.btc'],
         ),
       );
       for (int i = 0; i < 3; i++) {
@@ -94,7 +94,7 @@ void main() {
       state = state.copyWith(
         memePoints: 1e9,
         mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
-          unlockedRewards: const ['idle.youtube'],
+          unlockedRewards: const ['equipment.youtube'],
         ),
       );
       
@@ -122,7 +122,7 @@ void main() {
       state = state.copyWith(
         memePoints: 1e9,
         mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
-          unlockedRewards: const ['idle.youtube'],
+          unlockedRewards: const ['equipment.youtube'],
         ),
       );
       state = equipmentService.upgradeIdle(state, 'youtube');
@@ -149,7 +149,7 @@ void main() {
       state = state.copyWith(
         memePoints: 1e9,
         mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
-          unlockedRewards: const ['idle.youtube'],
+          unlockedRewards: const ['equipment.youtube'],
         ),
       );
       for (int i = 0; i < 3; i++) {
@@ -159,7 +159,7 @@ void main() {
       // 解鎖 BTC 的主線 gating，並升級至 Lv.3（以解鎖 DOGE 的 config 條件）
       state = state.copyWith(
         mainQuest: state.mainQuest!.copyWith(
-          unlockedRewards: const ['idle.youtube', 'idle.btc'],
+          unlockedRewards: const ['equipment.youtube', 'equipment.btc'],
         ),
       );
       state = equipmentService.upgradeIdle(state, 'youtube');
@@ -170,7 +170,7 @@ void main() {
       // 解鎖 DOGE 的主線 gating，再升級 DOGE Lv.1
       state = state.copyWith(
         mainQuest: state.mainQuest!.copyWith(
-          unlockedRewards: const ['idle.youtube', 'idle.btc', 'idle.doge'],
+          unlockedRewards: const ['equipment.youtube', 'equipment.btc', 'equipment.doge'],
         ),
       );
       state = equipmentService.upgradeIdle(state, 'doge');
@@ -192,7 +192,7 @@ void main() {
       state = state.copyWith(
         memePoints: 1e6,
         mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
-          unlockedRewards: const ['idle.youtube'],
+          unlockedRewards: const ['equipment.youtube'],
         ),
       );
       state = equipmentService.upgradeIdle(state, 'youtube');
@@ -218,7 +218,7 @@ void main() {
       state = state.copyWith(
         memePoints: 1e9,
         mainQuest: (state.mainQuest ?? const MainQuestState()).copyWith(
-          unlockedRewards: const ['idle.youtube'],
+          unlockedRewards: const ['equipment.youtube'],
         ),
       );
       

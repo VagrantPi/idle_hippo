@@ -208,7 +208,7 @@ class _PetsPageState extends State<PetsPage> {
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final imageHeight = constraints.maxHeight * 0.22; // 依卡片高度自適應
+              final imageHeight = constraints.maxHeight * 0.3; // 依卡片高度自適應
               return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

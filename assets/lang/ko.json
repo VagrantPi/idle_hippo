@@ -136,6 +136,7 @@
     }
   },
   "pets": {
+    "ticket": "펫 추첨권",
     "title": "펫 시스템",
     "equipped_title": "장착 중인 펫",
     "equipped": "장착됨",
@@ -158,6 +159,12 @@
     "MooDeng": {
       "name": "바운싱 피그 MooDeng",
       "description": "방치 수익 보너스를 제공하는 귀여운 바운싱 피그"
+    },
+    "quest": {
+      "ticket": {
+        "title": "펫 티켓 퀘스트",
+        "desc": "포인트 누적"
+      }
     }
   }
 }

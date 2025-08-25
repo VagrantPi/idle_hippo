@@ -12,6 +12,7 @@ import 'package:idle_hippo/services/equipment_service.dart';
 import 'package:idle_hippo/services/offline_reward_service.dart';
 import 'package:idle_hippo/services/daily_mission_service.dart';
 import 'package:idle_hippo/services/main_quest_service.dart';
+import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -59,6 +60,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final OfflineRewardService _offline = OfflineRewardService();
   final DailyMissionService _dailyMission = DailyMissionService();
   final MainQuestService _mainQuest = MainQuestService();
+  final PetTicketQuestService _petTicketQuest = PetTicketQuestService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -88,6 +90,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _initOfflineModule();
     _initDailyMissionModule();
     _initMainQuestModule();
+    _initPetTicketQuestModule();
     // 測試模式：若尚無離線基準，建立 baseline，讓 simulateAddSeconds 能立即結算
     if (widget.testMode && _gameState.offline.lastExitUtcMs <= 0) {
       final now = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -173,6 +176,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         
         // 處理主線任務進度（點數獲得）
         updatedState = _mainQuest.onEarnPoints(updatedState, pointsToAdd);
+
+        // 處理寵物抽獎券任務進度
+        updatedState = _petTicketQuest.addProgress(updatedState, pointsToAdd);
         
         setState(() {
           _gameState = updatedState.copyWith(
@@ -206,6 +212,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             setState(() {
               GameState updatedState = _dailyMission.onEarnPoints(_gameState, reward);
               updatedState = _mainQuest.onEarnPoints(updatedState, reward);
+              // 同步推進寵物抽獎券任務進度（離線收益）
+              updatedState = _petTicketQuest.addProgress(updatedState, reward);
               _gameState = updatedState;
             });
           }
@@ -223,6 +231,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
           setState(() {
             GameState updatedState = _dailyMission.onEarnPoints(_gameState, amount);
             updatedState = _mainQuest.onEarnPoints(updatedState, amount);
+            // 同步推進寵物抽獎券任務進度（離線翻倍）
+            updatedState = _petTicketQuest.addProgress(updatedState, amount);
             _gameState = updatedState;
           });
         }
@@ -389,6 +399,27 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     });
   }
 
+  void _initPetTicketQuestModule() {
+    // 檢查並解鎖寵物抽獎券任務（當主線達到指定階段）
+    GameState updatedState = _petTicketQuest.checkAndUnlock(_gameState);
+
+    // 若已解鎖但尚未有任務目標，依目前 idlePerSec 產生第一個任務
+    final quest = updatedState.petTicketQuest;
+    if (quest != null && quest.available && quest.target <= 0.0) {
+      final currentIdlePerSec = _idleIncome.currentIdlePerSec;
+      updatedState = _petTicketQuest.generateFirstQuest(
+        updatedState,
+        currentIdlePerSec: currentIdlePerSec,
+      );
+    }
+
+    if (!identical(updatedState, _gameState)) {
+      setState(() {
+        _gameState = updatedState;
+      });
+    }
+  }
+
   void _showQuestCompletedDialog(String questId, String rewardType, String rewardId) {
     final title = _localization.getString('quest.completed.title', defaultValue: '任務完成！');
     final confirm = _localization.getString('quest.completed.confirm', defaultValue: '確認');
@@ -400,7 +431,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 根據獎勵類型生成獎勵描述
     String rewardDescription;
     switch (rewardType) {
-      case 'equip':
+      case 'equipment':
         final equipmentName =_localization.getString('equip.$rewardId.name', defaultValue: '特殊');
         rewardDescription = _localization.getString('quest.reward.equipment', 
             defaultValue: '解鎖特殊裝備！');
@@ -426,6 +457,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         rewardDescription = _localization.getString('quest.reward.unknown', 
             defaultValue: '獲得神秘獎勵！');
     }
+    print('rewardDescription: $rewardDescription');
 
     showTopSlideDialog(
       context,
@@ -1044,6 +1076,21 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
               // 主線任務領取並推進到下一階段，包含更新 unlockedRewards
               setState(() {
                 _gameState = _mainQuest.claimCurrentQuest(_gameState);
+              });
+              // 立刻檢查並初始化寵物抽獎券任務（在進入 Stage 4 後）
+              _initPetTicketQuestModule();
+              // 同步 IdleIncome 的 GameState 參考，確保加成與任務累積即時生效
+              _idleIncome.updateGameState(_gameState);
+              _saveGameState();
+            },
+            onPetTicketClaim: (withAd) {
+              setState(() {
+                _gameState = _petTicketQuest.claimReward(
+                  _gameState,
+                  withAd: withAd,
+                  currentIdlePerSec: _idleIncome.currentIdlePerSec,
+                );
+                _idleIncome.updateGameState(_gameState);
               });
               _saveGameState();
             },

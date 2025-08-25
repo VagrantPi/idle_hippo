@@ -51,6 +51,8 @@ class MainScreen extends StatefulWidget {
   
   // GameState for MainQuest
   final GameState gameState;
+  // 寵物抽獎券領取回調
+  final void Function(bool withAd)? onPetTicketClaim;
 
   const MainScreen({
     super.key,
@@ -77,6 +79,7 @@ class MainScreen extends StatefulWidget {
     this.onClaimCurrentMission,
     this.onClaimCurrentStage,
     required this.gameState,
+    this.onPetTicketClaim,
   });
 
   @override
@@ -504,6 +507,33 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 8),
+
+              // 抽獎券數量顯示（僅圖示 + 數值，避免新增多語系字串）
+              if ((widget.gameState.mainQuest?.currentStage ?? 0) > 3)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/icon/Lottery.png',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.confirmation_num, color: Colors.cyanAccent, size: 20);
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: ${widget.gameState.petTickets}',
+                      style: const TextStyle(
+                        color: Colors.cyanAccent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
           ],
         ),
       ),
@@ -799,13 +829,42 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           missionPlan: widget.missionPlan ?? const [],
           missionsTodayCompleted: widget.missionsTodayCompleted ?? 0,
           onClaimCurrentMission: widget.onClaimCurrentMission,
+          onPetTicketClaim: widget.onPetTicketClaim,
           onClaimCurrentStage: () {
             // 先請父層更新全域 GameState（包含 unlockedRewards 與 currentStage 前進）
+            // 在前進階段前，讀取當前階段的獎勵以決定導頁
+            final questList = MainQuestService().getQuestList(widget.gameState);
+            Map<String, dynamic>? currentQuest;
+            for (final q in questList) {
+              if ((q['status'] as String?) == 'current') {
+                currentQuest = q;
+                break;
+              }
+            }
+            final reward = currentQuest != null
+                ? currentQuest['reward'] as Map<String, dynamic>?
+                : null;
+            final rewardType = reward != null ? reward['type'] as String? : null;
+            final rewardId = reward != null ? reward['id'] as String? : null;
+
             widget.onClaimCurrentStage?.call();
-            // 然後導向到裝備頁的放置分頁
+
+            // 然後依照獎勵類型導向對應頁面
             setState(() {
-              _equipmentInitialTabIndex = 1;
-              _pageManager.navigateToPage(PageType.equipment);
+              if (rewardType == 'system') {
+                if (rewardId == 'title') {
+                  _pageManager.navigateToPage(PageType.titles);
+                } else if (rewardId == 'pet') {
+                  _pageManager.navigateToPage(PageType.pets);
+                } else {
+                  // 未知系統類獎勵，回首頁以避免導頁錯誤
+                  _pageManager.navigateToHome();
+                }
+              } else {
+                // 非 system 類獎勵，維持導向裝備頁（預設切到放置分頁）
+                _equipmentInitialTabIndex = 1;
+                _pageManager.navigateToPage(PageType.equipment);
+              }
             });
           },
           gameState: widget.gameState,
