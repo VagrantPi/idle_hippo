@@ -73,9 +73,11 @@ class SecureSaveService {
       }
 
       // 所有存檔都失敗，回傳初始狀態
-      return GameState.initial(_currentVersion);
+      final initState = GameState.initial(_currentVersion);
+      return initState;
     } catch (e) {
-      return GameState.initial(_currentVersion);
+      final initState = GameState.initial(_currentVersion);
+      return initState;
     }
   }
 

@@ -18,6 +18,7 @@ import 'package:idle_hippo/ui/pages/settings_page.dart';
 import 'package:idle_hippo/ui/pages/music_game_page.dart';
 import 'package:idle_hippo/ui/pages/no_ads_page.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
+import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
 
 class MainScreen extends StatefulWidget {
@@ -89,6 +90,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final LocalizationService _localization = LocalizationService();
   final PageManager _pageManager = PageManager();
+  final GachaService _gachaService = GachaService();
   
   late AnimationController _characterController;
   late final IdleIncomeService _idleIncome;
@@ -125,6 +127,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _idleIncome = IdleIncomeService();
+    // 確保抽獎券初始值會透過 stream 發送
+    _gachaService.initialize();
 
     _characterController = AnimationController(
       duration: const Duration(milliseconds: 100),
@@ -528,27 +532,34 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
               // 抽獎券數量顯示（僅圖示 + 數值，避免新增多語系字串）
               if ((widget.gameState.mainQuest?.currentStage ?? 0) > 3)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/icon/Lottery.png',
-                      width: 20,
-                      height: 20,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.confirmation_num, color: Colors.cyanAccent, size: 20);
-                      },
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: ${widget.gameState.petTickets}',
-                      style: const TextStyle(
-                        color: Colors.cyanAccent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                StreamBuilder<int>(
+                  stream: _gachaService.petTicketsStream,
+                  initialData: widget.gameState.petTickets,
+                  builder: (context, snapshot) {
+                    final tickets = snapshot.data ?? widget.gameState.petTickets;
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/icon/Lottery.png',
+                          width: 20,
+                          height: 20,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.confirmation_num, color: Colors.cyanAccent, size: 20);
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
+                          style: const TextStyle(
+                            color: Colors.cyanAccent,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
           ],
         ),
@@ -868,7 +879,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         );
         break;
       case PageType.pets:
-        pageContent = const PetsPage();
+        pageContent = PetsPage(gameState: widget.gameState);
         break;
       case PageType.shop:
         pageContent = const ShopPage();

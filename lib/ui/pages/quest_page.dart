@@ -397,7 +397,6 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                 child: ElevatedButton(
                   onPressed: done
                       ? () async {
-                          print('claim pet ticket quest (x2) pressed, parent callback: ${widget.onPetTicketClaim != null}');
                           final localization = LocalizationService();
                           final dialogTitle = localization.getString('offline.title', defaultValue: 'Offline Reward');
                           final doubleLabel = localization.getString('offline.double_reward', defaultValue: 'Double x2');

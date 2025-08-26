@@ -136,19 +136,19 @@
     }
   },
   "pets": {
-    "ticket": "ペット抽選券",
+    "ticket": "ペットガチャチケット",
     "title": "ペットシステム",
     "equipped_title": "装備中のペット",
     "equipped": "装備中",
     "not_equipped": "未装備",
-    "tap_to_equip": "タップで装備",
-    "tap_to_unequip": "タップで解除",
+    "tap_to_equip": "タップして装備",
+    "tap_to_unequip": "タップして外す",
     "upgrade_points": "アップグレードポイント",
     "idle_income": "放置収益",
-    "next_level": "次レベルに必要",
+    "next_level": "次のレベルに必要",
     "no_pets_available": "利用可能なペットがありません",
-    "upgrade_success": "強化しました！",
-    "max_level_reached": "最大レベル達成",
+    "upgrade_success": "アップグレード成功！",
+    "max_level_reached": "最大レベルに到達",
     "rarity": {
       "RR": "コモン",
       "R": "レア",
@@ -156,14 +156,31 @@
       "SR": "エピック",
       "SSR": "レジェンダリー"
     },
-    "MooDeng": {
-      "name": "バウンシングピッグ MooDeng",
-      "description": "放置収益ボーナスを提供する可愛いバウンシングピッグ"
+    "gacha": {
+      "tab_title": "ガチャ",
+      "tickets_display": "チケット: {count}",
+      "single_draw": "単発ガチャ",
+      "single_draw_cost": "チケット1枚消費",
+      "ten_plus_one_draw": "11連ガチャ",
+      "ten_plus_one_cost": "チケット10枚消費",
+      "history_title": "ガチャ履歴",
+      "no_history": "ガチャ記録がありません",
+      "result_title": "ガチャ結果",
+      "new_pet": "新しいペット！",
+      "upgrade_points_gained": "アップグレードポイント +1",
+      "insufficient_tickets": "チケット不足",
+      "draw_failed": "ガチャ失敗",
+      "confirm": "確認",
+      "next": "次へ",
+      "skip": "スキップ"
+    },
+    "locked": {
+      "pet_system_unlock": "ペットシステムはメインクエスト第3章クリアで解放"
     },
     "quest": {
       "ticket": {
-        "title": "ペットチケットクエスト",
-        "desc": "ポイントを累積"
+        "title": "ペットガチャチケットクエスト",
+        "desc": "ポイントを蓄積"
       }
     }
   }

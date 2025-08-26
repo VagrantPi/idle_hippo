@@ -1,215 +1,538 @@
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/pet_service.dart';
+import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/pet.dart';
+import 'package:idle_hippo/ui/components/gacha_animation.dart';
+import 'package:idle_hippo/ui/components/gacha_button.dart';
+import 'package:idle_hippo/models/game_state.dart';
 
 class PetsPage extends StatefulWidget {
-  const PetsPage({super.key});
+  final GameState gameState;
+
+  const PetsPage({super.key, required this.gameState});
 
   @override
   State<PetsPage> createState() => _PetsPageState();
 }
 
-class _PetsPageState extends State<PetsPage> {
+class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin {
   final PetService _petService = PetService();
+  final GachaService _gachaService = GachaService();
   final LocalizationService _localization = LocalizationService();
+  // 尚未揭示（尚未顯示名稱）的抽卡結果時間戳，暫時不顯示在歷史中
+  final Set<int> _pendingRevealTimestamps = <int>{};
+  
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    // 若尚未初始化（無任何寵物），從設定檔建立初始寵物
-    if (_petService.currentState.pets.isEmpty) {
-      // 非同步初始化，狀態會透過 stream 送出
-      _petService.initialize(null);
-    }
+    _tabController = TabController(length: 2, vsync: this);
+    
+    // 初始化抽卡服務
+    _gachaService.initialize();
+  }
+
+  // Hot reload 時呼叫，確保服務重新載入持久化資料
+  @override
+  void reassemble() {
+    super.reassemble();
+    _gachaService.ensureInitialized();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final int currentStage = widget.gameState.mainQuest?.currentStage ?? 0;
+    final bool isLocked = currentStage <= 3;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: StreamBuilder<PetState>(
-        stream: _petService.petStateStream,
-        initialData: _petService.currentState,
-        builder: (context, snapshot) {
-          final petState = snapshot.data ?? const PetState();
-          final pets = _petService.getSortedPets();
-
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 80, 16, 16),
+      body: Stack(
+        children: [
+          // 主要內容（必要時灰階處理）
+          ColorFiltered(
+            colorFilter: isLocked
+                ? const ColorFilter.matrix(<double>[
+                    0.2126, 0.7152, 0.0722, 0, 0,
+                    0.2126, 0.7152, 0.0722, 0, 0,
+                    0.2126, 0.7152, 0.0722, 0, 0,
+                    0,      0,      0,      1, 0,
+                  ])
+                : const ColorFilter.mode(Colors.transparent, BlendMode.srcOver),
             child: Column(
               children: [
-                // 標題
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _localization.getPageName('pets'),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                
-                // 當前裝備的寵物資訊
-                if (petState.equippedPet != null)
-                  _buildEquippedPetInfo(petState.equippedPet!),
-                
-                // 寵物列表（兩欄 Grid）
-                Expanded(
-                  child: pets.isEmpty
-                      ? _buildEmptyState()
-                      : _buildPetGrid(pets),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEquippedPetInfo(Pet equippedPet) {
-    final currentIdlePerSec = _petService.getPetIdlePerSec(equippedPet);
-    
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: equippedPet.rarity.getColor(), width: 2),
-      ),
-      child: Column(
-        children: [
-          Text(
-            _localization.getString('pets.equipped_title', defaultValue: '已裝備寵物'),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              // 寵物圖片
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: equippedPet.rarity.getColor(), width: 2),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.asset(
-                    equippedPet.imagePath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[800],
-                        child: const Icon(Icons.pets, color: Colors.white),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              
-              // 寵物資訊
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${_localization.getString(equippedPet.name, defaultValue: equippedPet.name)} (${equippedPet.rarity.value})',
-                      style: TextStyle(
-                        color: equippedPet.rarity.getColor(),
-                        fontSize: 16,
+                // 標題區域
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 80, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _localization.getPageName('pets'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      '${_localization.getUI('level')}: ${equippedPet.level}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    Text(
-                      '${_localization.getString('pets.idle_income', defaultValue: '放置收益')}: ${currentIdlePerSec.toStringAsFixed(2)}/s',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                      style: const TextStyle(color: Colors.green, fontSize: 14),
-                    ),
+                  ),
+                ),
+                // Tab 切換區域
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 1),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white54,
+                    indicatorColor: const Color(0xFF00FFD1),
+                    tabs: [
+                      Tab(text: _localization.getPageName('pets')),
+                      Tab(text: _localization.getString('pets.gacha.tab_title')),
+                    ],
+                  ),
+                ),
+              
+              // Tab 內容區域
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildPetsListTab(),
+                    _buildGachaTab(),
                   ],
                 ),
               ),
             ],
+          ),
+        ),
+
+          // 鎖定覆蓋層（主線 < 3）
+          isLocked
+              ? Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                        ),
+                        child: Text(
+                          _localization.getString(
+                            'pets.locked.pet_system_unlock',
+                            defaultValue: '寵物系統需要完成主線第三章解鎖',
+                          ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+
+  /// 建構寵物列表 Tab
+  Widget _buildPetsListTab() {
+    return StreamBuilder<PetState>(
+      stream: _petService.petStateStream,
+      initialData: _petService.currentState,
+      builder: (context, snapshot) {
+        final petState = snapshot.data ?? const PetState();
+        final pets = _petService.getSortedPets();
+
+        if (pets.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.pets, color: Colors.white.withValues(alpha: 0.7), size: 72),
+                const SizedBox(height: 16),
+                Text(
+                  _localization.getString('pets.no_pets_available'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _tabController.animateTo(1),
+                  icon: const Icon(Icons.casino),
+                  label: Text(_localization.getString('pets.gacha.tab_title')),
+                )
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              // 當前裝備的寵物資訊
+              if (petState.equippedPet != null) ...[
+                const SizedBox(height: 8),
+                _buildEquippedPetInfo(petState.equippedPet!),
+                const SizedBox(height: 8),
+              ],
+
+              // 寵物列表（兩欄 Grid）
+              Expanded(
+                child: GridView.builder(
+                  padding: EdgeInsets.zero,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: pets.length,
+                  itemBuilder: (context, index) {
+                    final pet = pets[index];
+                    return _buildPetCard(pet);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 建構抽卡 Tab
+  Widget _buildGachaTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // 抽獎券顯示
+          StreamBuilder<int>(
+            stream: _gachaService.petTicketsStream,
+            initialData: _gachaService.getPetTickets(),
+            builder: (context, snapshot) {
+              final tickets = snapshot.data ?? 0;
+              return TicketDisplay(
+                ticketCount: tickets,
+                backgroundColor: Colors.amber,
+              );
+            },
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // 抽卡按鈕（左右兩欄）
+          Row(
+            children: [
+              Expanded(
+                child: StreamBuilder<int>(
+                  stream: _gachaService.petTicketsStream,
+                  initialData: _gachaService.getPetTickets(),
+                  builder: (context, snapshot) {
+                    final tickets = snapshot.data ?? 0;
+                    return GachaButton(
+                      text: _localization.getString('pets.gacha.single_draw'),
+                      costText: _localization.getString('pets.gacha.single_draw_cost'),
+                      onPressed: _performSingleDraw,
+                      isEnabled: tickets >= 1,
+                      primaryColor: Colors.blue,
+                      icon: Icons.casino,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: StreamBuilder<int>(
+                  stream: _gachaService.petTicketsStream,
+                  initialData: _gachaService.getPetTickets(),
+                  builder: (context, snapshot) {
+                    final tickets = snapshot.data ?? 0;
+                    return GachaButton(
+                      text: _localization.getString('pets.gacha.ten_plus_one_draw'),
+                      costText: _localization.getString('pets.gacha.ten_plus_one_cost'),
+                      onPressed: _performTenPlusOneDraw,
+                      isEnabled: tickets >= 10,
+                      primaryColor: Colors.purple,
+                      icon: Icons.auto_awesome,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // 抽卡歷史
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _localization.getString('pets.gacha.history_title'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // const SizedBox(height: 8),
+                  Expanded(
+                    child: _buildGachaHistory(),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPetGrid(List<Pet> pets) {
-    final aspect = _computeCardAspect(context);
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        // 依語系與字級自適應卡片比例
-        childAspectRatio: aspect,
-      ),
-      itemCount: pets.length,
-      itemBuilder: (context, index) {
-        final pet = pets[index];
-        return _buildPetCard(pet);
+  /// 建構抽卡歷史列表
+  Widget _buildGachaHistory() {
+    return StreamBuilder<List<GachaHistoryRecord>>(
+      stream: _gachaService.gachaHistoryStream,
+      initialData: _gachaService.getGachaHistory(),
+      builder: (context, snapshot) {
+        final history = snapshot.data ?? const <GachaHistoryRecord>[];
+        // 過濾尚未揭示的紀錄（等動畫顯示名稱後再插入）
+        final visible = history
+            .where((r) => !_pendingRevealTimestamps.contains(r.timestamp))
+            .toList();
+
+        if (visible.isEmpty) {
+          return Center(
+            child: Text(
+              _localization.getString('pets.gacha.no_history'),
+              style: const TextStyle(color: Colors.white70),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: visible.length,
+          itemBuilder: (context, index) {
+            final record = visible[index];
+            final rarityColor = _getRarityColorFromString(record.rarity);
+
+            return GachaHistoryCard(
+              rarity: record.rarity,
+              name: record.name,
+              timestamp: record.timestamp,
+              rarityColor: rarityColor,
+            );
+          },
+        );
       },
     );
   }
 
-  // 根據語系與文字縮放比，自適應卡片比例，避免保留過多空間或溢位
-  double _computeCardAspect(BuildContext context) {
-    final lang = _localization.currentLanguage;
-    // 使用新的 textScaler 取代已棄用的 textScaleFactor
-    final scaler = MediaQuery.of(context).textScaler;
-    final ts = scaler.scale(1.0); // 以字級 1.0 的縮放結果近似視為縮放係數
-    // 基準：中文較短，卡片可矮一些；其他語系字較長，卡片略高。
-    double base = (lang == 'zh') ? 0.8 : 0.66;
-    // 若使用者系統字級偏大，適度增高卡片（降低 aspect）
-    if (ts > 1.0) {
-      final delta = (ts - 1.0).clamp(0.0, 0.5); // 最多調 0.5
-      base -= 0.06 * delta / 0.5; // 最多降到 ~0.64
+  /// 取得稀有度顏色 (從 PetRarity 枚舉)
+  Color _getRarityColor(PetRarity rarity) {
+    switch (rarity) {
+      case PetRarity.ssr:
+        return Colors.amber;
+      case PetRarity.sr:
+        return Colors.purple;
+      case PetRarity.s:
+        return Colors.blue;
+      case PetRarity.r:
+        return Colors.green;
+      case PetRarity.rr:
+        return Colors.grey;
     }
-    return base;
   }
 
+  /// 取得稀有度顏色 (從字串)
+  Color _getRarityColorFromString(String rarity) {
+    switch (rarity) {
+      case 'SSR':
+        return Colors.amber;
+      case 'SR':
+        return Colors.purple;
+      case 'S':
+        return Colors.blue;
+      case 'R':
+        return Colors.green;
+      case 'RR':
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// 執行單抽
+  Future<void> _performSingleDraw() async {
+    try {
+      final result = await _gachaService.performSingleDraw();
+      if (mounted) {
+        _showGachaAnimation([result]);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_localization.getString('pets.gacha.draw_failed')}: $e')),
+        );
+      }
+    }
+  }
+
+  /// 執行十一連抽
+  Future<void> _performTenPlusOneDraw() async {
+    try {
+      final results = await _gachaService.performTenPlusOneDraw();
+      if (mounted) {
+        _showGachaAnimation(results);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('抽卡失敗: $e')),
+        );
+      }
+    }
+  }
+
+  /// 顯示抽卡動畫
+  void _showGachaAnimation(List<GachaResult> results) {
+    // 在動畫開始前，先將這批結果標記為「待揭示」，暫不顯示在歷史清單
+    setState(() {
+      _pendingRevealTimestamps.addAll(results.map((e) => e.timestamp));
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => GachaAnimationDialog(
+        results: results,
+        onReveal: (res) {
+          // 單抽：名稱揭示時釋放
+          if (results.length == 1 && mounted) {
+            setState(() {
+              _pendingRevealTimestamps.remove(res.timestamp);
+            });
+          }
+        },
+        onAdvance: (res) {
+          // 多抽：使用者按「下一個/確定」時釋放
+          if (results.length > 1 && mounted) {
+            setState(() {
+              _pendingRevealTimestamps.remove(res.timestamp);
+            });
+          }
+        },
+        onComplete: () {
+          // 動畫結束後，若尚有殘留（例如跳過）則一次性釋放
+          if (mounted) {
+            setState(() {
+              _pendingRevealTimestamps.clear();
+            });
+          }
+        },
+      ),
+    );
+  }
+
+
+  /// 建構當前裝備寵物資訊
+  Widget _buildEquippedPetInfo(Pet pet) {
+    return Container(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _getRarityColor(pet.rarity), width: 2),
+      ),
+      child: Row(
+        children: [
+          // 寵物圖片
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              image: DecorationImage(
+                image: AssetImage(pet.imagePath),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // 寵物資訊
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${pet.name} ${pet.rarity.value}',
+                  style: TextStyle(
+                    color: _getRarityColor(pet.rarity),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${_localization.getString('ui.level')}: ${pet.level}',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                Text(
+                  '${_localization.getString('pets.idle_income')}: ${pet.baseIdlePerSec}${_localization.getString('common.perSecond', defaultValue: '/s')}',
+                  style: const TextStyle(color: Colors.green),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 建構寵物卡片
   Widget _buildPetCard(Pet pet) {
     final currentIdlePerSec = _petService.getPetIdlePerSec(pet);
     final isEquipped = pet.isEquipped;
 
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: pet.rarity.getColor(),
-              width: isEquipped ? 2 : 1.5,
-            ),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final imageHeight = constraints.maxHeight * 0.3; // 依卡片高度自適應
-              return Column(
+    return Container(
+      padding: const EdgeInsets.all(10),
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: pet.rarity.getColor(),
+          width: isEquipped ? 2 : 1.5,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final imageHeight = constraints.maxHeight * 0.38; // 依卡片高度自適應
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 圖片（置中、等比縮放）
@@ -278,7 +601,7 @@ class _PetsPageState extends State<PetsPage> {
                         ),
                         const SizedBox(height: 1),
                         Text(
-                          '${_localization.getString('pets.idle_income', defaultValue: '放置收益')}: ${currentIdlePerSec.toStringAsFixed(2)}/s',
+                          '${_localization.getString('pets.idle_income', defaultValue: '放置收益')}: ${currentIdlePerSec.toStringAsFixed(2)}${_localization.getString('common.perSecond', defaultValue: '/s')}',
                           maxLines: 2,
                           softWrap: true,
                           style: const TextStyle(color: Colors.lightGreenAccent, fontSize: 12),
@@ -290,12 +613,6 @@ class _PetsPageState extends State<PetsPage> {
                           softWrap: true,
                           style: const TextStyle(color: Colors.orange, fontSize: 12),
                         ),
-                        Text(
-                          '${_localization.getString('pets.next_level', defaultValue: '下一級需要')}: ${pet.nextLevelRequirement}',
-                          maxLines: 2,
-                          softWrap: true,
-                          style: const TextStyle(color: Colors.white54, fontSize: 12),
-                        ),
                       ],
                     ),
                   ),
@@ -306,7 +623,7 @@ class _PetsPageState extends State<PetsPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SizedBox(
-                          height: 44,
+                          height: 40,
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () => _onPetTap(pet),
@@ -329,7 +646,7 @@ class _PetsPageState extends State<PetsPage> {
                         ),
                         const SizedBox(height: 4),
                         SizedBox(
-                          height: 44,
+                          height: 40,
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: pet.canUpgrade ? () => _upgradePet(pet) : null,
@@ -358,59 +675,8 @@ class _PetsPageState extends State<PetsPage> {
               ),
               
             ],
-            );
-            },
-          ),
-        ),
-        // 覆蓋在卡片黑色區域底部的測試加點按鈕（僅在未達升級門檻時顯示）
-        // if (!pet.canUpgrade)
-          Positioned(
-            left: 10,
-            right: 10,
-            bottom: 8,
-            child: SizedBox(
-              height: 28,
-              child: ElevatedButton(
-                onPressed: () => _addTestPoints(pet),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C5CE7),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    _localization.getString('pets.test_add_points', defaultValue: '加點(測試)'),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.pets,
-            size: 80,
-            color: Colors.grey[600],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _localization.getString('pets.no_pets_available', defaultValue: '暫無可用寵物'),
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 18,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -439,21 +705,4 @@ class _PetsPageState extends State<PetsPage> {
     }
   }
 
-  void _addTestPoints(Pet pet) async {
-    await _petService.addUpgradePoints(pet.rarity, 1);
-    if (!mounted) return;
-    final updated = _petService.getPetByRarity(pet.rarity);
-    if (updated == null) return;
-    final need = updated.nextLevelRequirement;
-    final has = updated.upgradePoints;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${_localization.getString(updated.name, defaultValue: updated.name)} +1 (${_localization.getString('pets.upgrade_points', defaultValue: '升級點數')}: $has/$need)',
-        ),
-        backgroundColor: Colors.deepPurple,
-        duration: const Duration(milliseconds: 900),
-      ),
-    );
-  }
 }

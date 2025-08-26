@@ -1,6 +1,47 @@
 import 'dart:convert';
 import 'pet.dart';
 
+/// 抽卡歷史記錄
+class GachaHistoryRecord {
+  final String rarity;
+  final String name;
+  final int timestamp;
+
+  const GachaHistoryRecord({
+    required this.rarity,
+    required this.name,
+    required this.timestamp,
+  });
+
+  factory GachaHistoryRecord.fromMap(Map<String, dynamic> map) {
+    return GachaHistoryRecord(
+      rarity: map['rarity'] as String,
+      name: map['name'] as String,
+      timestamp: map['timestamp'] as int,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'rarity': rarity,
+      'name': name,
+      'timestamp': timestamp,
+    };
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is GachaHistoryRecord &&
+        other.rarity == rarity &&
+        other.name == name &&
+        other.timestamp == timestamp;
+  }
+
+  @override
+  int get hashCode => rarity.hashCode ^ name.hashCode ^ timestamp.hashCode;
+}
+
 class PetTicketQuest {
   final double k;
   final double target;
@@ -469,6 +510,7 @@ class GameState {
   final PetState? petState;
   final PetTicketQuest? petTicketQuest;
   final int petTickets;
+  final List<GachaHistoryRecord> gachaHistory;
 
   const GameState({
     required this.saveVersion,
@@ -482,6 +524,7 @@ class GameState {
     this.petState,
     this.petTicketQuest,
     this.petTickets = 0,
+    this.gachaHistory = const [],
   });
 
   /// 建立初始狀態
@@ -497,6 +540,7 @@ class GameState {
       mainQuest: const MainQuestState(),
       petTicketQuest: null,
       petTickets: 0,
+      gachaHistory: const [],
     );
   }
 
@@ -538,6 +582,11 @@ class GameState {
               ? PetTicketQuest.fromMap(map['petTicketQuest'] as Map<String, dynamic>)
               : null,
       petTickets: (map['petTickets'] ?? 0) as int,
+      gachaHistory: map.containsKey('gachaHistory') && map['gachaHistory'] is List
+          ? List<Map<String, dynamic>>.from(map['gachaHistory'] as List)
+              .map(GachaHistoryRecord.fromMap)
+              .toList()
+          : const [],
     );
   }
 
@@ -560,6 +609,7 @@ class GameState {
       if (petState != null) 'petState': petState!.toMap(),
       if (petTicketQuest != null) 'petTicketQuest': petTicketQuest!.toMap(),
       'petTickets': petTickets,
+      'gachaHistory': gachaHistory.map((record) => record.toMap()).toList(),
     };
   }
 
@@ -599,6 +649,7 @@ class GameState {
     PetState? petState,
     PetTicketQuest? petTicketQuest,
     int? petTickets,
+    List<GachaHistoryRecord>? gachaHistory,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -612,6 +663,7 @@ class GameState {
       petState: petState ?? this.petState,
       petTicketQuest: petTicketQuest ?? this.petTicketQuest,
       petTickets: petTickets ?? this.petTickets,
+      gachaHistory: gachaHistory ?? List<GachaHistoryRecord>.from(this.gachaHistory),
     );
   }
 
@@ -625,7 +677,9 @@ class GameState {
   @override
   String toString() {
     return 'GameState(saveVersion: $saveVersion, memePoints: $memePoints, '
-           'equipments: $equipments, lastTs: $lastTs, offline: $offline)';
+           'equipments: $equipments, lastTs: $lastTs, offline: $offline, '
+           'petTickets: $petTickets, pets: ${petState?.pets.length ?? 0}, '
+           'equipped: ${petState?.equippedPetId}, gachaHistory: ${gachaHistory.length})';
   }
 
   @override
@@ -640,9 +694,10 @@ class GameState {
         other.offline == offline &&
         _dailyMissionEquals(other.dailyMission, dailyMission) &&
         _mainQuestEquals(other.mainQuest, mainQuest) &&
-        _petStateEquals(other.petState, petState) &&
+        other.petState == petState &&
         other.petTicketQuest == petTicketQuest &&
-        other.petTickets == petTickets;
+        other.petTickets == petTickets &&
+        _listGachaHistoryEquals(other.gachaHistory, gachaHistory);
   }
 
   @override
@@ -657,7 +712,8 @@ class GameState {
         (mainQuest?.hashCode ?? 0) ^
         (petState?.hashCode ?? 0) ^
         (petTicketQuest?.hashCode ?? 0) ^
-        petTickets.hashCode;
+        petTickets.hashCode ^
+        gachaHistory.hashCode;
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {
@@ -686,9 +742,12 @@ class GameState {
     return a == b;
   }
 
-  bool _petStateEquals(PetState? a, PetState? b) {
-    if (a == null && b == null) return true;
-    if (a == null || b == null) return false;
-    return a == b;
+
+  bool _listGachaHistoryEquals(List<GachaHistoryRecord> a, List<GachaHistoryRecord> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }

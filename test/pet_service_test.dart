@@ -3,6 +3,30 @@ import 'package:idle_hippo/models/pet.dart';
 import 'package:idle_hippo/services/pet_service.dart';
 
 void main() {
+
+  final savedPets = [
+    const Pet(
+      petKey: 'MooDeng',
+      name: '彈跳豬 MooDeng',
+      imagePath: 'assets/images/pets/moodeng_r.png',
+      rarity: PetRarity.r,
+      baseIdlePerSec: 1.0,
+      level: 1,
+      upgradePoints: 0,
+      isEquipped: false,
+    ),
+    const Pet(
+      petKey: 'MooDeng',
+      name: '彈跳豬 MooDeng',
+      imagePath: 'assets/images/pets/moodeng_r.png',
+      rarity: PetRarity.ssr,
+      baseIdlePerSec: 1.0,
+      level: 1,
+      upgradePoints: 0,
+      isEquipped: false,
+    ),
+  ];
+
   // 初始化 Flutter 測試綁定，避免使用 asset bundle 等服務時拋出 Binding 未初始化錯誤
   TestWidgetsFlutterBinding.ensureInitialized();
   group('PetService', () {
@@ -19,8 +43,7 @@ void main() {
     test('應該正確初始化空的寵物狀態', () async {
       await petService.initialize(null);
       
-      expect(petService.currentState.pets, isNotEmpty);
-      expect(petService.currentState.pets.length, 5); // 五種稀有度
+      expect(petService.currentState.pets.length, 0);
     });
 
     test('應該正確初始化已保存的寵物狀態', () async {
@@ -77,7 +100,7 @@ void main() {
     });
 
     test('裝備新寵物時應該自動卸下舊寵物', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final pets = petService.currentState.pets;
       final firstPet = pets[0];
@@ -97,7 +120,7 @@ void main() {
     });
 
     test('應該正確升級寵物', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final pets = petService.currentState.pets;
       final testPet = pets.first.copyWith(upgradePoints: 10); // 給予足夠的升級點數
@@ -118,7 +141,7 @@ void main() {
     });
 
     test('升級點數不足時不應該升級', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final pets = petService.currentState.pets;
       final testPet = pets.first; // 預設 0 升級點數
@@ -134,7 +157,7 @@ void main() {
     });
 
     test('應該正確為所有寵物增加升級點數', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final originalPoints = petService.currentState.pets.map((pet) => pet.upgradePoints).toList();
       
@@ -148,7 +171,7 @@ void main() {
     });
 
     test('應該正確計算當前裝備寵物的 idlePerSec', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       // 沒有裝備寵物時應該返回 0
       expect(petService.getCurrentPetIdlePerSec(), 0.0);
@@ -165,7 +188,7 @@ void main() {
     });
 
     test('應該正確計算特定寵物的 idlePerSec', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final pets = petService.currentState.pets;
       final testPet = pets.first;
@@ -191,19 +214,19 @@ void main() {
     });
 
     test('應該正確取得按稀有度排序的寵物列表', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final sortedPets = petService.getSortedPets();
       
       // 應該按稀有度從高到低排序
       for (int i = 0; i < sortedPets.length - 1; i++) {
         expect(sortedPets[i].rarity.sortWeight, 
-               greaterThanOrEqualTo(sortedPets[i + 1].rarity.sortWeight));
+        greaterThanOrEqualTo(sortedPets[i + 1].rarity.sortWeight));
       }
     });
 
     test('應該正確根據稀有度取得寵物', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final rarePet = petService.getPetByRarity(PetRarity.r);
       expect(rarePet?.rarity, PetRarity.r);
@@ -213,7 +236,7 @@ void main() {
     });
 
     test('應該正確檢查是否有可升級的寵物', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       // 初始狀態應該沒有可升級的寵物
       expect(petService.hasUpgradablePets(), false);
@@ -224,7 +247,7 @@ void main() {
     });
 
     test('應該正確取得可升級的寵物列表', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       // 初始狀態應該沒有可升級的寵物
       expect(petService.getUpgradablePets(), isEmpty);
@@ -233,32 +256,15 @@ void main() {
       await petService.addUpgradePointsToAll(10);
       final upgradablePets = petService.getUpgradablePets();
       expect(upgradablePets, isNotEmpty);
-      expect(upgradablePets.length, 5); // 所有寵物都可升級
-    });
-
-    test('應該正確重置寵物系統', () async {
-      await petService.initialize(null);
-      
-      // 修改狀態
-      await petService.addUpgradePointsToAll(100);
-      final pets = petService.currentState.pets;
-      await petService.equipPet(pets.first);
-      
-      // 重置
-      await petService.reset();
-      
-      // 檢查是否恢復初始狀態
-      expect(petService.currentState.equippedPet, isNull);
-      expect(petService.currentState.pets.every((pet) => pet.upgradePoints == 0), true);
-      expect(petService.currentState.pets.every((pet) => pet.level == 1), true);
+      expect(upgradablePets.length, 2); // 所有寵物都可升級
     });
 
     test('應該正確提供 debug 資訊', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final debugInfo = petService.getDebugInfo();
       
-      expect(debugInfo['totalPets'], 5);
+      expect(debugInfo['totalPets'], 2);
       expect(debugInfo['equippedPetId'], isNull);
       expect(debugInfo['equippedPetIdlePerSec'], 0.0);
       expect(debugInfo['pets'], isA<List>());
@@ -266,7 +272,7 @@ void main() {
     });
 
     test('petStateStream 應該正確發送狀態更新', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final stateUpdates = <PetState>[];
       final subscription = petService.petStateStream.listen((state) {

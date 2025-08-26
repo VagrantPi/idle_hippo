@@ -156,9 +156,26 @@
       "SR": "史詩",
       "SSR": "傳說"
     },
-    "MooDeng": {
-      "name": "彈跳豬 MooDeng",
-      "description": "可愛的彈跳豬，提供放置收益加成"
+    "gacha": {
+      "tab_title": "抽卡",
+      "tickets_display": "抽獎券: {count}",
+      "single_draw": "單抽",
+      "single_draw_cost": "消耗 1 張抽獎券",
+      "ten_plus_one_draw": "十一連抽",
+      "ten_plus_one_cost": "消耗 10 張抽獎券",
+      "history_title": "抽卡歷史",
+      "no_history": "尚無抽卡記錄",
+      "result_title": "抽卡結果",
+      "new_pet": "新獲得!",
+      "upgrade_points_gained": "升級點數 +1",
+      "insufficient_tickets": "抽獎券不足",
+      "draw_failed": "抽卡失敗",
+      "confirm": "確定",
+      "next": "下一個",
+      "skip": "跳過"
+    },
+    "locked": {
+      "pet_system_unlock": "寵物系統需要完成主線第三章解鎖"
     },
     "quest": {
       "ticket": {

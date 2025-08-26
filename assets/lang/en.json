@@ -139,7 +139,7 @@
     }
   },
   "pets": {
-    "ticket": "Pet Ticket",
+    "ticket": "Pet Gacha Ticket",
     "title": "Pet System",
     "equipped_title": "Equipped Pet",
     "equipped": "Equipped",
@@ -150,8 +150,8 @@
     "idle_income": "Idle Income",
     "next_level": "Next Level Requires",
     "no_pets_available": "No pets available",
-    "upgrade_success": "Upgraded!",
-    "max_level_reached": "Max Level Reached",
+    "upgrade_success": "Upgrade successful!",
+    "max_level_reached": "Max level reached",
     "rarity": {
       "RR": "Common",
       "R": "Rare",
@@ -159,13 +159,30 @@
       "SR": "Epic",
       "SSR": "Legendary"
     },
-    "MooDeng": {
-      "name": "Bouncing Pig MooDeng",
-      "description": "Cute bouncing pig that provides idle income bonus"
+    "gacha": {
+      "tab_title": "Gacha",
+      "tickets_display": "Tickets: {count}",
+      "single_draw": "Single Draw",
+      "single_draw_cost": "Costs 1 ticket",
+      "ten_plus_one_draw": "11x Draw",
+      "ten_plus_one_cost": "Costs 10 tickets",
+      "history_title": "Gacha History",
+      "no_history": "No gacha records yet",
+      "result_title": "Gacha Result",
+      "new_pet": "New Pet!",
+      "upgrade_points_gained": "Upgrade Points +1",
+      "insufficient_tickets": "Insufficient tickets",
+      "draw_failed": "Draw failed",
+      "confirm": "OK",
+      "next": "Next",
+      "skip": "Skip"
+    },
+    "locked": {
+      "pet_system_unlock": "Pet system unlocks after completing Main Quest Stage 3"
     },
     "quest": {
       "ticket": {
-        "title": "Pet Ticket Quest",
+        "title": "Pet Gacha Ticket Quest",
         "desc": "Accumulate points"
       }
     }
