@@ -81,4 +81,23 @@ class ConfigService {
     _configs.clear();
     await loadConfig();
   }
+
+  /// 取得寵物配置
+  Map<String, dynamic>? getPetConfig(String petKey) {
+    if (!_isLoaded) return null;
+    
+    final petsConfig = _configs['pets'] as Map<String, dynamic>?;
+    if (petsConfig == null) return null;
+    
+    final pets = petsConfig['pets'] as List<dynamic>?;
+    if (pets == null) return null;
+    
+    for (final pet in pets) {
+      if (pet is Map<String, dynamic> && pet['id'] == petKey) {
+        return pet;
+      }
+    }
+    
+    return null;
+  }
 }

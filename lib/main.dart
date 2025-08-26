@@ -4,6 +4,7 @@ import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/game_clock_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
+import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/services/secure_save_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/tap_service.dart';
@@ -72,13 +73,16 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   double _accumulatedIdleIncome = 0.0;
   // 移除不再需要的累積小數變數
   Timer? _tapFracTimer;
+  // 服務載入狀態
+  bool _isLoaded = false;
+  // Gacha tickets 訂閱，避免 autosave 用舊值覆寫
+  StreamSubscription<int>? _petTicketsSub;
 
   @override
   void initState() {
     super.initState();
     _gameState = GameState.initial(_saveService.currentVersion);
     _initializeGame();
-    _startAutoSaveTimer();
   }
 
   Future<void> _initializeGame() async {
@@ -91,6 +95,15 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _initDailyMissionModule();
     _initMainQuestModule();
     _initPetTicketQuestModule();
+    // 初始化 GachaService 並訂閱 tickets，同步到 _gameState
+    try {
+      await GachaService().ensureInitialized();
+      _subscribeGachaTickets();
+    } catch (e) {
+      // 保持穩定性：不中斷主流程
+      // ignore: avoid_print
+      print('[Main] GachaService init failed: $e');
+    }
     // 測試模式：若尚無離線基準，建立 baseline，讓 simulateAddSeconds 能立即結算
     if (widget.testMode && _gameState.offline.lastExitUtcMs <= 0) {
       final now = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -110,7 +123,20 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     if (!widget.testMode) {
       // 確保 IdleIncome 初始化完成後再啟動時間系統
       _gameClock.start();
+      // 載入完成後才啟動 autosave，避免用初始狀態覆寫存檔
+      _startAutoSaveTimer();
     }
+  }
+
+  void _subscribeGachaTickets() {
+    _petTicketsSub?.cancel();
+    _petTicketsSub = GachaService().petTicketsStream.listen((count) {
+      if (!mounted) return;
+      if (_gameState.petTickets == count) return;
+      setState(() {
+        _gameState = _gameState.copyWith(petTickets: count);
+      });
+    });
   }
 
   Future<void> _initializeFromConfig() async {
@@ -141,6 +167,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _autoSaveTimer?.cancel();
     _uiUpdateTimer?.cancel();
     _tapFracTimer?.cancel();
+    _petTicketsSub?.cancel();
     _gameClock.dispose();
     _idleIncome.dispose();
     _offline.dispose();
@@ -163,6 +190,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         throw Exception('Failed to load game state: $e');
       }
     }
+    _isLoaded = true;
     
     // 統一在這裡初始化放置收益系統
     _idleIncome.init(onIncomeGenerated: (double points) {
@@ -388,7 +416,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _mainQuest.setQuestCompletedCallback((questId, rewardType, rewardId) {
       if (!mounted) return;
 
-      print('questId: $questId, rewardType: $rewardType, rewardId: $rewardId'); 
       // 顯示任務完成彈窗
       _showQuestCompletedDialog(questId, rewardType, rewardId);
     });
@@ -427,7 +454,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 根據 questId 獲取任務標題
     final questTitle = _localization.getString('quest.$questId.title', defaultValue: questId);
     
-    print('questId: $questId | rewardType: $rewardType | rewardId: $rewardId');
     // 根據獎勵類型生成獎勵描述
     String rewardDescription;
     switch (rewardType) {
@@ -457,7 +483,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         rewardDescription = _localization.getString('quest.reward.unknown', 
             defaultValue: '獲得神秘獎勵！');
     }
-    print('rewardDescription: $rewardDescription');
 
     showTopSlideDialog(
       context,
@@ -784,8 +809,11 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       // 測試模式：不進行任何持久化
       return;
     }
+    if (!_isLoaded) {
+      return; // 載入前禁止存檔，避免覆寫
+    }
     try {
-      // 直接存檔當前 GameState，不需要合併 IdleIncome
+      // 直接存檔當前 GameState
       await _saveService.save(_gameState);
     } catch (e) {
       rethrow;
@@ -799,13 +827,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
     // 重置遊戲狀態（含每日上限區塊與資源）
     setState(() {
-      _gameState = GameState(
-        saveVersion: _saveService.currentVersion,
-        memePoints: 0.0,
-        equipments: {},
-        lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
-        dailyTap: null,
-      );
+      // 使用初始建構，確保主線/離線/寵物/抽卡歷史等欄位一併回到預設
+      _gameState = GameState.initial(_saveService.currentVersion);
       // 同步清空本地暫存顯示/收益
       _accumulatedIdleIncome = 0.0;
       _lastTapDisplayValue = 0.0;

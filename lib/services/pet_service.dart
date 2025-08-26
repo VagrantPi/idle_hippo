@@ -1,6 +1,8 @@
 import 'dart:async';
 import '../models/pet.dart';
 import 'config_service.dart';
+import 'secure_save_service.dart';
+import '../models/game_state.dart';
 
 class PetService {
   static final PetService _instance = PetService._internal();
@@ -20,61 +22,11 @@ class PetService {
 
   /// 初始化寵物系統
   Future<void> initialize(PetState? savedState) async {
-    if (savedState != null && savedState.pets.isNotEmpty) {
+    // 若有載入存檔則直接使用；否則建立預設 5 種稀有度的寵物清單
+    if (savedState != null) {
       _currentState = savedState;
-    } else {
-      // 確保設定已載入，否則無法從 pets.json 建立初始寵物
-      if (!_configService.isLoaded) {
-        await _configService.loadConfig();
-      }
-      // 建立初始寵物列表
-      _currentState = await _createInitialPets();
     }
     _emitState();
-  }
-
-  /// 建立初始寵物列表（五隻不同稀有度的 MooDeng）
-  Future<PetState> _createInitialPets() async {
-    final petsConfig = _configService.getValue('pets.pets', defaultValue: []);
-    if (petsConfig.isEmpty) {
-      return const PetState();
-    }
-
-    final petConfig = petsConfig[0] as Map<String, dynamic>;
-    final petKey = petConfig['id'] as String;
-    final petName = petConfig['name'] as String;
-    final imagePath = petConfig['image'] as String;
-    final rarities = petConfig['rarities'] as Map<String, dynamic>;
-
-    final List<Pet> pets = [];
-
-    // 為每個稀有度建立一隻寵物
-    for (final rarityEntry in rarities.entries) {
-      final rarityData = rarityEntry.value as Map<String, dynamic>;
-      final rarity = PetRarity.fromString(rarityData['rarity'] as String);
-      final baseIdlePerSec = (rarityData['baseIdlePerSec'] as num).toDouble();
-
-      pets.add(Pet(
-        petKey: petKey,
-        name: petName,
-        imagePath: imagePath,
-        rarity: rarity,
-        baseIdlePerSec: baseIdlePerSec,
-        level: 1,
-        upgradePoints: 0,
-        isEquipped: false,
-      ));
-    }
-
-    // 按稀有度排序（SSR > SR > S > R > RR）
-    pets.sort((a, b) {
-      final rarityCompare = b.rarity.sortWeight.compareTo(a.rarity.sortWeight);
-      if (rarityCompare != 0) return rarityCompare;
-      // 相同稀有度按 petKey 字典序排序
-      return a.petKey.compareTo(b.petKey);
-    });
-
-    return PetState(pets: pets);
   }
 
   /// 裝備寵物
@@ -219,15 +171,18 @@ class PetService {
 
   /// 儲存狀態到本地存儲
   Future<void> _saveState() async {
-    // 這裡應該通過 GameState 來保存，暫時先不實作
-    // 等待 GameState 更新後再實作
-  }
-
-  /// 重置寵物系統（用於測試或重新開始）
-  Future<void> reset() async {
-    _currentState = await _createInitialPets();
-    _emitState();
-    await _saveState();
+    // 將目前的 PetState 合併進 GameState 並持久化
+    try {
+      final saver = SecureSaveService();
+      final GameState state = await saver.load();
+      final GameState updated = state.copyWith(petState: _currentState);
+      await saver.save(updated);
+    } catch (e) {
+      // 最小可觀測性：輸出錯誤資訊
+      // ignore: avoid_print
+      print('[PetService] _saveState failed: $e');
+      // 測試環境下不因持久化錯誤而中斷流程
+    }
   }
 
   /// 為所有寵物增加升級點數

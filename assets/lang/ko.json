@@ -136,19 +136,19 @@
     }
   },
   "pets": {
-    "ticket": "펫 추첨권",
+    "ticket": "펫 가챠 티켓",
     "title": "펫 시스템",
-    "equipped_title": "장착 중인 펫",
+    "equipped_title": "장착된 펫",
     "equipped": "장착됨",
-    "not_equipped": "미장착",
+    "not_equipped": "장착 안됨",
     "tap_to_equip": "탭하여 장착",
     "tap_to_unequip": "탭하여 해제",
     "upgrade_points": "업그레이드 포인트",
     "idle_income": "방치 수익",
     "next_level": "다음 레벨 필요",
     "no_pets_available": "사용 가능한 펫이 없습니다",
-    "upgrade_success": "업그레이드 완료!",
-    "max_level_reached": "최대 레벨 달성",
+    "upgrade_success": "업그레이드 성공!",
+    "max_level_reached": "최대 레벨 도달",
     "rarity": {
       "RR": "일반",
       "R": "레어",
@@ -156,13 +156,30 @@
       "SR": "에픽",
       "SSR": "레전더리"
     },
-    "MooDeng": {
-      "name": "바운싱 피그 MooDeng",
-      "description": "방치 수익 보너스를 제공하는 귀여운 바운싱 피그"
+    "gacha": {
+      "tab_title": "가챠",
+      "tickets_display": "티켓: {count}",
+      "single_draw": "단일 뽑기",
+      "single_draw_cost": "티켓 1장 소모",
+      "ten_plus_one_draw": "11연 뽑기",
+      "ten_plus_one_cost": "티켓 10장 소모",
+      "history_title": "가챠 기록",
+      "no_history": "가챠 기록이 없습니다",
+      "result_title": "가챠 결과",
+      "new_pet": "새로운 펫!",
+      "upgrade_points_gained": "업그레이드 포인트 +1",
+      "insufficient_tickets": "티켓 부족",
+      "draw_failed": "뽑기 실패",
+      "confirm": "확인",
+      "next": "다음",
+      "skip": "건너뛰기"
+    },
+    "locked": {
+      "pet_system_unlock": "펫 시스템은 메인 퀘스트 3장 완료 후 해제됩니다"
     },
     "quest": {
       "ticket": {
-        "title": "펫 티켓 퀘스트",
+        "title": "펫 가챠 티켓 퀘스트",
         "desc": "포인트 누적"
       }
     }

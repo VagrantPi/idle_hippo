@@ -3,7 +3,9 @@ import '../services/config_service.dart';
 import '../services/game_clock_service.dart';
 import '../services/idle_income_service.dart';
 import '../services/pet_service.dart';
+import '../services/gacha_service.dart';
 import '../models/game_state.dart';
+import '../models/pet.dart';
 import '../services/tap_service.dart';
 import '../services/daily_mission_service.dart';
 
@@ -38,6 +40,7 @@ class _DebugPanelState extends State<DebugPanel> {
   final GameClockService _gameClock = GameClockService();
   final IdleIncomeService _idleIncome = IdleIncomeService();
   final PetService _petService = PetService();
+  final GachaService _gachaService = GachaService();
   bool _isVisible = true;
 
   @override
@@ -46,10 +49,10 @@ class _DebugPanelState extends State<DebugPanel> {
       return const SizedBox.shrink();
     }
 
-    return Positioned(
-      top: 50,
-      right: 10,
+    return Align(
+      alignment: Alignment.topRight,
       child: Container(
+        margin: const EdgeInsets.only(top: 50, right: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.8),
@@ -89,41 +92,6 @@ class _DebugPanelState extends State<DebugPanel> {
               ],
             ),
             const SizedBox(height: 8),
-            
-            // Actions
-            ElevatedButton(
-              onPressed: widget.onResetAll,
-              child: const Text('Reset All'),
-            ),
-            const SizedBox(height: 4),
-            ElevatedButton(
-              onPressed: widget.onOfflineSimulate60s,
-              child: const Text('Offline +60s'),
-            ),
-            const SizedBox(height: 4),
-            ElevatedButton(
-              onPressed: widget.onOfflineClearPending,
-              child: const Text('Clear Offline'),
-            ),
-            const SizedBox(height: 4),
-            ElevatedButton(
-              onPressed: _resetIdleStats,
-              child: const Text('Reset Idle Stats'),
-            ),
-            if (widget.onForceCompleteMission != null) ...[
-              const SizedBox(height: 4),
-              ElevatedButton(
-                onPressed: widget.onForceCompleteMission,
-                child: const Text('Complete Mission'),
-              ),
-            ],
-            if (widget.onSimulateDayReset != null) ...[
-              const SizedBox(height: 4),
-              ElevatedButton(
-                onPressed: widget.onSimulateDayReset,
-                child: const Text('Simulate Day Reset'),
-              ),
-            ],
             
             // Config Section
             if (_configService.isLoaded) ...[
@@ -177,8 +145,8 @@ class _DebugPanelState extends State<DebugPanel> {
               _buildSectionTitle('Pets'),
               _buildPetStats(),
               const SizedBox(height: 8),
-              _buildPetActions(),
-              const SizedBox(height: 8),
+              // _buildPetActions(),
+              // const SizedBox(height: 8),
             ],
             
             // Actions
@@ -288,6 +256,46 @@ class _DebugPanelState extends State<DebugPanel> {
                   ? 'Disable Fixed Step' 
                   : 'Enable Fixed Step',
               style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+
+        // Add Pet Tickets Button
+        GestureDetector(
+          onTap: _addPetTickets,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: Colors.purple.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Add 10 Pet Tickets',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+
+        // Clear Gacha History Button
+        GestureDetector(
+          onTap: _clearGachaHistory,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Clear Gacha History',
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
               ),
@@ -558,6 +566,47 @@ class _DebugPanelState extends State<DebugPanel> {
       );
     }
   }
+
+  Future<void> _addPetTickets() async {
+    await _gachaService.initialize();
+    await _gachaService.addPetTickets(10);
+    setState(() {});
+  }
+
+  void _testGachaProbabilities() {
+    final results = _gachaService.simulateGacha1000Times();
+    
+    // 顯示結果對話框
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('抽卡機率測試結果 (1000次)'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('SSR: ${results[PetRarity.ssr]} (${(results[PetRarity.ssr]! / 10).toStringAsFixed(1)}%)'),
+            Text('SR: ${results[PetRarity.sr]} (${(results[PetRarity.sr]! / 10).toStringAsFixed(1)}%)'),
+            Text('S: ${results[PetRarity.s]} (${(results[PetRarity.s]! / 10).toStringAsFixed(1)}%)'),
+            Text('R: ${results[PetRarity.r]} (${(results[PetRarity.r]! / 10).toStringAsFixed(1)}%)'),
+            Text('RR: ${results[PetRarity.rr]} (${(results[PetRarity.rr]! / 10).toStringAsFixed(1)}%)'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('確定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clearGachaHistory() async {
+    await _gachaService.initialize();
+    await _gachaService.clearGachaHistory();
+    setState(() {});
+  }
 }
 
 class DebugToggleButton extends StatefulWidget {
@@ -572,12 +621,12 @@ class DebugToggleButton extends StatefulWidget {
 class _DebugToggleButtonState extends State<DebugToggleButton> {
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 50,
-      left: 10,
+    return Align(
+      alignment: Alignment.topLeft,
       child: GestureDetector(
         onTap: widget.onToggle,
         child: Container(
+          margin: const EdgeInsets.only(top: 50, left: 10),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.green.withValues(alpha: 0.7),

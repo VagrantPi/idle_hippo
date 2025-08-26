@@ -31,6 +31,38 @@
           "color": "#FF0000"
         }
       }
+    },
+    {
+      "id": "PEPE",
+      "name": "佩佩蛙",
+      "image": "assets/images/pet/PEPE.png",
+      "rarities": {
+        "RR": {
+          "rarity": "RR",
+          "baseIdlePerSec": 0.1,
+          "color": "#808080"
+        },
+        "R": {
+          "rarity": "R", 
+          "baseIdlePerSec": 0.2,
+          "color": "#00FF00"
+        },
+        "S": {
+          "rarity": "S",
+          "baseIdlePerSec": 0.3,
+          "color": "#0000FF"
+        },
+        "SR": {
+          "rarity": "SR",
+          "baseIdlePerSec": 0.4,
+          "color": "#800080"
+        },
+        "SSR": {
+          "rarity": "SSR",
+          "baseIdlePerSec": 0.5,
+          "color": "#FF0000"
+        }
+      }
     }
   ],
   "upgrade": {
