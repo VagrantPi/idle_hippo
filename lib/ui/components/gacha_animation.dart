@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/pet.dart';
 import 'package:idle_hippo/services/localization_service.dart';
+import 'package:idle_hippo/services/rewarded_ad_service.dart';
 
 class GachaAnimationDialog extends StatefulWidget {
   final List<GachaResult> results;
@@ -10,6 +11,8 @@ class GachaAnimationDialog extends StatefulWidget {
   final ValueChanged<GachaResult>? onReveal;
   // 使用者按「下一個/確定」時觸發，傳遞當前已揭示之結果
   final ValueChanged<GachaResult>? onAdvance;
+  // 是否顯示廣告獎勵按鈕（預設 true，重抽後關閉）
+  final bool allowAdReward;
 
   const GachaAnimationDialog({
     super.key,
@@ -17,6 +20,7 @@ class GachaAnimationDialog extends StatefulWidget {
     required this.onComplete,
     this.onReveal,
     this.onAdvance,
+    this.allowAdReward = true,
   });
 
   @override
@@ -32,6 +36,9 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
   late Animation<double> _glowAnimation;
   late Animation<double> _textAnimation;
   final LocalizationService _localization = LocalizationService();
+  final RewardedAdService _rewardedAdService = RewardedAdService();
+  bool _adInProgress = false;
+  bool? _canTenPackAd; // null: 未查詢完成；true: 可用；false: 今日已無
   
   int _currentIndex = 0;
   bool _showResult = false;
@@ -81,6 +88,20 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
     ));
 
     _startAnimation();
+
+    // 預先查詢十一連廣告可用性（僅在結果為 10+1 且允許獎勵時）
+    if (widget.allowAdReward && widget.results.length > 1) {
+      _refreshTenPackAdQuota();
+    }
+  }
+
+  Future<void> _refreshTenPackAdQuota() async {
+    try {
+      final ok = await _rewardedAdService.canShowGachaTenPackAd();
+      if (mounted) setState(() => _canTenPackAd = ok);
+    } catch (_) {
+      if (mounted) setState(() => _canTenPackAd = false);
+    }
   }
 
   @override
@@ -283,7 +304,6 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
-                      
                       if (_showResult)
                         ElevatedButton(
                           onPressed: _currentIndex < widget.results.length - 1 
@@ -302,6 +322,110 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                     ],
                   ),
                 ),
+
+                // 廣告獎勵按鈕（置於下一行，置中）
+                if (_showResult && widget.allowAdReward)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Center(
+                      child: ElevatedButton.icon(
+                        onPressed: (() {
+                          final isTenPack = widget.results.length > 1;
+                          final disabledForQuota = isTenPack && (_canTenPackAd != true);
+                          if (_adInProgress || disabledForQuota) return null;
+                          return () async {
+                                setState(() => _adInProgress = true);
+                                try {
+                                  // 以 rootNavigator 的 context 顯示新對話框
+                                  final rootNavigator = Navigator.of(context, rootNavigator: true);
+                                  final rootContext = rootNavigator.context;
+
+                                  // 再次檢查 10+1 配額，避免競態
+                                  if (widget.results.length > 1) {
+                                    final ok = await _rewardedAdService.canShowGachaTenPackAd();
+                                    if (!ok) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(_localization.getString('pets.gacha.ad_draw_no_more', defaultValue: 'No more ads today')),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                  }
+
+                                  final adFuture = _rewardedAdService.showAd(
+                                    context: context,
+                                    onAdWatched: () async {},
+                                    dialogTitle: _localization.getString('ad_reward_title', defaultValue: 'Reward'),
+                                    rewardContent: const Text('+1 Ticket'),
+                                  );
+
+                                  // 關閉目前對話框，等待廣告完成
+                                  Navigator.of(context).pop();
+                                  await adFuture;
+
+                                  final gacha = GachaService();
+                                  List<GachaResult> newResults;
+                                  if (widget.results.length > 1) {
+                                    // 十一連：走服務的每日配額流程
+                                    newResults = await gacha.drawTenPlusOneWithAd();
+                                  } else {
+                                    // 單抽：補 1 張後再執行單抽（淨消耗 0）
+                                    await gacha.addPetTickets(1);
+                                    final r = await gacha.performSingleDraw();
+                                    newResults = [r];
+                                  }
+
+                                  // 重新打開動畫對話框（不再允許廣告獎勵）
+                                  showDialog(
+                                    context: rootContext,
+                                    barrierDismissible: false,
+                                    useRootNavigator: true,
+                                    builder: (ctx) => GachaAnimationDialog(
+                                      results: newResults,
+                                      onComplete: widget.onComplete,
+                                      onReveal: widget.onReveal,
+                                      onAdvance: widget.onAdvance,
+                                      allowAdReward: false,
+                                    ),
+                                  );
+                                } catch (_) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          _localization.getString('pets.gacha.ad_failed', defaultValue: 'Ad failed, please try again later'),
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) setState(() => _adInProgress = false);
+                                }
+                              };
+                        })(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.withValues(alpha: 0.7),
+                        ),
+                        icon: const Icon(Icons.movie, color: Colors.white),
+                        label: Builder(
+                          builder: (ctx) {
+                            final isTenPack = widget.results.length > 1;
+                            final noQuota = isTenPack && (_canTenPackAd == false);
+                            final textKey = noQuota
+                                ? 'pets.gacha.ad_draw_no_more'
+                                : 'pets.gacha.ad_draw_title';
+                            return Text(
+                              _localization.getString(textKey, defaultValue: noQuota ? 'No more ads today' : 'Ad Reward'),
+                              style: const TextStyle(color: Colors.white),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ],

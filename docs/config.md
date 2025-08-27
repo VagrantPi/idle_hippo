@@ -28,6 +28,8 @@ assets/config/
 | `tap.daily_cap_base` | number | 每日點擊上限（基礎值） | 200 |
 | `tap.daily_cap_ad_multiplier` | number | 廣告翻倍倍率（影響當日上限） | 2 |
 | `idle.base_per_sec` | number | 基礎放置收益（每秒） | 0.0 |
+| `gacha.daily_ad_draw_limit` | number | 每日廣告抽卡次數上限 | 1 |
+| `gacha.history.maxRecords` | number | 抽卡歷史保留上限（先進先出，最新在前） | 50 |
 | `ui.theme` | string | UI 主題色彩 | "green" |
 | `ui.showDebugPanel` | boolean | 是否顯示除錯面板 | true |
 | `character.animation` | object | 角色動畫設定 | - |
@@ -54,6 +56,12 @@ assets/config/
   },
   "idle": {
     "base_per_sec": 0.0
+  },
+  "gacha": {
+    "daily_ad_draw_limit": 1,
+    "history": {
+      "maxRecords": 50
+    }
   },
   "ui": {
     "theme": "green",

@@ -152,6 +152,10 @@
     "no_pets_available": "No pets available",
     "upgrade_success": "Upgrade successful!",
     "max_level_reached": "Max level reached",
+    "names": {
+      "MooDeng": "Moo Deng",
+      "PEPE": "Pepe the Frog"
+    },
     "rarity": {
       "RR": "Common",
       "R": "Rare",
@@ -175,7 +179,9 @@
       "draw_failed": "Draw failed",
       "confirm": "OK",
       "next": "Next",
-      "skip": "Skip"
+      "skip": "Skip",
+      "ad_draw_title": "Watch ad to draw again",
+      "ad_draw_no_more": "No ad rewards today"
     },
     "locked": {
       "pet_system_unlock": "Pet system unlocks after completing Main Quest Stage 3"

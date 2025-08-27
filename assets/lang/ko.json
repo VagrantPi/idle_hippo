@@ -149,6 +149,10 @@
     "no_pets_available": "사용 가능한 펫이 없습니다",
     "upgrade_success": "업그레이드 성공!",
     "max_level_reached": "최대 레벨 도달",
+    "names": {
+      "MooDeng": "무뎅",
+      "PEPE": "페페 더 프로그"
+    },
     "rarity": {
       "RR": "일반",
       "R": "레어",
@@ -172,7 +176,9 @@
       "draw_failed": "뽑기 실패",
       "confirm": "확인",
       "next": "다음",
-      "skip": "건너뛰기"
+      "skip": "건너뛰기",
+      "ad_draw_title": "광고 보고 한 번 더 뽑기",
+      "ad_draw_no_more": "오늘은 광고 보상 없음"
     },
     "locked": {
       "pet_system_unlock": "펫 시스템은 메인 퀘스트 3장 완료 후 해제됩니다"

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/pet_service.dart';
 import 'package:idle_hippo/services/gacha_service.dart';
+import 'package:idle_hippo/services/rewarded_ad_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/models/pet.dart';
 import 'package:idle_hippo/ui/components/gacha_animation.dart';
 import 'package:idle_hippo/ui/components/gacha_button.dart';
@@ -19,6 +21,7 @@ class PetsPage extends StatefulWidget {
 class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin {
   final PetService _petService = PetService();
   final GachaService _gachaService = GachaService();
+  final RewardedAdService _rewardedAdService = RewardedAdService();
   final LocalizationService _localization = LocalizationService();
   // 尚未揭示（尚未顯示名稱）的抽卡結果時間戳，暫時不顯示在歷史中
   final Set<int> _pendingRevealTimestamps = <int>{};
@@ -32,6 +35,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
     
     // 初始化抽卡服務
     _gachaService.initialize();
+    _rewardedAdService.initialize(GameStateService());
   }
 
   // Hot reload 時呼叫，確保服務重新載入持久化資料
@@ -44,6 +48,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _tabController.dispose();
+    _rewardedAdService.dispose();
     super.dispose();
   }
 
@@ -279,8 +284,8 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
               ),
             ],
           ),
-          
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 16),
           
           // 抽卡歷史
           Expanded(
@@ -342,9 +347,13 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
             final record = visible[index];
             final rarityColor = _getRarityColorFromString(record.rarity);
 
+            final petKey = (record.petKey ?? '').trim();
+            final localizedName = petKey.isNotEmpty
+                ? _localization.getString('pets.names.$petKey', defaultValue: record.name)
+                : _localization.getString(record.name, defaultValue: record.name);
             return GachaHistoryCard(
               rarity: record.rarity,
-              name: record.name,
+              name: localizedName,
               timestamp: record.timestamp,
               rarityColor: rarityColor,
             );
@@ -393,6 +402,22 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
       final result = await _gachaService.performSingleDraw();
       if (mounted) {
         _showGachaAnimation([result]);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_localization.getString('pets.gacha.draw_failed')}: $e')),
+        );
+      }
+    }
+  }
+
+  /// 執行廣告十一連抽
+  Future<void> _performTenPlusOneDrawWithAd() async {
+    try {
+      final results = await _gachaService.drawTenPlusOneWithAd();
+      if (mounted) {
+        _showGachaAnimation(results);
       }
     } catch (e) {
       if (mounted) {
@@ -491,7 +516,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${pet.name} ${pet.rarity.value}',
+                  '${_localization.getString('pets.names.${pet.petKey}', defaultValue: pet.name)} ${pet.rarity.value}',
                   style: TextStyle(
                     color: _getRarityColor(pet.rarity),
                     fontWeight: FontWeight.bold,
@@ -564,7 +589,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                 children: [
                   Expanded(
                     child: Text(
-                      _localization.getString(pet.name, defaultValue: pet.name),
+                      _localization.getString('pets.names.${pet.petKey}', defaultValue: pet.name),
                       maxLines: 2,
                       softWrap: true,
                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
@@ -697,7 +722,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${_localization.getString(pet.name, defaultValue: pet.name)} ${_localization.getString('pets.upgrade_success', defaultValue: '升級成功！')}',
+            '${_localization.getString('pets.names.${pet.petKey}', defaultValue: pet.name)} ${_localization.getString('pets.upgrade_success', defaultValue: '升級成功！')}',
           ),
           backgroundColor: Colors.green,
         ),

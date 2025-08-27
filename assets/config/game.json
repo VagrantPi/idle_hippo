@@ -11,6 +11,12 @@
   "daily_mission": {
     "tap_target": 5
   },
+  "gacha": {
+    "daily_ad_draw_limit": 1,
+    "history": {
+      "maxRecords": 50
+    }
+  },
   "ui": {
     "theme": "green",
     "showDebugPanel": false

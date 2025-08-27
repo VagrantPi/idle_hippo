@@ -149,7 +149,8 @@ class MainQuestService {
     final nextStage = quest.currentStage + 1;
     final updatedQuest = quest.copyWith(
       currentStage: nextStage,
-      // 不重置 tapCountProgress/memePointsEarned，維持累積值
+      // 需求調整：迷因點數在新階段從 0 開始累積
+      memePointsEarned: 0.0,
       unlockedRewards: newUnlockedRewards,
       claimable: false,
     );
