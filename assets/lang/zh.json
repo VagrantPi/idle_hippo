@@ -149,6 +149,10 @@
     "no_pets_available": "暫無可用寵物",
     "upgrade_success": "升級成功！",
     "max_level_reached": "已達最高等級",
+    "names": {
+      "MooDeng": "彈跳豬",
+      "PEPE": "佩佩蛙"
+    },
     "rarity": {
       "RR": "普通",
       "R": "稀有",
@@ -172,7 +176,9 @@
       "draw_failed": "抽卡失敗",
       "confirm": "確定",
       "next": "下一個",
-      "skip": "跳過"
+      "skip": "跳過",
+      "ad_draw_title": "看廣告再抽一次",
+      "ad_draw_no_more": "今日已無廣告獎勵"
     },
     "locked": {
       "pet_system_unlock": "寵物系統需要完成主線第三章解鎖"

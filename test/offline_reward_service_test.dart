@@ -106,7 +106,6 @@ void main() {
     late OfflineRewardService service;
     late GameState state;
     late int nowMs;
-    double lastDoubledAmount = 0;
 
     setUp(() {
       service = OfflineRewardService();
@@ -115,14 +114,12 @@ void main() {
         memePoints: 1000,
         offline: OfflineState(lastExitUtcMs: nowMs, idleRateSnapshot: 10.0, capHours: 1),
       );
-      lastDoubledAmount = 0;
       service.init(
         getGameState: () => state,
         getIdlePerSec: () => 10.0,
         onPersist: (updated) async => state = updated,
         nowUtcMsProvider: () => nowMs,
         onOfflineReward: (r, d, {required bool canDouble}) {},
-        onOfflineDoubled: (amount) => lastDoubledAmount = amount,
       );
     });
 
@@ -135,11 +132,11 @@ void main() {
       expect(rewardAmount, closeTo(600, 1e-6)); // 60s * 10/s
       expect(state.offline.lastRewardDoubled, isFalse);
 
-      await service.claimOfflineAdDouble();
+      final doubledAmount = await service.claimOfflineAdDouble();
 
       expect(state.offline.lastRewardDoubled, isTrue);
       expect(state.memePoints, pointsAfterReward + rewardAmount);
-      expect(lastDoubledAmount, rewardAmount);
+      expect(doubledAmount, rewardAmount);
     });
 
     test('不可重複雙倍', () async {
@@ -164,7 +161,6 @@ void main() {
         onPersist: (updated) async => state = updated,
         nowUtcMsProvider: () => nowMs,
         onOfflineReward: (r, d, {required bool canDouble}) {},
-        onOfflineDoubled: (amount) {},
       );
 
       final pointsBefore = state.memePoints;

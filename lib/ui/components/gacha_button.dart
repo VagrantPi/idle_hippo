@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:idle_hippo/services/localization_service.dart';
 
 class GachaButton extends StatefulWidget {
   final String text;
@@ -251,7 +252,7 @@ class TicketDisplay extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '抽獎券: $ticketCount',
+            '${LocalizationService().getString('pets.ticket', defaultValue: 'Tickets')}: $ticketCount',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

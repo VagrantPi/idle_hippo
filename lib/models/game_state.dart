@@ -1,16 +1,19 @@
 import 'dart:convert';
 import 'pet.dart';
+import 'package:idle_hippo/services/config_service.dart';
 
 /// 抽卡歷史記錄
 class GachaHistoryRecord {
   final String rarity;
   final String name;
   final int timestamp;
+  final String? petKey; // 2025-08: optional, for i18n lookup
 
   const GachaHistoryRecord({
     required this.rarity,
     required this.name,
     required this.timestamp,
+    this.petKey,
   });
 
   factory GachaHistoryRecord.fromMap(Map<String, dynamic> map) {
@@ -18,6 +21,7 @@ class GachaHistoryRecord {
       rarity: map['rarity'] as String,
       name: map['name'] as String,
       timestamp: map['timestamp'] as int,
+      petKey: map.containsKey('petKey') ? map['petKey'] as String? : null,
     );
   }
 
@@ -26,6 +30,7 @@ class GachaHistoryRecord {
       'rarity': rarity,
       'name': name,
       'timestamp': timestamp,
+      if (petKey != null) 'petKey': petKey,
     };
   }
 
@@ -35,11 +40,64 @@ class GachaHistoryRecord {
     return other is GachaHistoryRecord &&
         other.rarity == rarity &&
         other.name == name &&
-        other.timestamp == timestamp;
+        other.timestamp == timestamp &&
+        other.petKey == petKey;
   }
 
   @override
-  int get hashCode => rarity.hashCode ^ name.hashCode ^ timestamp.hashCode;
+  int get hashCode => rarity.hashCode ^ name.hashCode ^ timestamp.hashCode ^ (petKey?.hashCode ?? 0);
+}
+
+class GachaState {
+  final String lastDate; // YYYY-MM-DD in Asia/Taipei
+  final int tenPackAdRemaining;
+
+  const GachaState({
+    required this.lastDate,
+    this.tenPackAdRemaining = 1,
+  });
+
+  factory GachaState.initial() {
+    // 從設定檔讀取每日上限，未載入時回退為 1
+    final limit = (ConfigService().getValue(
+          'game.gacha.daily_ad_draw_limit',
+          defaultValue: 1,
+        ) as int);
+    return GachaState(lastDate: '', tenPackAdRemaining: limit);
+  }
+
+  factory GachaState.fromMap(Map<String, dynamic> map) {
+    return GachaState(
+      lastDate: (map['lastDate'] ?? '') as String,
+      tenPackAdRemaining: (map['tenPackAdRemaining'] ?? 1) as int,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'lastDate': lastDate,
+        'tenPackAdRemaining': tenPackAdRemaining,
+      };
+
+  GachaState copyWith({
+    String? lastDate,
+    int? tenPackAdRemaining,
+  }) {
+    return GachaState(
+      lastDate: lastDate ?? this.lastDate,
+      tenPackAdRemaining: tenPackAdRemaining ?? this.tenPackAdRemaining,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is GachaState &&
+        other.lastDate == lastDate &&
+        other.tenPackAdRemaining == tenPackAdRemaining;
+  }
+
+  @override
+  int get hashCode => lastDate.hashCode ^ tenPackAdRemaining.hashCode;
 }
 
 class PetTicketQuest {
@@ -511,6 +569,7 @@ class GameState {
   final PetTicketQuest? petTicketQuest;
   final int petTickets;
   final List<GachaHistoryRecord> gachaHistory;
+  final GachaState? gacha;
 
   const GameState({
     required this.saveVersion,
@@ -525,6 +584,7 @@ class GameState {
     this.petTicketQuest,
     this.petTickets = 0,
     this.gachaHistory = const [],
+    this.gacha,
   });
 
   /// 建立初始狀態
@@ -541,6 +601,7 @@ class GameState {
       petTicketQuest: null,
       petTickets: 0,
       gachaHistory: const [],
+      gacha: null,
     );
   }
 
@@ -587,6 +648,9 @@ class GameState {
               .map(GachaHistoryRecord.fromMap)
               .toList()
           : const [],
+      gacha: map.containsKey('gacha') && map['gacha'] is Map<String, dynamic>
+          ? GachaState.fromMap(map['gacha'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -610,6 +674,7 @@ class GameState {
       if (petTicketQuest != null) 'petTicketQuest': petTicketQuest!.toMap(),
       'petTickets': petTickets,
       'gachaHistory': gachaHistory.map((record) => record.toMap()).toList(),
+      if (gacha != null) 'gacha': gacha!.toMap(),
     };
   }
 
@@ -650,6 +715,7 @@ class GameState {
     PetTicketQuest? petTicketQuest,
     int? petTickets,
     List<GachaHistoryRecord>? gachaHistory,
+    GachaState? gacha,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -664,6 +730,7 @@ class GameState {
       petTicketQuest: petTicketQuest ?? this.petTicketQuest,
       petTickets: petTickets ?? this.petTickets,
       gachaHistory: gachaHistory ?? List<GachaHistoryRecord>.from(this.gachaHistory),
+      gacha: gacha ?? this.gacha,
     );
   }
 
@@ -679,7 +746,7 @@ class GameState {
     return 'GameState(saveVersion: $saveVersion, memePoints: $memePoints, '
            'equipments: $equipments, lastTs: $lastTs, offline: $offline, '
            'petTickets: $petTickets, pets: ${petState?.pets.length ?? 0}, '
-           'equipped: ${petState?.equippedPetId}, gachaHistory: ${gachaHistory.length})';
+           'equipped: ${petState?.equippedPetId}, gachaHistory: ${gachaHistory.length}, gacha: ${gacha != null})';
   }
 
   @override
@@ -697,7 +764,8 @@ class GameState {
         other.petState == petState &&
         other.petTicketQuest == petTicketQuest &&
         other.petTickets == petTickets &&
-        _listGachaHistoryEquals(other.gachaHistory, gachaHistory);
+        _listGachaHistoryEquals(other.gachaHistory, gachaHistory) &&
+        other.gacha == gacha;
   }
 
   @override
@@ -713,7 +781,8 @@ class GameState {
         (petState?.hashCode ?? 0) ^
         (petTicketQuest?.hashCode ?? 0) ^
         petTickets.hashCode ^
-        gachaHistory.hashCode;
+        gachaHistory.hashCode ^
+        (gacha?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

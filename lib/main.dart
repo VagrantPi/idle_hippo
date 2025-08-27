@@ -6,6 +6,7 @@ import 'package:idle_hippo/services/game_clock_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/services/secure_save_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/tap_service.dart';
 import 'package:idle_hippo/services/daily_tap_service.dart';
@@ -14,6 +15,7 @@ import 'package:idle_hippo/services/offline_reward_service.dart';
 import 'package:idle_hippo/services/daily_mission_service.dart';
 import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
+import 'package:idle_hippo/services/rewarded_ad_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -52,6 +54,7 @@ class IdleHippoScreen extends StatefulWidget {
 class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final ConfigService _configService = ConfigService();
   final SecureSaveService _saveService = SecureSaveService();
+  final GameStateService _gameStateService = GameStateService();
   final GameClockService _gameClock = GameClockService();
   final IdleIncomeService _idleIncome = IdleIncomeService();
   final LocalizationService _localization = LocalizationService();
@@ -62,6 +65,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final DailyMissionService _dailyMission = DailyMissionService();
   final MainQuestService _mainQuest = MainQuestService();
   final PetTicketQuestService _petTicketQuest = PetTicketQuestService();
+  final RewardedAdService _rewardedAdService = RewardedAdService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -91,6 +95,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     await _initializeFromConfig();
     await _initializeLocalization();
     await _loadGameState();
+    await _setupGameStateSync();
+    // 初始化 RewardedAdService，供抽卡動畫等元件查詢每日十連廣告配額
+    try {
+      await _rewardedAdService.initialize(_gameStateService);
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Main] RewardedAdService init failed: $e');
+    }
     _initOfflineModule();
     _initDailyMissionModule();
     _initMainQuestModule();
@@ -137,6 +149,32 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         _gameState = _gameState.copyWith(petTickets: count);
       });
     });
+  }
+
+  Future<void> _setupGameStateSync() async {
+    try {
+      // 初始化 GameStateService 並以目前已載入的本地狀態為基準
+      await _gameStateService.initialize();
+
+      // 將目前畫面狀態同步到服務，確保單一來源（也會觸發保存）
+      await _gameStateService.updateGameState(_gameState);
+
+      // 監聽服務狀態變更，保持畫面狀態與服務一致，避免 autosave 覆寫
+      _gameStateService.gameState.addListener(() {
+        if (!mounted) return;
+        final next = _gameStateService.gameState.value;
+        if (!identical(next, _gameState)) {
+          setState(() {
+            _gameState = next;
+            // 同步給 IdleIncomeService 以正確計算加成
+            _idleIncome.updateGameState(_gameState);
+          });
+        }
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Main] setupGameStateSync failed: $e');
+    }
   }
 
   Future<void> _initializeFromConfig() async {
@@ -250,145 +288,6 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
           reward: reward,
           effective: effective,
           canDouble: canDouble,
-        );
-      },
-      onOfflineDoubled: (amount) {
-        if (!mounted) return;
-        // 翻倍加發的獎勵同樣計入每日任務的累積進度
-        if (amount > 0) {
-          setState(() {
-            GameState updatedState = _dailyMission.onEarnPoints(_gameState, amount);
-            updatedState = _mainQuest.onEarnPoints(updatedState, amount);
-            // 同步推進寵物抽獎券任務進度（離線翻倍）
-            updatedState = _petTicketQuest.addProgress(updatedState, amount);
-            _gameState = updatedState;
-          });
-        }
-        final title = _localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!');
-        final confirm = _localization.getOffline('confirm');
-        final points = amount.toStringAsFixed(0);
-
-        showTopSlideDialog(
-          context,
-          barrierDismissible: true,
-          child: Builder(
-            builder: (ctx) {
-              final theme = Theme.of(ctx);
-              return GestureDetector(
-                onTap: () => Navigator.of(ctx).pop(),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xCC113300),
-                        Color(0xCC1F5E1F),
-                      ],
-                    ),
-                    border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFF00FFD1), width: 1),
-                            ),
-                            child: const Icon(Icons.check_circle, color: Color(0xFF00FFD1)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
-                            const SizedBox(width: 6),
-                            Text(
-                              '+$points',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                color: Colors.yellow,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _localization.getCommon('memePoints'),
-                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          SizedBox(
-                            width: 120,
-                            height: 44,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F5E1F),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
-                                ),
-                              ),
-                              onPressed: () => Navigator.of(ctx).pop(),
-                              child: Text(
-                                confirm,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
         );
       },
     );
@@ -745,8 +644,54 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () async {
-                            Navigator.of(ctx).pop();
-                            await _offline.claimOfflineAdDouble();
+                            Navigator.of(ctx).pop(); // Close the current dialog first
+
+                            final theme = Theme.of(context);
+                            final amount = _gameState.offline.lastReward;
+                            final points = amount.toStringAsFixed(0);
+
+                            await _rewardedAdService.showAd(
+                              context: context,
+                              dialogTitle: _localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!'),
+                              rewardContent: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.35),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '+$points',
+                                      style: theme.textTheme.headlineSmall?.copyWith(
+                                        color: Colors.yellow,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _localization.getCommon('memePoints'),
+                                      style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onAdWatched: () async {
+                                final doubledAmount = await _offline.claimOfflineAdDouble();
+                                if (doubledAmount > 0 && mounted) {
+                                  setState(() {
+                                    GameState updatedState = _dailyMission.onEarnPoints(_gameState, doubledAmount);
+                                    updatedState = _mainQuest.onEarnPoints(updatedState, doubledAmount);
+                                    updatedState = _petTicketQuest.addProgress(updatedState, doubledAmount);
+                                    _gameState = updatedState;
+                                  });
+                                }
+                              },
+                            );
                           },
                         ),
                       ),
@@ -813,8 +758,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       return; // 載入前禁止存檔，避免覆寫
     }
     try {
-      // 直接存檔當前 GameState
-      await _saveService.save(_gameState);
+      // 透過 GameStateService 單一路徑持久化，避免與其他服務衝突
+      await _gameStateService.updateGameState(_gameState);
     } catch (e) {
       rethrow;
     }
@@ -824,6 +769,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 重置服務統計
     _tapService.reset();
     _idleIncome.resetStats();
+    await _rewardedAdService.reset();
 
     // 重置遊戲狀態（含每日上限區塊與資源）
     setState(() {

@@ -32,8 +32,6 @@ class PetTicketQuestService {
   /// 當能量增加時，更新任務進度
   GameState addProgress(GameState gameState, double energyToAdd) {
     var quest = gameState.petTicketQuest;
-    // print('energyToAdd: $energyToAdd');
-    // print('quest.available: ${quest?.available}');
     if (quest == null || !quest.available || quest.progress >= quest.target) {
       return gameState; // 任務未啟用或已完成，不處理
     }

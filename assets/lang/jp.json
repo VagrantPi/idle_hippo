@@ -149,6 +149,10 @@
     "no_pets_available": "利用可能なペットがありません",
     "upgrade_success": "アップグレード成功！",
     "max_level_reached": "最大レベルに到達",
+    "names": {
+      "MooDeng": "ムーデン",
+      "PEPE": "カエルのペペ"
+    },
     "rarity": {
       "RR": "コモン",
       "R": "レア",
@@ -172,7 +176,9 @@
       "draw_failed": "ガチャ失敗",
       "confirm": "確認",
       "next": "次へ",
-      "skip": "スキップ"
+      "skip": "スキップ",
+      "ad_draw_title": "広告を見てもう一度ガチャ",
+      "ad_draw_no_more": "本日は広告報酬がありません"
     },
     "locked": {
       "pet_system_unlock": "ペットシステムはメインクエスト第3章クリアで解放"

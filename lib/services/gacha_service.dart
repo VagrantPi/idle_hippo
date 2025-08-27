@@ -5,6 +5,8 @@ import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/pet_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/secure_save_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
+import 'package:idle_hippo/services/rewarded_ad_service.dart';
 
 /// 抽卡結果
 class GachaResult {
@@ -57,6 +59,8 @@ class GachaService {
   final ConfigService _configService = ConfigService();
   final SecureSaveService _saveService = SecureSaveService();
   final Random _random = Random();
+  final RewardedAdService _rewardedAdService = RewardedAdService();
+  final GameStateService _gameStateService = GameStateService();
   
   GameState? _currentState;
   bool _initialized = false;
@@ -98,11 +102,20 @@ class GachaService {
 
   /// 初始化服務
   Future<void> initialize() async {
-    // 確保配置已載入，避免抽卡時取用 null 配置
+    // 確保配置已載入
     if (!_configService.isLoaded) {
       await _configService.loadConfig();
     }
-    _currentState = await _saveService.load();
+    await _gameStateService.initialize();
+    _currentState = _gameStateService.gameState.value;
+    _gameStateService.gameState.addListener(() {
+      _currentState = _gameStateService.gameState.value;
+      _emitPetTickets();
+      _emitGachaHistory();
+    });
+
+    await _rewardedAdService.initialize(_gameStateService);
+
     await PetService().initialize(_currentState?.petState);
     _emitPetTickets();
     _emitGachaHistory();
@@ -118,10 +131,8 @@ class GachaService {
 
   /// 保存狀態
   Future<void> _saveState(GameState state) async {
-    await _saveService.save(state);
-    _currentState = state;
-    await PetService().initialize(state.petState);
-    _emitPetTickets();
+    await _gameStateService.updateGameState(state);
+    await PetService().initialize(state.petState); // PetService might need its own state management later
   }
 
   /// 執行單次抽卡
@@ -284,13 +295,15 @@ class GachaService {
       rarity: result.rarity.value,
       name: result.name,
       timestamp: result.timestamp,
+      petKey: result.petKey,
     );
     
     // 添加新記錄到開頭
     final updatedHistory = <GachaHistoryRecord>[newRecord, ...currentHistory];
     
-    // 保持最多 20 條記錄
-    final limitedHistory = updatedHistory.take(20).toList();
+    // 保持最多 N 條記錄（由設定決定，預設 50）
+    final maxRecords = _configService.getValue('game.gacha.history.maxRecords', defaultValue: 50) as int;
+    final limitedHistory = updatedHistory.take(maxRecords).toList();
     
     // 更新到 GameState
     final updatedState = currentState.copyWith(gachaHistory: limitedHistory);
@@ -403,9 +416,7 @@ class GachaService {
 
   /// 執行十一連抽
   Future<List<GachaResult>> performTenPlusOneDraw() async {
-    if (_currentState == null) {
-      await initialize();
-    }
+    if (_currentState == null) await initialize();
 
     final currentState = _currentState!;
     if (currentState.petTickets < 10) {
@@ -416,19 +427,36 @@ class GachaService {
     final updatedState = currentState.copyWith(petTickets: currentState.petTickets - 10);
     await _saveState(updatedState);
 
-    // 執行 11 次抽卡
-    final results = <GachaResult>[];
-    for (int i = 0; i < 11; i++) {
-      final result = _performSingleGacha();
-      results.add(result);
-      
-      // 處理抽卡結果
-      await _processGachaResult(result);
-      
-      // 記錄抽卡歷史
-      await _recordGachaHistory(result);
+    return _performMultipleDraws(11);
+  }
+
+  /// 執行廣告觀看後的十一連抽
+  Future<List<GachaResult>> drawTenPlusOneWithAd() async {
+    if (!_initialized) await initialize();
+
+    if (!(await _rewardedAdService.canShowGachaTenPackAd())) {
+      throw Exception('今日已無廣告抽卡機會');
     }
 
+    // 消耗廣告次數
+    final consumed = await _rewardedAdService.consumeGachaTenPackAd();
+    if (!consumed) {
+      throw Exception('消耗廣告次數失敗');
+    }
+
+    // 執行抽卡，不消耗票券
+    return _performMultipleDraws(11);
+  }
+
+  /// 執行多次抽卡的內部邏輯
+  Future<List<GachaResult>> _performMultipleDraws(int count) async {
+    final results = <GachaResult>[];
+    for (int i = 0; i < count; i++) {
+      final result = _performSingleGacha();
+      results.add(result);
+      await _processGachaResult(result);
+      await _recordGachaHistory(result);
+    }
     return results;
   }
 
@@ -496,13 +524,15 @@ class GachaService {
       rarity: result.rarity.value,
       name: result.name,
       timestamp: result.timestamp,
+      petKey: result.petKey,
     );
     
     // 添加新記錄到開頭
     final updatedHistory = <GachaHistoryRecord>[newRecord, ...currentHistory];
     
-    // 保持最多 20 條記錄
-    final limitedHistory = updatedHistory.take(20).toList();
+    // 保持最多 N 條記錄（由設定決定，預設 50）
+    final maxRecords = _configService.getValue('game.gacha.history.maxRecords', defaultValue: 50) as int;
+    final limitedHistory = updatedHistory.take(maxRecords).toList();
     
     // 更新到 GameState
     final updatedState = currentState.copyWith(gachaHistory: limitedHistory);

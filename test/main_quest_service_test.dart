@@ -105,7 +105,8 @@ void main() {
       for (int i = 0; i < 40; i++) { // 已有 10 次，再加 40 次
         state = service.onTap(state);
       }
-      state = service.onEarnPoints(state, 450.0); // 已有 50，再加 450
+      // 新規則：進入新階段時 memePoints 從 0 開始，需補滿 500
+      state = service.onEarnPoints(state, 500.0);
 
       // 仍需確認才能前進
       expect(questCompleted, isFalse);

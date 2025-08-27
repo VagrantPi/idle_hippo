@@ -5,7 +5,7 @@ import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
-import 'package:idle_hippo/ui/components/slide_in_dialog.dart';
+import 'package:idle_hippo/services/rewarded_ad_service.dart';
 
 class QuestPage extends StatefulWidget {
   final List<Map<String, dynamic>> missionPlan;
@@ -37,6 +37,7 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
   final MainQuestService _mainQuest = MainQuestService();
   final PetTicketQuestService _petTicketQuest = PetTicketQuestService();
   final IdleIncomeService _idleIncome = IdleIncomeService();
+  final RewardedAdService _rewardedAdService = RewardedAdService();
   late GameState _state;
 
   @override
@@ -398,286 +399,52 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                   onPressed: done
                       ? () async {
                           final localization = LocalizationService();
-                          final dialogTitle = localization.getString('offline.title', defaultValue: 'Offline Reward');
-                          final doubleLabel = localization.getString('offline.double_reward', defaultValue: 'Double x2');
-                          final confirm = localization.getString('offline.confirm', defaultValue: 'Claim');
+                          final theme = Theme.of(context);
 
-                          showTopSlideDialog(
-                            context,
-                            barrierDismissible: false,
-                            child: Builder(
-                              builder: (ctx) {
-                                final theme = Theme.of(ctx);
-                                return Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xCC110022),
-                                        Color(0xCC2B0A56),
-                                      ],
+                          await _rewardedAdService.showAd(
+                            context: context,
+                            dialogTitle: localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!'),
+                            rewardContent: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.35),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.confirmation_num, color: Colors.yellow, size: 20),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '+2',
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      color: Colors.yellow,
+                                      fontWeight: FontWeight.w800,
                                     ),
-                                    border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.5),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ],
                                   ),
-                                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 36,
-                                            height: 36,
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: const Color(0xFF00FFD1), width: 1),
-                                            ),
-                                            child: const Icon(Icons.timer, color: Color(0xFF00FFD1)),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              dialogTitle,
-                                              style: theme.textTheme.titleLarge?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.35),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          children: [
-                                            const Icon(Icons.confirmation_num, color: Colors.yellow, size: 20),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              '+2',
-                                              style: theme.textTheme.headlineSmall?.copyWith(
-                                                color: Colors.yellow,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              localization.getString('pets.ticket', defaultValue: '抽獎券'),
-                                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          SizedBox(
-                                            height: 44,
-                                            child: ElevatedButton.icon(
-                                              icon: const Icon(Icons.slow_motion_video, size: 20),
-                                              label: Text(doubleLabel),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFE89A00),
-                                                foregroundColor: Colors.black,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                              ),
-                                              onPressed: () async {
-                                                Navigator.of(ctx).pop();
-                                                // 模擬觀看廣告流程（與 OfflineRewardService 一致：等待 3 秒）
-                                                await Future.delayed(const Duration(seconds: 3));
-                                                // 翻倍領取 + 顯示通知
-                                                if (widget.onPetTicketClaim != null) {
-                                                  // 交由父層進行 withAd:true 的領取與存檔
-                                                  widget.onPetTicketClaim!(true);
-                                                } else {
-                                                  // 後備：本地更新
-                                                  setState(() {
-                                                    _state = _petTicketQuest.claimReward(
-                                                      _state,
-                                                      withAd: true,
-                                                      currentIdlePerSec: _idleIncome.currentIdlePerSec,
-                                                    );
-                                                    _idleIncome.updateGameState(_state);
-                                                  });
-                                                }
-
-                                                final successTitle = localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!');
-                                                final ok = localization.getString('offline.confirm', defaultValue: 'Claim');
-                                                showTopSlideDialog(
-                                                  context,
-                                                  barrierDismissible: true,
-                                                  child: Builder(
-                                                    builder: (ctx2) {
-                                                      final theme2 = Theme.of(ctx2);
-                                                      return GestureDetector(
-                                                        onTap: () => Navigator.of(ctx2).pop(),
-                                                        child: Container(
-                                                          margin: const EdgeInsets.symmetric(horizontal: 24),
-                                                          decoration: BoxDecoration(
-                                                            borderRadius: BorderRadius.circular(16),
-                                                            gradient: const LinearGradient(
-                                                              begin: Alignment.topLeft,
-                                                              end: Alignment.bottomRight,
-                                                              colors: [
-                                                                Color(0xCC113300),
-                                                                Color(0xCC1F5E1F),
-                                                              ],
-                                                            ),
-                                                            border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                color: Colors.black.withValues(alpha: 0.5),
-                                                                blurRadius: 16,
-                                                                offset: const Offset(0, 8),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Row(
-                                                                children: [
-                                                                  Container(
-                                                                    width: 36,
-                                                                    height: 36,
-                                                                    decoration: BoxDecoration(
-                                                                      color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
-                                                                      borderRadius: BorderRadius.circular(8),
-                                                                      border: Border.all(color: const Color(0xFF00FFD1), width: 1),
-                                                                    ),
-                                                                    child: const Icon(Icons.check_circle, color: Color(0xFF00FFD1)),
-                                                                  ),
-                                                                  const SizedBox(width: 12),
-                                                                  Expanded(
-                                                                    child: Text(
-                                                                      successTitle,
-                                                                      style: theme2.textTheme.titleLarge?.copyWith(
-                                                                        color: Colors.white,
-                                                                        fontWeight: FontWeight.w700,
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(height: 12),
-                                                              Container(
-                                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                                                decoration: BoxDecoration(
-                                                                  color: Colors.black.withValues(alpha: 0.35),
-                                                                  borderRadius: BorderRadius.circular(12),
-                                                                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                                                                ),
-                                                                child: Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                                  children: [
-                                                                    const Icon(Icons.confirmation_num, color: Colors.yellow, size: 20),
-                                                                    const SizedBox(width: 6),
-                                                                    Text(
-                                                                      '+2',
-                                                                      style: theme2.textTheme.headlineSmall?.copyWith(
-                                                                        color: Colors.yellow,
-                                                                        fontWeight: FontWeight.w800,
-                                                                      ),
-                                                                    ),
-                                                                    const SizedBox(width: 6),
-                                                                    Text(
-                                                                      localization.getString('pets.ticket', defaultValue: '抽獎券'),
-                                                                      style: theme2.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              const SizedBox(height: 16),
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  SizedBox(
-                                                                    width: 120,
-                                                                    height: 44,
-                                                                    child: ElevatedButton(
-                                                                      style: ElevatedButton.styleFrom(
-                                                                        backgroundColor: const Color(0xFF1F5E1F),
-                                                                        foregroundColor: Colors.white,
-                                                                        elevation: 0,
-                                                                        shape: RoundedRectangleBorder(
-                                                                          borderRadius: BorderRadius.circular(12),
-                                                                          side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
-                                                                        ),
-                                                                      ),
-                                                                      onPressed: () => Navigator.of(ctx2).pop(),
-                                                                      child: Text(
-                                                                        ok,
-                                                                        style: theme2.textTheme.titleMedium?.copyWith(
-                                                                          color: Colors.white,
-                                                                          fontWeight: FontWeight.w700,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          SizedBox(
-                                            width: 120,
-                                            height: 44,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF2B0A56),
-                                                foregroundColor: Colors.white,
-                                                elevation: 0,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
-                                                ),
-                                              ),
-                                              onPressed: () => Navigator.of(ctx).pop(),
-                                              child: Text(
-                                                confirm,
-                                                style: theme.textTheme.titleMedium?.copyWith(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    localization.getString('pets.ticket', defaultValue: '抽獎券'),
+                                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
                                   ),
-                                );
-                              },
+                                ],
+                              ),
                             ),
+                            onAdWatched: () async {
+                              if (widget.onPetTicketClaim != null) {
+                                widget.onPetTicketClaim!(true);
+                              } else {
+                                setState(() {
+                                  _state = _petTicketQuest.claimReward(
+                                    _state,
+                                    withAd: true,
+                                    currentIdlePerSec: _idleIncome.currentIdlePerSec,
+                                  );
+                                  _idleIncome.updateGameState(_state);
+                                });
+                              }
+                            },
                           );
                         }
                   : null,

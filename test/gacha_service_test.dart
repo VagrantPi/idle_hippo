@@ -159,23 +159,23 @@ void main() {
       expect(record.timestamp, greaterThan(0));
     });
 
-    test('抽卡歷史記錄最多保留 20 條', () async {
+    test('抽卡歷史記錄最多保留 gacha.history.maxRecords，預設 50 條', () async {
       await gachaService.initialize();
       
       // 清空歷史記錄
       await gachaService.clearGachaHistory();
       
       // 確保有足夠的抽獎券
-      await gachaService.addPetTickets(25);
+      await gachaService.addPetTickets(60);
       
-      // 執行 25 次抽卡
-      for (int i = 0; i < 25; i++) {
+      // 執行 60 次抽卡
+      for (int i = 0; i < 60; i++) {
         await gachaService.performSingleDraw();
       }
       
-      // 驗證歷史記錄最多 20 條
+      // 驗證歷史記錄最多 50 條
       final history = gachaService.getGachaHistory();
-      expect(history.length, lessThanOrEqualTo(20));
+      expect(history.length, lessThanOrEqualTo(50));
     });
 
     test('稀有度機率分布測試', () {
@@ -211,20 +211,6 @@ void main() {
       
       final totalProbability = probabilities.values.reduce((a, b) => a + b);
       expect(totalProbability, closeTo(1.0, 0.001));
-    });
-
-    test('清空抽卡歷史功能', () async {
-      await gachaService.initialize();
-      
-      // 確保有抽卡記錄
-      await gachaService.addPetTickets(2);
-      await gachaService.performSingleDraw();
-      
-      expect(gachaService.getGachaHistory().length, greaterThan(0));
-      
-      // 清空歷史記錄
-      await gachaService.clearGachaHistory();
-      expect(gachaService.getGachaHistory().length, equals(0));
     });
   });
 

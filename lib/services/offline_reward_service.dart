@@ -14,7 +14,6 @@ class OfflineRewardService with WidgetsBindingObserver {
   late GameState Function() _getGameState; // 取得最新的 GameState（由宿主維護）
   late Future<void> Function(GameState) _persist; // 寫入存檔
   void Function(double reward, Duration effective, {required bool canDouble})? _onOfflineReward;
-  void Function(double amount)? _onOfflineDoubled;
   int Function()? _nowUtcMsProvider; // 測試注入當前 UTC ms
 
   bool _initialized = false;
@@ -24,14 +23,12 @@ class OfflineRewardService with WidgetsBindingObserver {
     required GameState Function() getGameState,
     required Future<void> Function(GameState) onPersist,
     void Function(double, Duration, {required bool canDouble})? onOfflineReward,
-    void Function(double)? onOfflineDoubled,
     int Function()? nowUtcMsProvider,
   }) {
     _getIdlePerSec = getIdlePerSec;
     _getGameState = getGameState;
     _persist = onPersist;
     _onOfflineReward = onOfflineReward;
-    _onOfflineDoubled = onOfflineDoubled;
     _nowUtcMsProvider = nowUtcMsProvider;
 
     if (!_initialized) {
@@ -193,18 +190,15 @@ class OfflineRewardService with WidgetsBindingObserver {
     await _persist(updated);
   }
 
-  /// Step 11: 玩家點擊「觀看廣告翻倍」按鈕後呼叫
-  Future<void> claimOfflineAdDouble() async {
+  /// Step 11: 玩家點擊「觀看廣告翻倍」按鈕後呼叫，此方法現在只處理狀態更新
+  Future<double> claimOfflineAdDouble() async {
     final gs = _getGameState();
     final rewardToDouble = gs.offline.lastReward;
 
     // 防呆：沒有獎勵或已翻倍過，則不執行
     if (rewardToDouble <= 0 || gs.offline.lastRewardDoubled) {
-      return;
+      return 0.0;
     }
-
-    // 假廣告流程：等待 3 秒
-    await Future.delayed(const Duration(seconds: 3));
 
     // 再次取得最新狀態，以防萬一在等待時狀態有變
     final currentGs = _getGameState();
@@ -216,7 +210,7 @@ class OfflineRewardService with WidgetsBindingObserver {
     );
     await _persist(updated);
 
-    // 通知 UI 翻倍成功，並回傳加發的金額
-    _onOfflineDoubled?.call(rewardToDouble);
+    // 回傳加發的金額，讓呼叫端處理 UI 通知
+    return rewardToDouble;
   }
 }
