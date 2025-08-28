@@ -36,7 +36,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB 게이밍 키보드"
     },
     "faceMask": {
@@ -56,6 +56,36 @@
     "doge": {
       "name": "DOGE",
       "desc": "이런 방치, 대단 Wow."
+    },
+    "successKid": {
+      "name": "성공 소년"
+    },
+    "disasterGirl": {
+      "name": "재난 소녀"
+    },
+    "stonks": {
+      "name": "스톤크스"
+    },
+    "judgmentalCat": {
+      "name": "심판하는 고양이"
+    },
+    "batmanSlappingRobin": {
+      "name": "배트맨 로빈 싸대기"
+    },
+    "teletubbies": {
+      "name": "텔레토비"
+    },
+    "scientificResearch": {
+      "name": "학술 연구용"
+    },
+    "handshake": {
+      "name": "악수하다"
+    },
+    "nyanCat": {
+      "name": "냥캣"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "{name} Lv.{level} 달성 시 해제",
@@ -151,7 +181,21 @@
     "max_level_reached": "최대 레벨 도달",
     "names": {
       "MooDeng": "무뎅",
-      "PEPE": "페페 더 프로그"
+      "PEPE": "페페 더 프로그",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "OiiaiCat",
+      "PopCat": "PopCat",
+      "AfraidOfHamster": "AfraidOfHamster",
+      "Catsthatlooklikehitler": "Catsthatlooklikehitler",
+      "CryCat": "CryCat",
+      "JudgmentalCat": "JudgmentalCat",
+      "LeopardCat": "LeopardCat",
+      "Penguin": "Penguin",
+      "Seal": "Seal",
+      "Squirrel": "Squirrel",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "일반",

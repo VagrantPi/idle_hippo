@@ -8,7 +8,7 @@ void main() {
   setUp(() {
     equipment.setTapEquipmentsForTest([
       {
-        'id': 'rgb_keyboard',
+        'id': 'rgbKeyboard',
         'type': 'tap',
         'max_level': 10,
         'levels': [
@@ -33,12 +33,12 @@ void main() {
 
   test('升級成功：扣除成本並提升等級', () {
     var state = GameState.initial(1).copyWith(memePoints: 15.0);
-    expect(equipment.canUpgrade(state, 'rgb_keyboard'), true);
+    expect(equipment.canUpgrade(state, 'rgbKeyboard'), true);
 
-    state = equipment.upgrade(state, 'rgb_keyboard');
+    state = equipment.upgrade(state, 'rgbKeyboard');
 
     expect(state.memePoints, 5.0); // 15 - cost(10)
-    expect(state.equipments['rgb_keyboard'], 1);
+    expect(state.equipments['rgbKeyboard'], 1);
 
     // cumulative bonus at Lv1 = 1
     expect(equipment.computeTapGain(state), 1 + 1);
@@ -46,9 +46,9 @@ void main() {
 
   test('連續升級至 Lv.3', () {
     var state = GameState.initial(1).copyWith(memePoints: 100.0);
-    state = equipment.upgrade(state, 'rgb_keyboard'); // cost 10 -> lv1
-    state = equipment.upgrade(state, 'rgb_keyboard'); // cost 20 -> lv2
-    state = equipment.upgrade(state, 'rgb_keyboard'); // cost 30 -> lv3
+    state = equipment.upgrade(state, 'rgbKeyboard'); // cost 10 -> lv1
+    state = equipment.upgrade(state, 'rgbKeyboard'); // cost 20 -> lv2
+    state = equipment.upgrade(state, 'rgbKeyboard'); // cost 30 -> lv3
 
     expect(state.memePoints, 100.0 - (10 + 20 + 30));
     // cumulative bonus at Lv3 = 1+2+3 = 6
@@ -58,10 +58,10 @@ void main() {
   test('資源不足：無法升級', () {
     var state = GameState.initial(1).copyWith(memePoints: 19.0);
     // first ensure at level 1 already (so next cost is 20)
-    state = equipment.upgrade(state.copyWith(memePoints: 29.0), 'rgb_keyboard'); // lv1, mp=19
+    state = equipment.upgrade(state.copyWith(memePoints: 29.0), 'rgbKeyboard'); // lv1, mp=19
 
-    expect(equipment.canUpgrade(state, 'rgb_keyboard'), false);
-    final next = equipment.upgrade(state, 'rgb_keyboard');
+    expect(equipment.canUpgrade(state, 'rgbKeyboard'), false);
+    final next = equipment.upgrade(state, 'rgbKeyboard');
     expect(next, state); // unchanged
   });
 
@@ -69,16 +69,16 @@ void main() {
     // make to level 5 quickly
     var state = GameState.initial(1).copyWith(memePoints: 1000.0);
     for (int i = 0; i < 5; i++) {
-      state = equipment.upgrade(state, 'rgb_keyboard');
+      state = equipment.upgrade(state, 'rgbKeyboard');
     }
 
     // cumulative bonus at Lv5 = 1+2+3+4+5 = 15
     expect(equipment.computeTapGain(state), 1 + 15);
 
     // next cost should be null when at or above max in this test (5)
-    expect(equipment.getNextCost('rgb_keyboard', 5), null);
+    expect(equipment.getNextCost('rgbKeyboard', 5), null);
 
-    final after = equipment.upgrade(state, 'rgb_keyboard');
+    final after = equipment.upgrade(state, 'rgbKeyboard');
     expect(after, state);
   });
 }

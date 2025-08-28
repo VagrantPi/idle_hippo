@@ -1,63 +1,83 @@
-{
+  {
+  "default_tap_levels": [
+    { "level": 1,  "cost": 10,  "bonus": 1 },
+    { "level": 2,  "cost": 20,  "bonus": 0.8 },
+    { "level": 3,  "cost": 30,  "bonus": 0.6 },
+    { "level": 4,  "cost": 50,  "bonus": 0.4 },
+    { "level": 5,  "cost": 80,  "bonus": 0.2 },
+    { "level": 6,  "cost": 130, "bonus": 0.1 },
+    { "level": 7,  "cost": 210, "bonus": 0.08 },
+    { "level": 8,  "cost": 340, "bonus": 0.06 },
+    { "level": 9,  "cost": 550, "bonus": 0.04 },
+    { "level": 10, "cost": 890, "bonus": 0.02 }
+  ],
+  "default_idle_levels": [
+    { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
+    { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
+    { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
+    { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
+    { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
+    { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
+    { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
+    { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
+    { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
+    { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
+  ],
   "tap_equipments": [
     {
-      "id": "rgb_keyboard",
+      "id": "rgbKeyboard",
       "icon": "assets/images/equipment/RGBKeyboard.png",
-      "name_key": "equip.rgb_keyboard.name",
+      "name_key": "equip.rgbKeyboard.name",
       "type": "tap",
-      "max_level": 10,
-      "levels": [
-        { "level": 1,  "cost": 10,  "bonus": 1 },
-        { "level": 2,  "cost": 20,  "bonus": 0.8 },
-        { "level": 3,  "cost": 30,  "bonus": 0.6 },
-        { "level": 4,  "cost": 50,  "bonus": 0.4 },
-        { "level": 5,  "cost": 80,  "bonus": 0.2 },
-        { "level": 6,  "cost": 130, "bonus": 0.1 },
-        { "level": 7,  "cost": 210, "bonus": 0.08 },
-        { "level": 8,  "cost": 340, "bonus": 0.06 },
-        { "level": 9,  "cost": 550, "bonus": 0.04 },
-        { "level": 10, "cost": 890, "bonus": 0.02 }
-      ]
+      "max_level": 10
     },
     {
       "id": "faceMask",
       "icon": "assets/images/equipment/faceMask.png",
       "name_key": "equip.faceMask.name",
       "type": "tap",
-      "requires": { "id": "rgb_keyboard", "level": 3 },
-      "max_level": 10,
-      "levels": [
-        { "level": 1,  "cost": 10,  "bonus": 1 },
-        { "level": 2,  "cost": 20,  "bonus": 0.8 },
-        { "level": 3,  "cost": 30,  "bonus": 0.6 },
-        { "level": 4,  "cost": 50,  "bonus": 0.4 },
-        { "level": 5,  "cost": 80,  "bonus": 0.2 },
-        { "level": 6,  "cost": 130, "bonus": 0.1 },
-        { "level": 7,  "cost": 210, "bonus": 0.08 },
-        { "level": 8,  "cost": 340, "bonus": 0.06 },
-        { "level": 9,  "cost": 550, "bonus": 0.04 },
-        { "level": 10, "cost": 890, "bonus": 0.02 }
-      ]
+      "requires": { "id": "rgbKeyboard", "level": 3 },
+      "max_level": 10
     },
     {
       "id": "dress",
       "icon": "assets/images/equipment/dress.png",
       "name_key": "equip.dress.name",
       "type": "tap",
-      "requires": { "id": "rgb_keyboard", "level": 3 },
-      "max_level": 10,
-      "levels": [
-        { "level": 1,  "cost": 10,  "bonus": 1 },
-        { "level": 2,  "cost": 20,  "bonus": 0.8 },
-        { "level": 3,  "cost": 30,  "bonus": 0.6 },
-        { "level": 4,  "cost": 50,  "bonus": 0.4 },
-        { "level": 5,  "cost": 80,  "bonus": 0.2 },
-        { "level": 6,  "cost": 130, "bonus": 0.1 },
-        { "level": 7,  "cost": 210, "bonus": 0.08 },
-        { "level": 8,  "cost": 340, "bonus": 0.06 },
-        { "level": 9,  "cost": 550, "bonus": 0.04 },
-        { "level": 10, "cost": 890, "bonus": 0.02 }
-      ]
+      "requires": { "id": "rgbKeyboard", "level": 3 },
+      "max_level": 10
+    },
+    {
+      "id": "successKid",
+      "icon": "assets/images/equipment/SuccessKid.png",
+      "name_key": "equip.successKid.name",
+      "type": "tap",
+      "requires": { "id": "rgbKeyboard", "level": 5 },
+      "max_level": 10
+    },
+    {
+      "id": "disasterGirl",
+      "icon": "assets/images/equipment/DisasterGirl.png",
+      "name_key": "equip.disasterGirl.name",
+      "type": "tap",
+      "requires": { "id": "successKid", "level": 7 },
+      "max_level": 10
+    },
+    {
+      "id": "teletubbies",
+      "icon": "assets/images/equipment/Teletubbies.png",
+      "name_key": "equip.teletubbies.name",
+      "type": "tap",
+      "requires": { "id": "successKid", "level": 3 },
+      "max_level": 10
+    },
+    {
+      "id": "judgmentalCat",
+      "icon": "assets/images/equipment/JudgmentalCat.png",
+      "name_key": "equip.judgmentalCat.name",
+      "type": "tap",
+      "requires": { "id": "rgbKeyboard", "level": 3 },
+      "max_level": 10
     }
   ],
   "idle_equipments": [
@@ -65,64 +85,74 @@
       "id": "youtube",
       "icon": "assets/images/equipment/YouTube.png",
       "name_key": "equip.youtube.name",
-      "desc_key": "equip.youtube.desc",
       "type": "idle",
       "unlock": null,
-      "max_level": 10,
-      "levels": [
-        { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
-        { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
-        { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
-        { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
-        { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
-        { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
-        { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
-        { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
-        { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
-        { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
-      ]
+      "max_level": 10
     },
     {
       "id": "btc",
       "icon": "assets/images/equipment/BTC.png",
       "name_key": "equip.btc.name",
-      "desc_key": "equip.btc.desc",
       "type": "idle",
       "unlock": { "type": "equip_level", "id": "youtube", "level": 3 },
-      "max_level": 10,
-      "levels": [
-        { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
-        { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
-        { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
-        { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
-        { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
-        { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
-        { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
-        { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
-        { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
-        { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
-      ]
+      "max_level": 10
     },
     {
       "id": "doge",
       "icon": "assets/images/equipment/DOGE.png",
       "name_key": "equip.doge.name",
-      "desc_key": "equip.doge.desc",
       "type": "idle",
-      "unlock": { "type": "equip_level", "id": "btc", "level": 3 },
-      "max_level": 10,
-      "levels": [
-        { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
-        { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 },
-        { "level": 3,  "cost": 30,  "bonus_per_sec": 0.3 },
-        { "level": 4,  "cost": 50,  "bonus_per_sec": 0.4 },
-        { "level": 5,  "cost": 80,  "bonus_per_sec": 0.5 },
-        { "level": 6,  "cost": 130, "bonus_per_sec": 0.6 },
-        { "level": 7,  "cost": 210, "bonus_per_sec": 0.7 },
-        { "level": 8,  "cost": 340, "bonus_per_sec": 0.8 },
-        { "level": 9,  "cost": 550, "bonus_per_sec": 0.9 },
-        { "level": 10, "cost": 890, "bonus_per_sec": 1.0 }
-      ]
+      "unlock": { "type": "equip_level", "id": "btc", "level": 5 },
+      "max_level": 10
+    },
+    {
+      "id": "stonks",
+      "icon": "assets/images/equipment/Stonks.png",
+      "name_key": "equip.stonks.name",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "doge", "level": 7 },
+      "max_level": 10
+    },
+    {
+      "id": "batmanSlappingRobin",
+      "icon": "assets/images/equipment/BatmanSlappingRobin.png",
+      "name_key": "equip.batmanSlappingRobin.name",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "stonks", "level": 9 },
+      "max_level": 10
+    },
+    {
+      "id": "nyanCat",
+      "icon": "assets/images/equipment/NyanCat.png",
+      "name_key": "equip.nyanCat.name",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "batmanSlappingRobin", "level": 5 },
+      "max_level": 10
+    },
+    {
+      "id": "handshake",
+      "icon": "assets/images/equipment/Handshake.png",
+      "name_key": "equip.handshake.name",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "nyanCat", "level": 5 },
+      "max_level": 10
+    },
+    {
+      "id": "title_114514",
+      "icon": "assets/images/equipment/114514.png",
+      "name_key": "equip.title_114514.name",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "youtube", "level": 3 },
+      "max_level": 10
+    },
+    {
+      "id": "scientificResearch",
+      "icon": "assets/images/equipment/ScientificResearch.png",
+      "name_key": "equip.scientificResearch.name",
+      "type": "idle",
+      "unlock": { "type": "equip_level", "id": "youtube", "level": 5 },
+      "max_level": 10
     }
   ]
 }
+

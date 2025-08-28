@@ -1,69 +1,27 @@
 {
+  "default_rarities": {
+    "RR": { "rarity": "RR", "baseIdlePerSec": 0.1, "color": "#808080" },
+    "R":  { "rarity": "R",  "baseIdlePerSec": 0.2, "color": "#00FF00" },
+    "S":  { "rarity": "S",  "baseIdlePerSec": 0.3, "color": "#0000FF" },
+    "SR": { "rarity": "SR", "baseIdlePerSec": 0.4, "color": "#800080" },
+    "SSR":{ "rarity": "SSR","baseIdlePerSec": 0.5, "color": "#FF0000" }
+  },
   "pets": [
-    {
-      "id": "MooDeng",
-      "name": "彈跳豬",
-      "image": "assets/images/pet/MooDeng.png",
-      "rarities": {
-        "RR": {
-          "rarity": "RR",
-          "baseIdlePerSec": 0.1,
-          "color": "#808080"
-        },
-        "R": {
-          "rarity": "R", 
-          "baseIdlePerSec": 0.2,
-          "color": "#00FF00"
-        },
-        "S": {
-          "rarity": "S",
-          "baseIdlePerSec": 0.3,
-          "color": "#0000FF"
-        },
-        "SR": {
-          "rarity": "SR",
-          "baseIdlePerSec": 0.4,
-          "color": "#800080"
-        },
-        "SSR": {
-          "rarity": "SSR",
-          "baseIdlePerSec": 0.5,
-          "color": "#FF0000"
-        }
-      }
-    },
-    {
-      "id": "PEPE",
-      "name": "佩佩蛙",
-      "image": "assets/images/pet/PEPE.png",
-      "rarities": {
-        "RR": {
-          "rarity": "RR",
-          "baseIdlePerSec": 0.1,
-          "color": "#808080"
-        },
-        "R": {
-          "rarity": "R", 
-          "baseIdlePerSec": 0.2,
-          "color": "#00FF00"
-        },
-        "S": {
-          "rarity": "S",
-          "baseIdlePerSec": 0.3,
-          "color": "#0000FF"
-        },
-        "SR": {
-          "rarity": "SR",
-          "baseIdlePerSec": 0.4,
-          "color": "#800080"
-        },
-        "SSR": {
-          "rarity": "SSR",
-          "baseIdlePerSec": 0.5,
-          "color": "#FF0000"
-        }
-      }
-    }
+    { "id": "MooDeng", "name": "彈跳豬", "image": "assets/images/pet/MooDeng.png" },
+    { "id": "PEPE", "name": "佩佩蛙", "image": "assets/images/pet/PEPE.png" },
+    { "id": "ThisIsFine", "name": "This Is Fine", "image": "assets/images/pet/ThisIsFine.png" },
+    { "id": "Doge", "name": "Doge", "image": "assets/images/pet/Doge.png" },
+    { "id": "ChipichapaCat", "name": "Chipichapa", "image": "assets/images/pet/ChipichapaCat.gif" },
+    { "id": "OiiaiCat", "name": "OiiaiCat", "image": "assets/images/pet/OiiaiCat.gif" },
+    { "id": "PopCat", "name": "PopCat", "image": "assets/images/pet/PopCat.gif" },
+    { "id": "AfraidOfHamster", "name": "AfraidOfHamster", "image": "assets/images/pet/AfraidOfHamster.png" },
+    { "id": "Catsthatlooklikehitler", "name": "Catsthatlooklikehitler", "image": "assets/images/pet/Catsthatlooklikehitler.png" },
+    { "id": "CryCat", "name": "CryCat", "image": "assets/images/pet/CryCat.png" },
+    { "id": "LeopardCat", "name": "LeopardCat", "image": "assets/images/pet/LeopardCat.png" },
+    { "id": "Penguin", "name": "Penguin", "image": "assets/images/pet/Penguin.png" },
+    { "id": "Seal", "name": "Seal", "image": "assets/images/pet/Seal.png" },
+    { "id": "Squirrel", "name": "Squirrel", "image": "assets/images/pet/Squirrel.png" },
+    { "id": "ScaredCat", "name": "ScaredCat", "image": "assets/images/pet/ScaredCat.png" }
   ],
   "upgrade": {
     "levelUpUpgradeBase": 0.5,

@@ -100,4 +100,29 @@ class ConfigService {
     
     return null;
   }
+
+  /// 取得寵物某稀有度的配置（支援 per-pet override，否則回退到 default_rarities）
+  Map<String, dynamic>? getPetRarityConfig(String petKey, String rarityKey) {
+    if (!_isLoaded) return null;
+
+    final petsConfig = _configs['pets'] as Map<String, dynamic>?;
+    if (petsConfig == null) return null;
+
+    // 1) 優先讀取該寵物自己的 rarities（向後相容）
+    final pet = getPetConfig(petKey);
+    final petRarities = pet != null ? pet['rarities'] as Map<String, dynamic>? : null;
+    if (petRarities != null && petRarities.containsKey(rarityKey)) {
+      final cfg = petRarities[rarityKey];
+      return (cfg is Map<String, dynamic>) ? cfg : null;
+    }
+
+    // 2) 回退到全域 default_rarities
+    final defaultRarities = petsConfig['default_rarities'] as Map<String, dynamic>?;
+    if (defaultRarities != null && defaultRarities.containsKey(rarityKey)) {
+      final cfg = defaultRarities[rarityKey];
+      return (cfg is Map<String, dynamic>) ? cfg : null;
+    }
+
+    return null;
+  }
 }

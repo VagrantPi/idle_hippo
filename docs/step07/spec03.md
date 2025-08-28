@@ -2,7 +2,7 @@
 
 以現在的例子來說
 
-rgb_keyboard 需要升級到 level 3 後才可以升級 faceMask 跟 dress
+rgbKeyboard 需要升級到 level 3 後才可以升級 faceMask 跟 dress
 
 否則一開始 faceMask 跟 dress 都是 disabled，整個裝備 Container 上面會有一層透明度 50% 的半透明遮罩
 

@@ -36,7 +36,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB ゲーミングキーボード"
     },
     "faceMask": {
@@ -56,6 +56,36 @@
     "doge": {
       "name": "DOGE",
       "desc": "そんな放置、すごいワオ。"
+    },
+    "successKid": {
+      "name": "サクセス・キッド"
+    },
+    "disasterGirl": {
+      "name": "ディザスター・ガール"
+    },
+    "stonks": {
+      "name": "ストンクス"
+    },
+    "judgmentalCat": {
+      "name": "ジャッジメンタル・キャット"
+    },
+    "batmanSlappingRobin": {
+      "name": "バットマンがロビンを平手打ち"
+    },
+    "teletubbies": {
+      "name": "テレタビーズ"
+    },
+    "scientificResearch": {
+      "name": "学術研究のために"
+    },
+    "handshake": {
+      "name": "握手する"
+    },
+    "nyanCat": {
+      "name": "ニャン・キャット"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "{name} Lv.{level} で解放",
@@ -151,7 +181,21 @@
     "max_level_reached": "最大レベルに到達",
     "names": {
       "MooDeng": "ムーデン",
-      "PEPE": "カエルのペペ"
+      "PEPE": "カエルのペペ",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "OiiaiCat",
+      "PopCat": "PopCat",
+      "AfraidOfHamster": "AfraidOfHamster",
+      "Catsthatlooklikehitler": "Catsthatlooklikehitler",
+      "CryCat": "CryCat",
+      "JudgmentalCat": "JudgmentalCat",
+      "LeopardCat": "LeopardCat",
+      "Penguin": "Penguin",
+      "Seal": "Seal",
+      "Squirrel": "Squirrel",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "コモン",

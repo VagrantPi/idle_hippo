@@ -39,7 +39,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB Gaming Keyboard"
     },
     "faceMask": {
@@ -59,6 +59,36 @@
     "doge": {
       "name": "DOGE",
       "desc": "Such idle, very wow."
+    },
+    "successKid": {
+      "name": "Success Kid"
+    },
+    "disasterGirl": {
+      "name": "Disaster Girl"
+    },
+    "stonks": {
+      "name": "Stonks"
+    },
+    "judgmentalCat": {
+      "name": "Judgmental Cat"
+    },
+    "batmanSlappingRobin": {
+      "name": "Batman Slapping Robin"
+    },
+    "teletubbies": {
+      "name": "Teletubbies"
+    },
+    "scientificResearch": {
+      "name": "For Scientific Research"
+    },
+    "handshake": {
+      "name": "Handshake"
+    },
+    "nyanCat": {
+      "name": "Nyan Cat"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "Unlock after {name} Lv.{level}",
@@ -154,7 +184,21 @@
     "max_level_reached": "Max level reached",
     "names": {
       "MooDeng": "Moo Deng",
-      "PEPE": "Pepe the Frog"
+      "PEPE": "Pepe the Frog",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "OiiaiCat",
+      "PopCat": "PopCat",
+      "AfraidOfHamster": "Afraid Of Hamster",
+      "Catsthatlooklikehitler": "Catsthat Look Like Hitler",
+      "CryCat": "Cry Cat",
+      "JudgmentalCat": "Judgmental Cat",
+      "LeopardCat": "Leopard Cat",
+      "Penguin": "Penguin",
+      "Seal": "Seal",
+      "Squirrel": "Squirrel",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "Common",

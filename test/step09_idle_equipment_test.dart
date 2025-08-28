@@ -27,25 +27,30 @@ void main() {
       idleIncomeService.resetStats();
     });
 
-    test('放置裝備資料載入正確', () async {
+    test('放置裝備資料載入正確（集中化 levels 回退）', () async {
       final idleEquipments = equipmentService.listIdleEquipments();
-      
-      expect(idleEquipments.length, 3);
-      
-      // 驗證 Youtube
+
+      // 新版共有 5 個 idle 裝備
+      expect(idleEquipments.length, 9);
+
+      // 驗證 Youtube 基本欄位與由預設 levels 計算的成本/加成
       final youtube = idleEquipments.firstWhere((e) => e['id'] == 'youtube');
       expect(youtube['name_key'], 'equip.youtube.name');
-      expect(youtube.containsKey('levels'), isTrue);
-      
-      // 驗證 BTC
+      expect(equipmentService.getIdleNextCost('youtube', 0), 10);
+      expect(
+        equipmentService.cumulativeIdleBonusFor('youtube', 1),
+        closeTo(0.1, 1e-9),
+      );
+
+      // 驗證 BTC（僅資料正確，解鎖條件另有測試）
       final btc = idleEquipments.firstWhere((e) => e['id'] == 'btc');
       expect(btc['name_key'], 'equip.btc.name');
-      expect(btc.containsKey('levels'), isTrue);
-      
-      // 驗證 DOGE
+      expect(equipmentService.getIdleNextCost('btc', 0), 10);
+
+      // 驗證 DOGE（僅資料正確，解鎖條件另有測試）
       final doge = idleEquipments.firstWhere((e) => e['id'] == 'doge');
       expect(doge['name_key'], 'equip.doge.name');
-      expect(doge.containsKey('levels'), isTrue);
+      expect(equipmentService.getIdleNextCost('doge', 0), 10);
     });
 
     test('放置裝備解鎖條件驗證', () {
@@ -72,16 +77,16 @@ void main() {
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'youtube'), true);
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'btc'), true);
       
-      // 先不解鎖 DOGE（需 BTC Lv.3，且後續升級時再用主線解鎖）
+      // 先不解鎖 DOGE（需 BTC Lv.5，且後續升級時再用主線解鎖）
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'doge'), false);
       
-      // 升級 BTC 到 3 級以滿足 DOGE 的 config 解鎖條件（先授予主線獎勵）
+      // 升級 BTC 到 5 級以滿足 DOGE 的 config 解鎖條件（先授予主線獎勵）
       state = state.copyWith(
         mainQuest: state.mainQuest!.copyWith(
           unlockedRewards: const ['equipment.youtube', 'equipment.btc'],
         ),
       );
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 5; i++) {
         state = equipmentService.upgradeIdle(state, 'btc');
       }
       expect(equipmentService.isIdleEquipmentUnlocked(state.equipments, 'doge'), true);

@@ -73,7 +73,7 @@ class EquipmentService {
     return null;
   }
 
-  /// 讀取裝備相依（requires），格式：{"id": "rgb_keyboard", "level": 3}
+  /// 讀取裝備相依（requires），格式：{"id": "rgbKeyboard", "level": 3}
   (String id, int level)? _requireOf(Map<String, dynamic> equip) {
     final req = equip['requires'];
     if (req is Map<String, dynamic>) {
@@ -98,6 +98,28 @@ class EquipmentService {
       }
     }
     return null;
+  }
+
+  /// 取得裝備的 levels：
+  /// 1) 優先使用裝備自身的 levels
+  /// 2) 否則依 type 回退至全域預設：
+  ///    - tap  → equipments.default_tap_levels
+  ///    - idle → equipments.default_idle_levels
+  List<Map<String, dynamic>> _levelsOf(Map<String, dynamic> equip) {
+    final raw = equip['levels'];
+    if (raw is List) {
+      return raw.cast<Map<String, dynamic>>();
+    }
+
+    final type = equip['type'] as String?;
+    if (type == 'tap') {
+      final list = _config.getValue('equipments.default_tap_levels', defaultValue: []);
+      if (list is List) return list.cast<Map<String, dynamic>>();
+    } else if (type == 'idle') {
+      final list = _config.getValue('equipments.default_idle_levels', defaultValue: []);
+      if (list is List) return list.cast<Map<String, dynamic>>();
+    }
+    return const [];
   }
 
   /// 檢查指定 tap 裝備是否已解鎖（依相依條件）
@@ -128,7 +150,7 @@ class EquipmentService {
 
   // 統一：以 double 計算累積加成（支援小數）
   double _cumulativeBonus(Map<String, dynamic> equip, int level) {
-    final levels = equip['levels'] as List<dynamic>?;
+    final levels = _levelsOf(equip);
     if (levels == null) return 0.0;
     
     final bonuses = <num>[];
@@ -146,7 +168,7 @@ class EquipmentService {
   // 計算放置裝備的累積 bonus_per_sec
   double _cumulativeIdleBonus(Map<String, dynamic> equip, int level) {
     if (level <= 0) return 0.0;
-    final levels = equip['levels'] as List<dynamic>?;
+    final levels = _levelsOf(equip);
     if (levels == null) return 0.0;
     
     final bonuses = <num>[];
@@ -217,7 +239,7 @@ class EquipmentService {
     final maxLv = _maxLevel(equip);
     if (currentLevel >= maxLv) return null;
     final nextLv = currentLevel + 1;
-    final levels = (equip['levels'] as List).cast<Map<String, dynamic>>();
+    final levels = _levelsOf(equip);
     final found = levels.firstWhere(
       (m) => (m['level'] as num).toInt() == nextLv,
       orElse: () => const {},
@@ -235,7 +257,7 @@ class EquipmentService {
     final maxLv = _maxLevel(equip);
     if (currentLevel >= maxLv) return null;
     final nextLv = currentLevel + 1;
-    final levels = (equip['levels'] as List).cast<Map<String, dynamic>>();
+    final levels = _levelsOf(equip);
     final found = levels.firstWhere(
       (m) => (m['level'] as num).toInt() == nextLv,
       orElse: () => const {},
