@@ -17,10 +17,10 @@
   {
     "tap_equipments": [
       {
-        "id": "rgb_keyboard",
+        "id": "rgbKeyboard",
         "icon": "assets/images/equipment/RGBKeyboard.png",
-        "name_key": "equip.rgb_keyboard.name",
-        "desc_key": "equip.rgb_keyboard.desc",
+        "name_key": "equip.rgbKeyboard.name",
+        "desc_key": "equip.rgbKeyboard.desc",
         "type": "tap", 
         "max_level": 10,
         "levels": [
@@ -44,13 +44,13 @@
 
   ```json
   {
-    "equip.rgb_keyboard.name": {
+    "equip.rgbKeyboard.name": {
       "en": "RGB Gaming Keyboard",
       "zh": "RGB 電競鍵盤",
       "jp": "RGBゲーミングキーボード",
       "ko": "RGB 게이밍 키보드"
     },
-    "equip.rgb_keyboard.desc": {
+    "equip.rgbKeyboard.desc": {
       "en": "Add tap power with a dazzling keyboard.",
       "zh": "絢爛鍵盤讓你的點擊更有力！",
       "jp": "まばゆいキーボードでタップ力アップ！",
@@ -96,7 +96,7 @@
   ```json
   {
     "equipments": {
-      "rgb_keyboard": 0  // 初始 0 等（尚未購買/升級）
+      "rgbKeyboard": 0  // 初始 0 等（尚未購買/升級）
     }
   }
   ```
@@ -104,7 +104,7 @@
 
 ### 2.5 Debug 面板
 
-* 顯示：`tap.base`、`sumTapBonus`、`tap_gain`、`rgb_keyboard.level`、`rgb_keyboard.nextCost`。
+* 顯示：`tap.base`、`sumTapBonus`、`tap_gain`、`rgbKeyboard.level`、`rgbKeyboard.nextCost`。
 * 提供「+資源100」測試按鈕（僅 Debug）以驗證升級流程。
 
 ### 2.6 資產
@@ -128,15 +128,15 @@
 
 ### 案例 1：首次升級成功
 
-* **Given** `memePoints=15`、`rgb_keyboard.level=0`、`tap.base=1`
+* **Given** `memePoints=15`、`rgbKeyboard.level=0`、`tap.base=1`
 * **When** 點擊「升級」
-* **Then** `memePoints=5`、`rgb_keyboard.level=1`、`sumTapBonus=1`、`tap_gain=1+1=2`
+* **Then** `memePoints=5`、`rgbKeyboard.level=1`、`sumTapBonus=1`、`tap_gain=1+1=2`
 
 ---
 
 ### 案例 2：連續升級至 Lv.3
 
-* **Given** `memePoints=100`、`rgb_keyboard.level=0`、成本表（10,20,30）
+* **Given** `memePoints=100`、`rgbKeyboard.level=0`、成本表（10,20,30）
 * **When** 連續升到 Lv.3
 * **Then** 最終 `memePoints = 100 - (10+20+30) = 40`、`sumTapBonus=1+2+3=6`、`tap_gain=base+6`
 
@@ -152,7 +152,7 @@
 
 ### 案例 4：滿級狀態
 
-* **Given** `rgb_keyboard.level=10`
+* **Given** `rgbKeyboard.level=10`
 * **When** 進入裝備頁
 * **Then** 顯示 `Lv.10/10`、`下一級`欄位隱藏或標記「MAX」，按鈕禁用
 
@@ -160,7 +160,7 @@
 
 ### 案例 5：點擊收益即時更新
 
-* **Given** `tap.base=1`、`rgb_keyboard.level=1`（bonus=1）、有效點擊間隔通過（Step 5）
+* **Given** `tap.base=1`、`rgbKeyboard.level=1`（bonus=1）、有效點擊間隔通過（Step 5）
 * **When** 先點擊一次 → 應得 2；升級到 Lv.2（bonus=2）後再點擊一次
 * **Then** 第二次點擊應得 3（`1 + 2`），數值即時反映
 

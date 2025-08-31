@@ -561,7 +561,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                             return Transform.scale(
                               scale: 0.8 + _textAnimation.value * 0.2,
                               child: Text(
-                                result.name,
+                                _localization.getString('pets.names.${result.petKey}', defaultValue: result.name),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,

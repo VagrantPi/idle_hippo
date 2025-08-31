@@ -1,6 +1,7 @@
 import 'package:idle_hippo/models/game_state.dart';
 import '../services/config_service.dart';
 import '../services/decimal_utils.dart';
+import 'game_state_service.dart';
 
 class EquipmentService {
   static final EquipmentService _instance = EquipmentService._internal();
@@ -73,7 +74,7 @@ class EquipmentService {
     return null;
   }
 
-  /// 讀取裝備相依（requires），格式：{"id": "rgb_keyboard", "level": 3}
+  /// 讀取裝備相依（requires），格式：{"id": "rgbKeyboard", "level": 3}
   (String id, int level)? _requireOf(Map<String, dynamic> equip) {
     final req = equip['requires'];
     if (req is Map<String, dynamic>) {
@@ -98,6 +99,28 @@ class EquipmentService {
       }
     }
     return null;
+  }
+
+  /// 取得裝備的 levels：
+  /// 1) 優先使用裝備自身的 levels
+  /// 2) 否則依 type 回退至全域預設：
+  ///    - tap  → equipments.default_tap_levels
+  ///    - idle → equipments.default_idle_levels
+  List<Map<String, dynamic>> _levelsOf(Map<String, dynamic> equip) {
+    final raw = equip['levels'];
+    if (raw is List) {
+      return raw.cast<Map<String, dynamic>>();
+    }
+
+    final type = equip['type'] as String?;
+    if (type == 'tap') {
+      final list = _config.getValue('equipments.default_tap_levels', defaultValue: []);
+      if (list is List) return list.cast<Map<String, dynamic>>();
+    } else if (type == 'idle') {
+      final list = _config.getValue('equipments.default_idle_levels', defaultValue: []);
+      if (list is List) return list.cast<Map<String, dynamic>>();
+    }
+    return const [];
   }
 
   /// 檢查指定 tap 裝備是否已解鎖（依相依條件）
@@ -128,12 +151,10 @@ class EquipmentService {
 
   // 統一：以 double 計算累積加成（支援小數）
   double _cumulativeBonus(Map<String, dynamic> equip, int level) {
-    final levels = equip['levels'] as List<dynamic>?;
-    if (levels == null) return 0.0;
+    final levels = _levelsOf(equip);
     
     final bonuses = <num>[];
     for (final m in levels) {
-      if (m is! Map<String, dynamic>) continue;
       final lv = (m['level'] as num).toInt();
       if (lv <= level) {
         final b = m['bonus'];
@@ -146,8 +167,7 @@ class EquipmentService {
   // 計算放置裝備的累積 bonus_per_sec
   double _cumulativeIdleBonus(Map<String, dynamic> equip, int level) {
     if (level <= 0) return 0.0;
-    final levels = equip['levels'] as List<dynamic>?;
-    if (levels == null) return 0.0;
+    final levels = _levelsOf(equip);
     
     final bonuses = <num>[];
     for (final m in levels) {
@@ -217,7 +237,7 @@ class EquipmentService {
     final maxLv = _maxLevel(equip);
     if (currentLevel >= maxLv) return null;
     final nextLv = currentLevel + 1;
-    final levels = (equip['levels'] as List).cast<Map<String, dynamic>>();
+    final levels = _levelsOf(equip);
     final found = levels.firstWhere(
       (m) => (m['level'] as num).toInt() == nextLv,
       orElse: () => const {},
@@ -235,7 +255,7 @@ class EquipmentService {
     final maxLv = _maxLevel(equip);
     if (currentLevel >= maxLv) return null;
     final nextLv = currentLevel + 1;
-    final levels = (equip['levels'] as List).cast<Map<String, dynamic>>();
+    final levels = _levelsOf(equip);
     final found = levels.firstWhere(
       (m) => (m['level'] as num).toInt() == nextLv,
       orElse: () => const {},
@@ -279,10 +299,13 @@ class EquipmentService {
     final newMap = Map<String, int>.from(state.equipments);
     newMap[id] = currentLevel + 1;
 
-    return state.copyWith(
+    final newState = state.copyWith(
       memePoints: DecimalUtils.add(state.memePoints, -cost),
       equipments: newMap,
     );
+    // 立即寫回並觸發稱號條件檢查（equip_level_reach / equip_pair_levels）
+    GameStateService().updateGameState(newState);
+    return newState;
   }
 
   /// 升級放置裝備
@@ -302,9 +325,12 @@ class EquipmentService {
     final newMap = Map<String, int>.from(state.equipments);
     newMap[id] = currentLevel + 1;
 
-    return state.copyWith(
+    final newState = state.copyWith(
       memePoints: DecimalUtils.add(state.memePoints, -cost),
       equipments: newMap,
     );
+    // 立即寫回並觸發稱號條件檢查（equip_level_reach / equip_pair_levels）
+    GameStateService().updateGameState(newState);
+    return newState;
   }
 }

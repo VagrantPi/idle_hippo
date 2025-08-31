@@ -17,6 +17,51 @@ assets/config/
 
 ---
 
+### 結構說明（新版，集中共用 levels）
+
+為了移除不同裝備間重複的 `levels` 配置，`equipments.json` 新增兩個全域陣列：
+
+```json
+{
+  "default_tap_levels": [
+    { "level": 1,  "cost": 10,  "bonus": 1 },
+    { "level": 2,  "cost": 20,  "bonus": 0.8 }
+    // ...
+  ],
+  "default_idle_levels": [
+    { "level": 1,  "cost": 10,  "bonus_per_sec": 0.1 },
+    { "level": 2,  "cost": 20,  "bonus_per_sec": 0.2 }
+    // ...
+  ],
+  "tap_equipments": [
+    { "id": "rgbKeyboard", "type": "tap", "icon": "...", "name_key": "...", "max_level": 10 },
+    { "id": "faceMask",    "type": "tap", "requires": {"id": "rgbKeyboard", "level": 3}, "max_level": 10 }
+  ],
+  "idle_equipments": [
+    { "id": "youtube", "type": "idle", "unlock": null, "max_level": 10 },
+    { "id": "btc",     "type": "idle", "unlock": {"type": "equip_level", "id": "youtube", "level": 3}, "max_level": 10 }
+  ]
+}
+```
+
+### 回退與向後相容
+
+- 若單一裝備物件未定義 `levels` 欄位，系統會依據 `type` 自動回退：
+  - `type: "tap"` → 使用全域 `default_tap_levels`
+  - `type: "idle"` → 使用全域 `default_idle_levels`
+- 仍支援舊版（每個裝備各自包含完整 `levels`）的寫法；若裝備自帶 `levels`，將優先使用其自身定義。
+- 裝備最大等級由 `max_level` 控制，回退與覆寫都遵循相同的等級與成本/加成查找規則。
+
+### 欄位說明（levels）
+
+- `level`：等級（整數，從 1 起）
+- `cost`：升級至該等級所需成本（整數）
+- `bonus`：點擊裝備的每級加成（tap 類型使用，數值相加）
+- `bonus_per_sec`：放置裝備的每級每秒加成（idle 類型使用，數值相加）
+
+> 注意：`bonus` 與 `bonus_per_sec` 只會在對應的裝備類型中使用，另一類型可忽略。
+
+
 ## 🎮 game.json - 遊戲全域設定
 
 ### 參數說明
@@ -370,42 +415,59 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 
 寵物系統配置檔案，定義寵物種類、稀有度、基礎屬性及升級參數。
 
-### 結構說明
+### 結構說明（新版，集中共用稀有度配置）
 
 ```json
 {
+  "default_rarities": {
+    "RR": { "rarity": "RR", "baseIdlePerSec": 0.1, "color": "#808080" },
+    "R":  { "rarity": "R",  "baseIdlePerSec": 0.2, "color": "#00FF00" },
+    "S":  { "rarity": "S",  "baseIdlePerSec": 0.3, "color": "#0000FF" },
+    "SR": { "rarity": "SR", "baseIdlePerSec": 0.4, "color": "#800080" },
+    "SSR":{ "rarity": "SSR","baseIdlePerSec": 0.5, "color": "#FF0000" }
+  },
   "pets": [
-    {
-      "id": "寵物種類ID",
-      "name": "寵物名稱",
-      "image": "寵物圖片路徑",
-      "rarities": {
-        "稀有度名稱": {
-          "rarity": "稀有度代碼",
-          "baseIdlePerSec": "基礎放置收益/秒"
-        }
-      }
-    }
+    { "id": "MooDeng", "name": "彈跳豬", "image": "assets/images/pet/MooDeng.png" }
   ],
   "upgrade": {
-    "levelUpUpgradeBase": "等級升級基礎加成",
-    "levelUpUpgradeDecayLevels": "加成衰減間隔等級",
-    "levelUpUpgradeDecayRate": "加成衰減率"
+    "levelUpUpgradeBase": 0.5,
+    "levelUpUpgradeDecayLevels": 10,
+    "levelUpUpgradeDecayRate": 0.5
   }
 }
 ```
 
+### 回退與向後相容
+
+- 若單一寵物物件下未定義 `rarities` 欄位，則程式會自動回退使用全域 `default_rarities`。
+- 如需針對特定寵物客製化某些稀有度數值，可在該寵物物件下加入 `rarities`，僅覆寫需要變更的鍵：
+
+```json
+{
+  "id": "MooDeng",
+  "name": "彈跳豬",
+  "image": "assets/images/pet/MooDeng.png",
+  "rarities": {
+    "SSR": { "rarity": "SSR", "baseIdlePerSec": 0.6 } // 僅覆寫 SSR，其他沿用 default_rarities
+  }
+}
+```
+
+> 注意：系統仍支援舊版「每個寵物完整包含 rarities」的寫法，優先使用 per-pet 設定，其次才回退至 `default_rarities`。
+
 ### 參數說明
+
+#### default_rarities 物件（全域共用）
+- **RR/R/S/SR/SSR**: 對應稀有度配置物件
+- **rarity**: 稀有度代碼 (RR, R, S, SR, SSR)
+- **baseIdlePerSec**: 基礎放置收益/秒
+- **color**: 建議用於 UI 的顏色標示（十六進位色碼）
 
 #### pets 陣列
 - **id**: 寵物種類的唯一識別碼
 - **name**: 寵物的顯示名稱
 - **image**: 寵物圖片的資源路徑
-- **rarities**: 該寵物種類的所有稀有度變體
-
-#### rarities 物件
-- **rarity**: 稀有度代碼 (RR, R, S, SR, SSR)
-- **baseIdlePerSec**: 該稀有度的基礎放置收益每秒數值
+- **rarities**:（選填）針對該寵物的覆寫設定，缺漏的鍵會回退使用 `default_rarities`
 
 #### upgrade 物件
 - **levelUpUpgradeBase**: 每級升級的基礎加成倍率 (預設: 0.5)
@@ -444,33 +506,18 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 
 ```json
 {
+  "default_rarities": {
+    "RR": { "rarity": "RR", "baseIdlePerSec": 0.1, "color": "#808080" },
+    "R":  { "rarity": "R",  "baseIdlePerSec": 0.2, "color": "#00FF00" },
+    "S":  { "rarity": "S",  "baseIdlePerSec": 0.3, "color": "#0000FF" },
+    "SR": { "rarity": "SR", "baseIdlePerSec": 0.4, "color": "#800080" },
+    "SSR":{ "rarity": "SSR","baseIdlePerSec": 0.5, "color": "#FF0000" }
+  },
   "pets": [
     {
       "id": "MooDeng",
       "name": "彈跳豬 MooDeng",
-      "image": "assets/images/pets/moodeng.png",
-      "rarities": {
-        "RR": {
-          "rarity": "RR",
-          "baseIdlePerSec": 5.0
-        },
-        "R": {
-          "rarity": "R", 
-          "baseIdlePerSec": 10.0
-        },
-        "S": {
-          "rarity": "S",
-          "baseIdlePerSec": 20.0
-        },
-        "SR": {
-          "rarity": "SR",
-          "baseIdlePerSec": 40.0
-        },
-        "SSR": {
-          "rarity": "SSR",
-          "baseIdlePerSec": 80.0
-        }
-      }
+      "image": "assets/images/pet/MooDeng.png"
     }
   ],
   "upgrade": {
@@ -483,4 +530,4 @@ final petIncome = configService.getValue('pets.pets.0.initial_idle_income', defa
 
 ---
 
-*最後更新: 2025-08-25*
+*最後更新: 2025-08-28*

@@ -39,7 +39,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB Gaming Keyboard"
     },
     "faceMask": {
@@ -59,6 +59,36 @@
     "doge": {
       "name": "DOGE",
       "desc": "Such idle, very wow."
+    },
+    "successKid": {
+      "name": "Success Kid"
+    },
+    "disasterGirl": {
+      "name": "Disaster Girl"
+    },
+    "stonks": {
+      "name": "Stonks"
+    },
+    "judgmentalCat": {
+      "name": "Judgmental Cat"
+    },
+    "batmanSlappingRobin": {
+      "name": "Batman Slapping Robin"
+    },
+    "teletubbies": {
+      "name": "Teletubbies"
+    },
+    "scientificResearch": {
+      "name": "For Scientific Research"
+    },
+    "handshake": {
+      "name": "Handshake"
+    },
+    "nyanCat": {
+      "name": "Nyan Cat"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "Unlock after {name} Lv.{level}",
@@ -154,7 +184,21 @@
     "max_level_reached": "Max level reached",
     "names": {
       "MooDeng": "Moo Deng",
-      "PEPE": "Pepe the Frog"
+      "PEPE": "Pepe the Frog",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "OiiaiCat",
+      "PopCat": "PopCat",
+      "AfraidOfHamster": "Afraid Of Hamster",
+      "Catsthatlooklikehitler": "Catsthat Look Like Hitler",
+      "CryCat": "Cry Cat",
+      "JudgmentalCat": "Judgmental Cat",
+      "LeopardCat": "Leopard Cat",
+      "Penguin": "Penguin",
+      "Seal": "Seal",
+      "Squirrel": "Squirrel",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "Common",
@@ -192,5 +236,31 @@
         "desc": "Accumulate points"
       }
     }
+  },
+  "title": {
+    "tab": {
+      "unlocked": "Unlocked",
+      "locked": "Locked"
+    },
+    "btn": {
+      "claim": "Claim"
+    },
+    "hidden": "????",
+    "lock": {
+      "title_system_unlock": "Title system unlocks after completing Main Quest Stage 2"
+    },
+    "rookie": "Meme Rookie",
+    "rookie.desc": "Finish Mainline: Meme Rookie",
+    "ssr_collector": "Pro Meme Collector",
+    "ssr_collector.desc": "Obtain ≥1 SSR Pet",
+    "114514": "Iiyo! Koiyo!",
+    "114514.desc": "Equip 114514 reaches Lv.10",
+    "crypto_expert": "Crypto Expert",
+    "crypto_expert.desc_reveal": "BTC Lv10 + DOGE Lv10",
+    "came_anyway": "Came Anyway",
+    "came_anyway.desc_reveal": "Face Mask Lv10 + Dress Lv10",
+    "meme_king": "King of Meme",
+    "meme_king.desc": "Collect all other titles",
+    "all_obtained": "All titles obtained!"
   }
 }

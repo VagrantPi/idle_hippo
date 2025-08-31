@@ -1071,7 +1071,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
               dailyMissionService: _dailyMission,
               onResetAll: _resetAllState,
               onOfflineSimulate60s: () async {
-                await _offline.simulateAddSeconds(60);
+                await _offline.simulateAddSeconds(6000);
               },
               onOfflineClearPending: () async {
                 await _offline.clearPending();

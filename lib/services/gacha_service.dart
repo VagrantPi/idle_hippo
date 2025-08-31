@@ -207,7 +207,7 @@ class GachaService {
       throw Exception('寵物配置不存在: $petKey');
     }
 
-    final rarityConfig = petConfig['rarities'][rarity.value];
+    final rarityConfig = _configService.getPetRarityConfig(petKey, rarity.value);
     if (rarityConfig == null) {
       throw Exception('稀有度配置不存在: ${rarity.value}');
     }
@@ -264,7 +264,10 @@ class GachaService {
       if (petConfig == null) {
         throw Exception('寵物配置不存在: ${result.petKey}');
       }
-      final rarityConfig = petConfig['rarities'][result.rarity.value];
+      final rarityConfig = _configService.getPetRarityConfig(result.petKey, result.rarity.value);
+      if (rarityConfig == null) {
+        throw Exception('稀有度配置不存在: ${result.rarity.value}');
+      }
       
       final newPet = Pet(
         petKey: result.petKey,

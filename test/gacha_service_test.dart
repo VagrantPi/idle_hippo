@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/pet.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/services/config_service.dart';
 
 void main() {
   // 確保 Flutter 測試綁定初始化，供 rootBundle 載入資產
@@ -79,7 +80,18 @@ void main() {
       final result = await gachaService.performSingleDraw();
       
       // 驗證抽卡結果
-      expect(result.petKey, isIn(['MooDeng', 'PEPE']));
+      final cfg = ConfigService();
+      if (!cfg.isLoaded) {
+        await cfg.loadConfig();
+      }
+      final petsList = cfg.getValue('pets.pets') as List<dynamic>?;
+      final allowedIds = (petsList ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map((e) => e['id'] as String)
+          .where((id) => id.isNotEmpty)
+          .toList();
+      expect(allowedIds, isNotEmpty, reason: '設定檔應提供至少一個寵物 id');
+      expect(result.petKey, isIn(allowedIds));
       expect(result.rarity, isA<PetRarity>());
       expect(result.name, isNotEmpty);
       expect(result.imagePath, isNotEmpty);
@@ -101,8 +113,20 @@ void main() {
       // 驗證抽卡結果
       expect(results.length, equals(11));
       
+      final cfg = ConfigService();
+      if (!cfg.isLoaded) {
+        await cfg.loadConfig();
+      }
+      final petsList = cfg.getValue('pets.pets') as List<dynamic>?;
+      final allowedIds = (petsList ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map((e) => e['id'] as String)
+          .where((id) => id.isNotEmpty)
+          .toList();
+      expect(allowedIds, isNotEmpty, reason: '設定檔應提供至少一個寵物 id');
+
       for (final result in results) {
-        expect(result.petKey, isIn(['MooDeng', 'PEPE']));
+        expect(result.petKey, isIn(allowedIds));
         expect(result.rarity, isA<PetRarity>());
         expect(result.name, isNotEmpty);
         expect(result.imagePath, isNotEmpty);

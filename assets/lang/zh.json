@@ -36,7 +36,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB 遊戲鍵盤"
     },
     "faceMask": {
@@ -45,17 +45,44 @@
     "dress": {
       "name": "連身裙"
     },
+    "successKid": {
+      "name": "成功男孩"
+    },
+    "disasterGirl": {
+      "name": "災難女孩"
+    },
     "youtube": {
-      "name": "Youtube",
-      "desc": "產生被動迷因能量。"
+      "name": "Youtube"
     },
     "btc": {
-      "name": "BTC",
-      "desc": "幣圈熱度加持，放置收益提高。"
+      "name": "BTC"
     },
     "doge": {
-      "name": "DOGE",
-      "desc": "如此放置，非常哇。"
+      "name": "DOGE"
+    },
+    "stonks": {
+      "name": "Stonks"
+    },
+    "judgmentalCat": {
+      "name": "奇怪知識增加了"
+    },
+    "batmanSlappingRobin": {
+      "name": "蝙蝠俠打羅賓"
+    },
+    "teletubbies": {
+      "name": "天線寶寶就你爛"
+    },
+    "scientificResearch": {
+      "name": "我需要網址，為了學術研究"
+    },
+    "handshake": {
+      "name": "本斥但大"
+    },
+    "nyanCat": {
+      "name": "彩虹貓"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "需要 {name} 達到 Lv.{level} 解鎖",
@@ -151,7 +178,20 @@
     "max_level_reached": "已達最高等級",
     "names": {
       "MooDeng": "彈跳豬",
-      "PEPE": "佩佩蛙"
+      "PEPE": "佩佩蛙",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "oiiai貓",
+      "PopCat": "Pop貓",
+      "AfraidOfHamster": "怕爆倉鼠",
+      "Catsthatlooklikehitler": "希特勒貓",
+      "CryCat": "CryCat",
+      "LeopardCat": "石虎",
+      "Penguin": "Penguin",
+      "Seal": "怕豹",
+      "Squirrel": "水元素松鼠",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "普通",
@@ -189,5 +229,31 @@
         "desc": "累積點數"
       }
     }
+  },
+  "title": {
+    "tab": {
+      "unlocked": "已取得",
+      "locked": "未取得"
+    },
+    "btn": {
+      "claim": "領取"
+    },
+    "hidden": "????",
+    "lock": {
+      "title_system_unlock": "稱號系統需要完成主線第二章解鎖"
+    },
+    "rookie": "迷因菜鳥稱號",
+    "rookie_desc": "完成主線『迷因小菜鳥階段』",
+    "ssr_collector": "專業迷因收藏者",
+    "ssr_collector_desc": "至少獲得 1 個 SSR 寵物",
+    "114514": "いいよ！ こいよ！",
+    "114514_desc": "裝備 114514 等級達 10",
+    "crypto_expert": "虛擬貨幣專家",
+    "crypto_expert_desc": "裝備 BTC Lv10 + DOGE Lv10",
+    "came_anyway": "還是來了",
+    "came_anyway_desc": "裝備 口罩 Lv10 + 連身裙 Lv10",
+    "meme_king": "迷因之王",
+    "meme_king_desc": "收集所有其他稱號",
+    "all_obtained": "全部稱號已取得！"
   }
 }

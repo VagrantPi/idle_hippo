@@ -1,31 +1,60 @@
 {
   "titles": [
     {
-      "id": "title_001",
-      "name": "河馬新手",
-      "unlock_condition": {
-        "type": "total_taps",
-        "value": 100
-      },
-      "display_text": "初來乍到的河馬訓練師"
+      "id": "t_rookie",
+      "name_key": "title.rookie",
+      "desc_key": "title.rookie_desc", 
+      "type": "visible",
+      "condition": { "kind": "main_stage_done", "stage": 2 } 
     },
     {
-      "id": "title_002", 
-      "name": "點擊大師",
-      "unlock_condition": {
-        "type": "total_taps",
-        "value": 1000
-      },
-      "display_text": "手指飛快的點擊專家"
+      "id": "t_ssr_collector",
+      "name_key": "title.ssr_collector",
+      "desc_key": "title.ssr_collector_desc",
+      "type": "visible",
+      "condition": { "kind": "gacha_obtained_rarity", "rarity": "SSR", "count": 1 }
     },
     {
-      "id": "title_003",
-      "name": "放置王者",
-      "unlock_condition": {
-        "type": "idle_time_hours",
-        "value": 24
-      },
-      "display_text": "耐心等待的放置高手"
+      "id": "t_114514",
+      "name_key": "title.114514",
+      "desc_key": "title.114514_desc",
+      "type": "visible",
+      "condition": { "kind": "equip_level_reach", "equip_id": "equip.114514", "level": 10 }
+    },
+    {
+      "id": "t_crypto_expert",
+      "name_key": "title.crypto_expert",
+      "desc_key": "title.crypto_expert_desc",   
+      "hidden_desc_key": "title.hidden",               
+      "type": "hidden",
+      "condition": {
+        "kind": "equip_pair_levels",
+        "pairs": [
+          { "equip_id": "equip.BTC",  "level": 10 },
+          { "equip_id": "equip.DOGE", "level": 10 }
+        ]
+      }
+    },
+    {
+      "id": "t_came_anyway",
+      "name_key": "title.came_anyway",
+      "desc_key": "title.came_anyway_desc",
+      "hidden_desc_key": "title.hidden",
+      "type": "hidden",
+      "condition": {
+        "kind": "equip_pair_levels",
+        "pairs": [
+          { "equip_id": "equip.Mask",   "level": 10 },
+          { "equip_id": "equip.Dress",  "level": 10 }
+        ]
+      }
+    },
+    {
+      "id": "t_meme_king",
+      "name_key": "title.meme_king",
+      "desc_key": "title.meme_king_desc",
+      "type": "visible",
+      "condition": { "kind": "collect_all_titles_except", "exclude": ["t_meme_king"] }
     }
   ]
 }

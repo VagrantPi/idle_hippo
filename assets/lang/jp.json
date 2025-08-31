@@ -36,7 +36,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB ゲーミングキーボード"
     },
     "faceMask": {
@@ -56,6 +56,36 @@
     "doge": {
       "name": "DOGE",
       "desc": "そんな放置、すごいワオ。"
+    },
+    "successKid": {
+      "name": "サクセス・キッド"
+    },
+    "disasterGirl": {
+      "name": "ディザスター・ガール"
+    },
+    "stonks": {
+      "name": "ストンクス"
+    },
+    "judgmentalCat": {
+      "name": "ジャッジメンタル・キャット"
+    },
+    "batmanSlappingRobin": {
+      "name": "バットマンがロビンを平手打ち"
+    },
+    "teletubbies": {
+      "name": "テレタビーズ"
+    },
+    "scientificResearch": {
+      "name": "学術研究のために"
+    },
+    "handshake": {
+      "name": "握手する"
+    },
+    "nyanCat": {
+      "name": "ニャン・キャット"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "{name} Lv.{level} で解放",
@@ -151,7 +181,21 @@
     "max_level_reached": "最大レベルに到達",
     "names": {
       "MooDeng": "ムーデン",
-      "PEPE": "カエルのペペ"
+      "PEPE": "カエルのペペ",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "OiiaiCat",
+      "PopCat": "PopCat",
+      "AfraidOfHamster": "AfraidOfHamster",
+      "Catsthatlooklikehitler": "Catsthatlooklikehitler",
+      "CryCat": "CryCat",
+      "JudgmentalCat": "JudgmentalCat",
+      "LeopardCat": "LeopardCat",
+      "Penguin": "Penguin",
+      "Seal": "Seal",
+      "Squirrel": "Squirrel",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "コモン",
@@ -189,5 +233,31 @@
         "desc": "ポイントを蓄積"
       }
     }
+  },
+  "title": {
+    "tab": {
+      "unlocked": "取得済み",
+      "locked": "未取得"
+    },
+    "btn": {
+      "claim": "受け取る"
+    },
+    "hidden": "????",
+    "lock": {
+      "title_system_unlock": "称号システムはメインクエスト第2章クリアで解放"
+    },
+    "rookie": "ミームビギナー",
+    "rookie.desc": "メインライン『ミーム初心者ステージ』を完了",
+    "ssr_collector": "プロ・ミームコレクター",
+    "ssr_collector.desc": "SSR ペットを少なくとも1体獲得",
+    "114514": "いいよ！ こいよ！",
+    "114514.desc": "装備 114514 のレベルを10に到達",
+    "crypto_expert": "暗号通貨エキスパート",
+    "crypto_expert.desc_reveal": "BTC Lv10 + DOGE Lv10",
+    "came_anyway": "それでも来た",
+    "came_anyway.desc_reveal": "マスク Lv10 + ワンピース Lv10",
+    "meme_king": "ミームの王",
+    "meme_king.desc": "他のすべての称号を収集",
+    "all_obtained": "全ての称号を取得しました！"
   }
 }

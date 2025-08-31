@@ -36,7 +36,7 @@
     }
   },
   "equip": {
-    "rgb_keyboard": {
+    "rgbKeyboard": {
       "name": "RGB 게이밍 키보드"
     },
     "faceMask": {
@@ -56,6 +56,36 @@
     "doge": {
       "name": "DOGE",
       "desc": "이런 방치, 대단 Wow."
+    },
+    "successKid": {
+      "name": "성공 소년"
+    },
+    "disasterGirl": {
+      "name": "재난 소녀"
+    },
+    "stonks": {
+      "name": "스톤크스"
+    },
+    "judgmentalCat": {
+      "name": "심판하는 고양이"
+    },
+    "batmanSlappingRobin": {
+      "name": "배트맨 로빈 싸대기"
+    },
+    "teletubbies": {
+      "name": "텔레토비"
+    },
+    "scientificResearch": {
+      "name": "학술 연구용"
+    },
+    "handshake": {
+      "name": "악수하다"
+    },
+    "nyanCat": {
+      "name": "냥캣"
+    },
+    "title_114514": {
+      "name": "114514"
     },
     "lock": {
       "need_level": "{name} Lv.{level} 달성 시 해제",
@@ -151,7 +181,21 @@
     "max_level_reached": "최대 레벨 도달",
     "names": {
       "MooDeng": "무뎅",
-      "PEPE": "페페 더 프로그"
+      "PEPE": "페페 더 프로그",
+      "ThisIsFine": "This Is Fine",
+      "Doge": "Doge",
+      "ChipichapaCat": "chipichapa",
+      "OiiaiCat": "OiiaiCat",
+      "PopCat": "PopCat",
+      "AfraidOfHamster": "AfraidOfHamster",
+      "Catsthatlooklikehitler": "Catsthatlooklikehitler",
+      "CryCat": "CryCat",
+      "JudgmentalCat": "JudgmentalCat",
+      "LeopardCat": "LeopardCat",
+      "Penguin": "Penguin",
+      "Seal": "Seal",
+      "Squirrel": "Squirrel",
+      "ScaredCat": "ScaredCat"
     },
     "rarity": {
       "RR": "일반",
@@ -189,5 +233,31 @@
         "desc": "포인트 누적"
       }
     }
+  },
+  "title": {
+    "tab": {
+      "unlocked": "획득됨",
+      "locked": "미획득"
+    },
+    "btn": {
+      "claim": "수령"
+    },
+    "hidden": "????",
+    "lock": {
+      "title_system_unlock": "칭호 시스템은 메인 퀘스트 2장 완료 후 해제됩니다"
+    },
+    "rookie": "밈 루키",
+    "rookie.desc": "메인라인 ‘밈 초보자 단계’ 완료",
+    "ssr_collector": "프로 밈 수집가",
+    "ssr_collector.desc": "SSR 펫을 최소 1마리 획득",
+    "114514": "이이요! 고이요!",
+    "114514.desc": "장비 114514 레벨 10 달성",
+    "crypto_expert": "크립토 전문가",
+    "crypto_expert.desc_reveal": "BTC Lv10 + DOGE Lv10",
+    "came_anyway": "그래도 왔다",
+    "came_anyway.desc_reveal": "마스크 Lv10 + 드레스 Lv10",
+    "meme_king": "밈의 왕",
+    "meme_king.desc": "다른 모든 칭호를 수집",
+    "all_obtained": "모든 칭호를 획득했습니다!"
   }
 }
