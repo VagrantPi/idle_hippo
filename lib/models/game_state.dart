@@ -556,6 +556,93 @@ class MainQuestState {
   }
 }
 
+/// 稱號狀態（持久化）
+class TitlesState {
+  final Map<String, String> states; // titleId -> 'locked' | 'claimable' | 'claimed'
+  final Map<String, int> claimedAt; // titleId -> epochMs
+  final bool hasClaimable; // 供紅點顯示（Navbar/頁籤）
+
+  const TitlesState({
+    this.states = const {},
+    this.claimedAt = const {},
+    this.hasClaimable = false,
+  });
+
+  factory TitlesState.fromMap(Map<String, dynamic> map) {
+    final rawStates = map['states'];
+    final rawClaimedAt = map['claimedAt'];
+    // states
+    final Map<String, String> parsedStates = {};
+    if (rawStates is Map) {
+      rawStates.forEach((key, value) {
+        parsedStates[key.toString()] = value.toString();
+      });
+    }
+    // claimedAt
+    final Map<String, int> parsedClaimedAt = {};
+    if (rawClaimedAt is Map) {
+      rawClaimedAt.forEach((key, value) {
+        parsedClaimedAt[key.toString()] = (value as num).toInt();
+      });
+    }
+    return TitlesState(
+      states: parsedStates,
+      claimedAt: parsedClaimedAt,
+      hasClaimable: (map['redDot'] is Map && (map['redDot']['hasClaimable'] is bool))
+          ? (map['redDot']['hasClaimable'] as bool)
+          : false,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'states': states,
+        'claimedAt': claimedAt,
+        'redDot': {
+          'hasClaimable': hasClaimable,
+        },
+      };
+
+  TitlesState copyWith({
+    Map<String, String>? states,
+    Map<String, int>? claimedAt,
+    bool? hasClaimable,
+  }) {
+    return TitlesState(
+      states: states ?? Map<String, String>.from(this.states),
+      claimedAt: claimedAt ?? Map<String, int>.from(this.claimedAt),
+      hasClaimable: hasClaimable ?? this.hasClaimable,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TitlesState &&
+        _mapStringEquals(other.states, states) &&
+        _mapIntEquals(other.claimedAt, claimedAt) &&
+        other.hasClaimable == hasClaimable;
+  }
+
+  @override
+  int get hashCode => states.hashCode ^ claimedAt.hashCode ^ hasClaimable.hashCode;
+
+  static bool _mapStringEquals(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) return false;
+    for (final k in a.keys) {
+      if (!b.containsKey(k) || a[k] != b[k]) return false;
+    }
+    return true;
+  }
+
+  static bool _mapIntEquals(Map<String, int> a, Map<String, int> b) {
+    if (a.length != b.length) return false;
+    for (final k in a.keys) {
+      if (!b.containsKey(k) || a[k] != b[k]) return false;
+    }
+    return true;
+  }
+}
+
 class GameState {
   final int saveVersion;
   final double memePoints;
@@ -570,6 +657,7 @@ class GameState {
   final int petTickets;
   final List<GachaHistoryRecord> gachaHistory;
   final GachaState? gacha;
+  final TitlesState? titles;
 
   const GameState({
     required this.saveVersion,
@@ -585,6 +673,7 @@ class GameState {
     this.petTickets = 0,
     this.gachaHistory = const [],
     this.gacha,
+    this.titles,
   });
 
   /// 建立初始狀態
@@ -602,6 +691,7 @@ class GameState {
       petTickets: 0,
       gachaHistory: const [],
       gacha: null,
+      titles: const TitlesState(),
     );
   }
 
@@ -651,6 +741,9 @@ class GameState {
       gacha: map.containsKey('gacha') && map['gacha'] is Map<String, dynamic>
           ? GachaState.fromMap(map['gacha'] as Map<String, dynamic>)
           : null,
+      titles: map.containsKey('titles') && map['titles'] is Map<String, dynamic>
+          ? TitlesState.fromMap(map['titles'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -675,6 +768,7 @@ class GameState {
       'petTickets': petTickets,
       'gachaHistory': gachaHistory.map((record) => record.toMap()).toList(),
       if (gacha != null) 'gacha': gacha!.toMap(),
+      if (titles != null) 'titles': titles!.toMap(),
     };
   }
 
@@ -694,6 +788,15 @@ class GameState {
       if (dailyTap != null && dailyTap!.todayGained < 0) return false;
       // 檢查 offline 區塊
       if (!offline.validate()) return false;
+      // 檢查 titles 區塊（若存在）
+      if (titles != null) {
+        for (final s in titles!.states.values) {
+          if (s != 'locked' && s != 'claimable' && s != 'claimed') return false;
+        }
+        for (final ts in titles!.claimedAt.values) {
+          if (ts < 0) return false;
+        }
+      }
       
       return true;
     } catch (e) {
@@ -716,6 +819,7 @@ class GameState {
     int? petTickets,
     List<GachaHistoryRecord>? gachaHistory,
     GachaState? gacha,
+    TitlesState? titles,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -731,6 +835,7 @@ class GameState {
       petTickets: petTickets ?? this.petTickets,
       gachaHistory: gachaHistory ?? List<GachaHistoryRecord>.from(this.gachaHistory),
       gacha: gacha ?? this.gacha,
+      titles: titles ?? this.titles,
     );
   }
 
@@ -765,7 +870,8 @@ class GameState {
         other.petTicketQuest == petTicketQuest &&
         other.petTickets == petTickets &&
         _listGachaHistoryEquals(other.gachaHistory, gachaHistory) &&
-        other.gacha == gacha;
+        other.gacha == gacha &&
+        other.titles == titles;
   }
 
   @override
@@ -782,7 +888,8 @@ class GameState {
         (petTicketQuest?.hashCode ?? 0) ^
         petTickets.hashCode ^
         gachaHistory.hashCode ^
-        (gacha?.hashCode ?? 0);
+        (gacha?.hashCode ?? 0) ^
+        (titles?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

@@ -1,12 +1,13 @@
 # 📄 Step 20 規格書（稱號系統）
 
 ## 1. 階段目標
-- 實作「稱號圖鑑」：分為 **未取得** / **已取得** 兩個 Tab，皆為**三欄網格**排列。
+- 實作「稱號圖鑑」：分為 **未取得** / **已取得** 兩個 Tab，皆為**兩欄網格**排列（MVP）。
 - 稱號具備三種狀態：`locked(鎖定/隱藏)`、`claimable(可領取)`、`claimed(已領取)`。
-- 有可領取稱號時，在**主畫面右側功能列的「稱號」入口**與稱號頁 Tab 上顯示**小紅點**（動畫沿用任務頁按鈕效果）。
+- 有可領取稱號時，在**主畫面底下 Navbar 的「稱號」入口**與稱號頁內的 **未取得** Tab 上顯示**小紅點**（動畫沿用任務頁按鈕效果）。
 - 稱號需**按下「領取」**才會從「未取得」移到「已取得」。
-- 支援「條件隱藏」：部分稱號在未達條件前僅顯示 **`????`**；達成後才揭露實際條件文案。
-- （跨頁關聯）**任務頁面**：完成主線【梗圖河馬階段】後解鎖「裝備任務」Tab；解鎖前該 Tab 顯示鎖定與提示 **「寵物系統需要完成主線第二章解鎖」**。
+- 支援「隱藏型」：若 `type=hidden`，在鎖定時描述以 **`????`** 顯示（名稱不隱藏）。
+- 稱號頁面具**整頁鎖定機制**：主線未超過第二章完成（`stage <= 2`）時，整頁灰階並顯示解鎖提示。
+- 當 **未取得** 分頁所有稱號都取得完畢時，顯示「已取得所有稱號」提示。
 
 ---
 
@@ -16,57 +17,31 @@
 - 入口：主畫面右側功能列「稱號」圖示。
 - 稱號頁：
   - **Tab**：`未取得`、`已取得`（預設顯示「未取得」）。
-  - **列表樣式**：三欄網格卡片；卡片內容：
-    - 圖示（可共用占位圖或對應主題圖）/稱號名稱/簡短描述或條件提示。
-    - 狀態徽記：`????`（未揭露）、`可領取`、`已取得`。
+  - **列表樣式**：兩欄網格卡片；卡片內容：
+    - 圖示（可用占位圖示）/稱號名稱/簡短描述或提示。
+    - 鎖定時（`type=hidden`）描述以 `????` 顯示；名稱仍顯示本地化名稱。
     - **領取按鈕**：僅在 `claimable` 狀態顯示；點擊後移入「已取得」Tab。
 - **小紅點**：
-  - 規則：當任一稱號 `claimable=true` → 在功能列入口與「未取得」Tab 標籤上顯示紅點；無可領取則隱藏。
+  - 規則：當任一稱號 `claimable=true` → 在主畫面 navbar 功能列入口與「未取得」Tab 標籤上顯示紅點；無可領取則隱藏。
   - 動畫：沿用任務頁按鈕紅點的縮放/閃爍參數（共用一份 `PulseDotAnim`）。
+- 整頁鎖定時顯示半透明遮罩與提示文案。
 
-### 2.2 稱號資料（資料化）
-- 檔案：`assets/config/titles.json`，欄位建議：
+### 2.2 稱號資料（MVP 資料鍵位）
+- 來源：`ConfigService().getValue('titles.titles')`（JSON 內部結構為 `{"titles": [ ... ]}`）。
+- 欄位：`id`、`name_key`、`desc_key`、`hidden_desc_key`、`type`（`type` 可為 `hidden` 表示鎖定時描述使用隱藏文案）。
 ```json
 [
   {
-    "id": "title.rookie",
-    "name_key": "title.rookie.name",
-    "desc_key": "title.rookie.desc",
-    "reveal": true,
-    "condition": { "type": "mainline_completed", "value": "stage2" }
+    "id": "title.sample_hidden",
+    "type": "hidden",
+    "name_key": "title.sample_hidden.name",
+    "desc_key": "title.sample_hidden.desc",
+    "hidden_desc_key": "title.hidden"
   },
   {
-    "id": "title.ssr_collector",
-    "name_key": "title.ssr_collector.name",
-    "desc_key": "title.ssr_collector.desc",
-    "reveal": true,
-    "condition": { "type": "own_any_pet_rarity_at_least", "value": "SSR" }
-  },
-  {
-    "id": "title.title_114514",
-    "name_key": "title.title_114514.name",
-    "desc_key": "title.title_114514.desc",
-    "reveal": true,
-    "condition": { "type": "equip_level_reach", "equip_id": "equip.title_114514", "level": 10 }
-  },
-  {
-    "id": "title.crypto_expert",
-    "name_key": "title.crypto_expert.name",
-    "desc_key": "title.crypto_expert.desc",
-    "reveal": false,
-    "hidden_hint_key": "title.crypto_expert.hint_hidden",
-    "reveal_desc_key": "title.crypto_expert.hint_reveal",
-    "condition": { "type": "equip_multi_level_and", "rules": [
-      { "equip_id": "equip.BTC", "level": 10 },
-      { "equip_id": "equip.DOGE", "level": 10 }
-    ]}
-  },
-  {
-    "id": "title.king_of_meme",
-    "name_key": "title.king_of_meme.name",
-    "desc_key": "title.king_of_meme.desc",
-    "reveal": true,
-    "condition": { "type": "all_titles_claimed_except", "exclude": ["title.king_of_meme"] }
+    "id": "title.sample_normal",
+    "name_key": "title.sample_normal.name",
+    "desc_key": "title.sample_normal.desc"
   }
 ]
 ````
@@ -84,20 +59,19 @@
 
 * 狀態定義：
 
-  * `locked`：條件未達；若 `reveal=false`，名稱顯示 `????`，描述顯示 `????` 或 `hidden_hint_key`。
-  * `claimable`：達成條件，顯示真實名稱與條件說明，顯示【領取】。
+  * `locked`：條件未達；若 `type=hidden`，描述顯示 `????`（名稱不隱藏）。
+  * `claimable`：可領取，顯示【領取】。
   * `claimed`：已領取，顯示於「已取得」Tab。
 * 領取流程：
 
-  1. 玩家點擊【領取】 → 將該稱號狀態標記為 `claimed`。
-  2. 觸發 UI 提示與音效；移動到「已取得」Tab。
-  3. 檢查是否觸發「迷因之王」條件（全稱號已領取）。
+  1. 玩家點擊【領取】 → 將該稱號狀態標記為 `claimed`（MVP 本地狀態）。
+  2. 移動到「已取得」Tab。
 
 ### 2.5 排序規則
 
-* 「未取得」：`claimable` 在最前（按可領取時間由新到舊），其後 `locked`（按配置順序）。
-* 「已取得」：依領取時間由新到舊。
-* 皆維持三欄網格，行高自適應多語長度（至少 2 行）。
+* 「未取得」：`claimable` 在最前，其後 `locked`（按配置順序）。
+* 「已取得」：依領取時間由新到舊（新領取置頂）。
+* 皆維持兩欄網格，行高自適應多語長度（至少 2 行）。
 
 ### 2.6 儲存/持久化
 
@@ -127,16 +101,16 @@
   "title.hidden":       {"zh":"????","en":"????","jp":"????","ko":"????"},
 
   "title.rookie.name":  {"zh":"迷因菜鳥稱號","en":"Meme Rookie","jp":"ミームビギナー","ko":"밈 루키"},
-  "title.rookie.desc":  {"zh":"完成主線『迷因小菜鳥階段』","en":"Finish Mainline: Meme Rookie"},
+  "title.rookie_desc":  {"zh":"完成主線『迷因小菜鳥階段』","en":"Finish Mainline: Meme Rookie"},
   "title.ssr_collector.name":{"zh":"專業迷因收藏者","en":"Pro Meme Collector"},
-  "title.ssr_collector.desc":{"zh":"至少獲得 1 個 SSR 寵物","en":"Obtain ≥1 SSR Pet"},
+  "title.ssr_collector_desc":{"zh":"至少獲得 1 個 SSR 寵物","en":"Obtain ≥1 SSR Pet"},
   "title.title_114514.name":  {"zh":"いいよ！ こいよ！","en":"Iiyo! Koiyo!"},
-  "title.title_114514.desc":  {"zh":"裝備 114514 等級達 10","en":"Equip 114514 reaches Lv.10"},
+  "title.title_114514_desc":  {"zh":"裝備 114514 等級達 10","en":"Equip 114514 reaches Lv.10"},
   "title.crypto_expert.name":{"zh":"虛擬貨幣專家","en":"Crypto Expert"},
   "title.crypto_expert.hint_hidden":{"zh":"????","en":"????"},
   "title.crypto_expert.hint_reveal":{"zh":"裝備 BTC Lv10 + DOGE Lv10","en":"BTC Lv10 + DOGE Lv10"},
   "title.king_of_meme.name":{"zh":"迷因之王","en":"King of Meme"},
-  "title.king_of_meme.desc":{"zh":"收集所有其他稱號","en":"Collect all other titles"}
+  "title.king_of_meme_desc":{"zh":"收集所有其他稱號","en":"Collect all other titles"}
 }
 ```
 
@@ -148,52 +122,92 @@
 
 ---
 
+好的 ✅ 我會根據你剛貼的 **Step 20 規格書（稱號系統）** 補齊
+
+---
+
+# 📄 Step 20 規格書（稱號系統）續篇
+
 ## 3. 驗收標準
 
-* ✅ **Tab 與三欄**：稱號頁分為「未取得 / 已取得」兩個 Tab，皆為三欄網格。
-* ✅ **小紅點**：當任一稱號進入 `claimable` → 主功能列「稱號」入口與稱號頁 Tab 出現紅點動畫；全部領取後紅點消失。
-* ✅ **隱藏顯示**：`虛擬貨幣專家` 初始顯示 `????`；當 **BTC Lv10 且 DOGE Lv10** 時，立即顯示文字 **「裝備 BTC lv10 + DOGE lv10」**，並顯示【領取】按鈕可點擊。
-* ✅ **領取遷移**：點擊【領取】後，該稱號從「未取得」移至「已取得」，狀態持久化；重啟 App 仍維持。
-* ✅ **關聯規則**：完成主線【梗圖河馬階段】後，任務頁面解鎖「裝備任務」Tab；解鎖前顯示鎖定與提示 **「寵物系統需要完成主線第二章解鎖」**（文案一致）。
-* ✅ **迷因之王**：當除 `title.king_of_meme` 外的所有稱號皆 `claimed` 時，`title.king_of_meme` 進入 `claimable`，可領取後顯示於「已取得」。
+* ✅ 主畫面右側功能列「稱號」入口存在，並能正常開啟稱號頁。
+* ✅ 稱號頁分為 **未取得** / **已取得** 兩個 Tab，排列為兩欄網格。
+* ✅ 未達成條件的稱號狀態正確顯示 `locked`；若 `type=hidden` 則描述顯示 `????`。
+* ✅ 當條件達成後，稱號自動轉為 `claimable`，並在稱號入口與未取得 Tab 上顯示小紅點。
+* ✅ 點擊「領取」後，稱號正確移至「已取得」Tab，並依照領取時間由新到舊排序。
+* ✅ 「已取得」Tab 正確顯示領取過的稱號，完成度百分比會更新。
+* ✅ 主線未達到 `stage > 2` 前，整個稱號頁以灰階顯示並顯示「解鎖提示」。
+* ✅ 稱號狀態會正確持久化到存檔，重啟遊戲後保持一致。
+* ✅ 小紅點狀態隨 `claimable` 移除而消失，動畫沿用任務頁按鈕。
+* ✅ i18n 正確套用，切換語系時 UI 文字正常顯示。
 
 ---
 
 ## 4. 實例化需求測試案例
 
-### 測試 1：隱藏→揭露→領取
+### 測試案例 1：稱號入口與鎖定狀態
 
-* **Given** `BTC Lv9`、`DOGE Lv9`，`title.crypto_expert` 為 `locked(reveal=false)`，稱號卡顯示 `????`
-* **When** 升級 `BTC` 至 `Lv10` 與 `DOGE` 至 `Lv10`
-* **Then** `title.crypto_expert` 變為 `claimable`，描述顯示「裝備 BTC Lv10 + DOGE Lv10」，小紅點出現
-* **When** 點【領取】
-* **Then** 移至「已取得」Tab，小紅點若無其他可領取則隱藏
+* **Given** 玩家剛完成主線第一章（stage=1）
+* **When** 打開稱號頁
+* **Then** 整頁灰階，顯示「需完成主線第二章解鎖」提示
 
-### 測試 2：主線觸發的稱號
+---
 
-* **Given** 尚未完成主線 `stage2(迷因小菜鳥階段)`
-* **When** 完成 `stage2`
-* **Then** `title.rookie` → `claimable`，可領取
+### 測試案例 2：隱藏型稱號顯示
 
-### 測試 3：SSR 寵物稱號
+* **Given** 玩家未達成「虛擬貨幣專家」條件
+* **When** 打開稱號頁
+* **Then** 「虛擬貨幣專家」顯示名稱，但描述為「????」
 
-* **Given** 尚無 SSR 寵物
-* **When** 透過抽卡獲得任一 SSR
-* **Then** `title.ssr_collector` → `claimable`，小紅點提示
+---
 
-### 測試 4：全收集稱號
+### 測試案例 3：條件達成 → 可領取
 
-* **Given** 除 `title.king_of_meme` 外所有稱號皆已 `claimed`
-* **When** 進入稱號頁
-* **Then** `title.king_of_meme` → `claimable`，領取後出現在「已取得」
+* **Given** 玩家將 BTC 裝備升至 Lv10，DOGE 裝備升至 Lv10
+* **When** 重新打開稱號頁
+* **Then** 「虛擬貨幣專家」變為 `claimable`，描述顯示「BTC Lv10 + DOGE Lv10」，未取得 Tab 顯示紅點
 
-### 測試 5：任務頁關聯提示
+---
 
-* **Given** 未完成【梗圖河馬階段】
-* **When** 打開任務頁
-* **Then** 「裝備任務」Tab 為鎖定並顯示提示文案
-* **When** 完成【梗圖河馬階段】
-* **Then** 該 Tab 解鎖可進入
+### 測試案例 4：領取流程
+
+* **Given** 玩家稱號「虛擬貨幣專家」狀態為 `claimable`
+* **When** 玩家點擊「領取」
+* **Then** 該稱號狀態轉為 `claimed`，移至「已取得」Tab，未取得 Tab 紅點消失
+
+---
+
+### 測試案例 5：SSR 寵物觸發
+
+* **Given** 玩家抽到第一隻 SSR 寵物
+* **When** 稱號系統更新
+* **Then** 「專業迷因收藏者」變為 `claimable`，並出現在未取得 Tab
+
+---
+
+### 測試案例 6：排序驗證
+
+* **Given** 玩家同時達成兩個稱號條件（迷因菜鳥、SSR 收藏者）
+* **When** 打開未取得 Tab
+* **Then** 兩者皆為 `claimable`，排序按照配置順序顯示
+* **And** 領取後，已取得 Tab 依領取順序，最新的在最上方
+
+---
+
+### 測試案例 7：持久化驗證
+
+* **Given** 玩家已領取「迷因菜鳥稱號」
+* **When** 關閉 App 再重啟
+* **Then** 已取得 Tab 正確顯示「迷因菜鳥稱號」，未取得 Tab 不再顯示
+
+---
+
+### 測試案例 8：i18n 驗證
+
+* **Given** 系統語言切換為日文
+* **When** 打開稱號頁
+* **Then** Tab、稱號名稱、描述正確顯示日文（如「取得済み」「ミームビギナー」）
+
 
 ---
 

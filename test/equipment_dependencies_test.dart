@@ -1,12 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
 
 void main() {
+  // 測試環境初始化（避免未初始化的 Binding 與平台通道）
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('裝備相依關係（requires）', () {
     final svc = EquipmentService();
 
-    setUp(() {
+    setUp(() async {
+      // 以測試模式初始化 GameStateService，避免 secure storage 寫入
+      await GameStateService().initializeForTest(GameState.initial(1));
       svc.setTapEquipmentsForTest([
         {
           'id': 'rgbKeyboard',

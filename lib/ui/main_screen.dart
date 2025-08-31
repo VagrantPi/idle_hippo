@@ -20,6 +20,7 @@ import 'package:idle_hippo/ui/pages/no_ads_page.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/services/config_service.dart';
 
 class MainScreen extends StatefulWidget {
   final double memePoints;
@@ -116,6 +117,37 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     if (v.abs() >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K';
     // 對於迷因點數顯示，只保留一位小數以避免過多小數位
     return v.toStringAsFixed(1);
+  }
+
+  // ===== Titles 判斷輔助 =====
+  String _normalizeEquipId(String raw) {
+    var id = raw.trim();
+    if (id.startsWith('equip.')) {
+      id = id.substring('equip.'.length);
+    }
+    switch (id) {
+      case '114514':
+        return 'title_114514';
+      case 'Mask':
+      case 'mask':
+        return 'faceMask';
+      default:
+        return id;
+    }
+  }
+
+  bool _isEquipmentLevelReached(String equipId, int requiredLevel) {
+    try {
+      final normalized = _normalizeEquipId(equipId);
+      final altLower = normalized.toLowerCase();
+      final currentLevel = widget.gameState.equipments[normalized]
+          ?? widget.gameState.equipments[altLower]
+          ?? widget.gameState.equipments[equipId]
+          ?? 0;
+      return currentLevel >= requiredLevel;
+    } catch (_) {
+      return false;
+    }
   }
 
   // 速率顯示（/s）使用整數顯示：例如 0.1 -> '0', 1.9 -> '2'
@@ -768,6 +800,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             _buildNavButton(
               iconPath: 'assets/images/icon/TitleBadge.png',
               pageType: PageType.titles,
+              showBadge: _hasTitlesBadge(),
             ),
             _buildNavButton(
               iconPath: 'assets/images/icon/Pet.png',
@@ -795,6 +828,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     required String iconPath,
     PageType? pageType,
     bool isHome = false,
+    bool showBadge = false,
   }) {
     final isSelected = isHome
         ? _pageManager.isHomePage
@@ -826,25 +860,181 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       width: containerWidth,
       height: bottomNavigationBarHeight,
       alignment: Alignment.center,
-      child: AnimatedButton(
-        iconPath: iconPath,
-        size: bottomNavigationBarHeight.toDouble(), // 調整按鈕大小
-        isNavButton: true,
-        showTitle: isSelected,
-        title: getButtonTitle(),
-        onTap: () {
-          if (isHome) {
-            _pageManager.navigateToHome();
-          } else if (pageType != null) {
-            _pageManager.navigateToPage(pageType);
-          }
-        },
-        borderColor: isSelected 
-            ? const Color(0xFF00FFD1)
-            : const Color(0xFF6B7BD6),
-        borderWidth: 2,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: AnimatedButton(
+              iconPath: iconPath,
+              size: bottomNavigationBarHeight.toDouble(), // 調整按鈕大小
+              isNavButton: true,
+              showTitle: isSelected,
+              title: getButtonTitle(),
+              onTap: () {
+                if (isHome) {
+                  _pageManager.navigateToHome();
+                } else if (pageType != null) {
+                  _pageManager.navigateToPage(pageType);
+                }
+              },
+              borderColor: isSelected 
+                  ? const Color(0xFF00FFD1)
+                  : const Color(0xFF6B7BD6),
+              borderWidth: 2,
+            ),
+          ),
+          if (showBadge)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: ScaleTransition(
+                scale: _badgePulseAnimation,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
+  }
+
+  // 判斷是否存在「可領取稱號」（與右側紅點相同的顯示邏輯：使用相同的 ScaleTransition 動畫）
+  bool _hasTitlesBadge() {
+    final titles = widget.gameState.titles;
+    if (titles == null) return false;
+    // 與 TitlesPage 一致：完成第二章後才解鎖稱號功能（<= 2 鎖定）
+    final currentStage = widget.gameState.mainQuest?.currentStage ?? 0;
+    if (currentStage <= 2) return false;
+    // 直接依據 config 與當前 GameState 計算是否存在可領取稱號（含 hidden 與 collect_all_titles_except）
+    try {
+      final list = (ConfigService().getValue('titles.titles', defaultValue: []) as List)
+          .cast<Map<String, dynamic>?>()
+          .whereType<Map<String, dynamic>>()
+          .toList();
+
+      final claimedIds = titles.states.entries
+          .where((e) => e.value == 'claimed')
+          .map((e) => e.key)
+          .toSet();
+
+      // 預先蒐集全部 ID（供 collect_all_titles_except 使用）
+      final allIds = list.map((e) => e['id']?.toString() ?? '').where((id) => id.isNotEmpty).toSet();
+
+      bool isCondMet(Map<String, dynamic>? condition) {
+        if (condition == null) return false;
+        final kind = condition['kind']?.toString();
+        if (kind == 'main_stage_done') {
+          final stage = (condition['stage'] as num?)?.toInt() ?? 0;
+          final currentStage = widget.gameState.mainQuest?.currentStage ?? 0;
+          return currentStage >= stage;
+        } else if (kind == 'equip_level_reach') {
+          final equipId = condition['equip_id'] as String?;
+          final level = (condition['level'] as num?)?.toInt() ?? 0;
+          return equipId != null && _isEquipmentLevelReached(equipId, level);
+        } else if (kind == 'equip_pair_levels') {
+          final pairs = condition['pairs'] as List?;
+          if (pairs == null) return false;
+          return pairs.every((pair) {
+            final equipId = pair is Map ? pair['equip_id'] as String? : null;
+            final level = pair is Map ? (pair['level'] as num?)?.toInt() ?? 0 : 0;
+            return equipId != null && _isEquipmentLevelReached(equipId, level);
+          });
+        } else if (kind == 'gacha_obtained_rarity') {
+          final rarity = (condition['rarity'] as String?)?.toUpperCase() ?? '';
+          final count = (condition['count'] as num?)?.toInt() ?? 1;
+          final got = widget.gameState.gachaHistory.where((r) => r.rarity.toUpperCase() == rarity).length;
+          return got >= count;
+        } else if (kind == 'collect_all_titles_except') {
+          // 此條件在迭代 item 時由外層判斷：
+          // 只要除 self 與 exclude 外的所有稱號皆在 claimedIds，即視為可領取
+          return false; // 由外層處理
+        }
+        return false;
+      }
+
+      for (final m in list) {
+        final id = m['id']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        // 已領取不需顯示紅點
+        if (claimedIds.contains(id)) continue;
+
+        final condition = m['condition'] as Map<String, dynamic>?;
+        var met = isCondMet(condition);
+
+        // 特別處理 collect_all_titles_except：除 self 與 exclude 外皆為 claimed
+        if (!met && (condition?['kind']?.toString() == 'collect_all_titles_except')) {
+          final exclude = (condition?['exclude'] as List?)?.cast<String>() ?? const [];
+          final targetSet = allIds.difference({id, ...exclude});
+          final allClaimed = targetSet.every((tid) => claimedIds.contains(tid));
+          met = allClaimed;
+        }
+
+        if (met) {
+          return true;
+        }
+      }
+    } catch (_) {}
+
+    // 最後再檢查既有的 states 中被標記為 claimable 的是否仍符合條件（避免舊狀態造成誤亮）
+    try {
+      final list = (ConfigService().getValue('titles.titles', defaultValue: []) as List)
+          .cast<Map<String, dynamic>?>()
+          .whereType<Map<String, dynamic>>()
+          .toList();
+      final byId = {for (final m in list) (m['id']?.toString() ?? ''): m};
+      bool validate(String id) {
+        final m = byId[id];
+        if (m == null) return false;
+        final cond = m['condition'] as Map<String, dynamic>?;
+        if (cond == null) return false;
+        // 重用前面的條件檢查邏輯（簡化重寫）
+        final kind = cond['kind']?.toString();
+        if (kind == 'main_stage_done') {
+          final stage = (cond['stage'] as num?)?.toInt() ?? 0;
+          final currentStage = widget.gameState.mainQuest?.currentStage ?? 0;
+          return currentStage >= stage;
+        } else if (kind == 'equip_level_reach') {
+          final equipId = cond['equip_id'] as String?;
+          final level = (cond['level'] as num?)?.toInt() ?? 0;
+          return equipId != null && _isEquipmentLevelReached(equipId, level);
+        } else if (kind == 'equip_pair_levels') {
+          final pairs = cond['pairs'] as List?;
+          if (pairs == null) return false;
+          return pairs.every((pair) {
+            final equipId = pair is Map ? pair['equip_id'] as String? : null;
+            final level = pair is Map ? (pair['level'] as num?)?.toInt() ?? 0 : 0;
+            return equipId != null && _isEquipmentLevelReached(equipId, level);
+          });
+        } else if (kind == 'gacha_obtained_rarity') {
+          final rarity = (cond['rarity'] as String?)?.toUpperCase() ?? '';
+          final count = (cond['count'] as num?)?.toInt() ?? 1;
+          final got = widget.gameState.gachaHistory.where((r) => r.rarity.toUpperCase() == rarity).length;
+          return got >= count;
+        } else if (kind == 'collect_all_titles_except') {
+          final allIds = byId.keys.where((e) => e.isNotEmpty).toSet();
+          final exclude = (cond['exclude'] as List?)?.cast<String>() ?? const [];
+          final claimedIds = titles.states.entries
+              .where((e) => e.value == 'claimed')
+              .map((e) => e.key)
+              .toSet();
+          final targetSet = allIds.difference({id, ...exclude});
+          return targetSet.every((tid) => claimedIds.contains(tid));
+        }
+        return false;
+      }
+
+      for (final e in titles.states.entries) {
+        if (e.value == 'claimable' && validate(e.key)) return true;
+      }
+    } catch (_) {}
+
+    return false;
   }
 
   Widget _buildCurrentPage() {

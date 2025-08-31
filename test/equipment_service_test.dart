@@ -1,11 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   final equipment = EquipmentService();
 
-  setUp(() {
+  setUp(() async {
+    await GameStateService().initializeForTest(GameState.initial(1));
     equipment.setTapEquipmentsForTest([
       {
         'id': 'rgbKeyboard',

@@ -229,5 +229,31 @@
         "desc": "累積點數"
       }
     }
+  },
+  "title": {
+    "tab": {
+      "unlocked": "已取得",
+      "locked": "未取得"
+    },
+    "btn": {
+      "claim": "領取"
+    },
+    "hidden": "????",
+    "lock": {
+      "title_system_unlock": "稱號系統需要完成主線第二章解鎖"
+    },
+    "rookie": "迷因菜鳥稱號",
+    "rookie_desc": "完成主線『迷因小菜鳥階段』",
+    "ssr_collector": "專業迷因收藏者",
+    "ssr_collector_desc": "至少獲得 1 個 SSR 寵物",
+    "114514": "いいよ！ こいよ！",
+    "114514_desc": "裝備 114514 等級達 10",
+    "crypto_expert": "虛擬貨幣專家",
+    "crypto_expert_desc": "裝備 BTC Lv10 + DOGE Lv10",
+    "came_anyway": "還是來了",
+    "came_anyway_desc": "裝備 口罩 Lv10 + 連身裙 Lv10",
+    "meme_king": "迷因之王",
+    "meme_king_desc": "收集所有其他稱號",
+    "all_obtained": "全部稱號已取得！"
   }
 }

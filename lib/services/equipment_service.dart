@@ -1,6 +1,7 @@
 import 'package:idle_hippo/models/game_state.dart';
 import '../services/config_service.dart';
 import '../services/decimal_utils.dart';
+import 'game_state_service.dart';
 
 class EquipmentService {
   static final EquipmentService _instance = EquipmentService._internal();
@@ -151,11 +152,9 @@ class EquipmentService {
   // 統一：以 double 計算累積加成（支援小數）
   double _cumulativeBonus(Map<String, dynamic> equip, int level) {
     final levels = _levelsOf(equip);
-    if (levels == null) return 0.0;
     
     final bonuses = <num>[];
     for (final m in levels) {
-      if (m is! Map<String, dynamic>) continue;
       final lv = (m['level'] as num).toInt();
       if (lv <= level) {
         final b = m['bonus'];
@@ -169,7 +168,6 @@ class EquipmentService {
   double _cumulativeIdleBonus(Map<String, dynamic> equip, int level) {
     if (level <= 0) return 0.0;
     final levels = _levelsOf(equip);
-    if (levels == null) return 0.0;
     
     final bonuses = <num>[];
     for (final m in levels) {
@@ -301,10 +299,13 @@ class EquipmentService {
     final newMap = Map<String, int>.from(state.equipments);
     newMap[id] = currentLevel + 1;
 
-    return state.copyWith(
+    final newState = state.copyWith(
       memePoints: DecimalUtils.add(state.memePoints, -cost),
       equipments: newMap,
     );
+    // 立即寫回並觸發稱號條件檢查（equip_level_reach / equip_pair_levels）
+    GameStateService().updateGameState(newState);
+    return newState;
   }
 
   /// 升級放置裝備
@@ -324,9 +325,12 @@ class EquipmentService {
     final newMap = Map<String, int>.from(state.equipments);
     newMap[id] = currentLevel + 1;
 
-    return state.copyWith(
+    final newState = state.copyWith(
       memePoints: DecimalUtils.add(state.memePoints, -cost),
       equipments: newMap,
     );
+    // 立即寫回並觸發稱號條件檢查（equip_level_reach / equip_pair_levels）
+    GameStateService().updateGameState(newState);
+    return newState;
   }
 }

@@ -236,5 +236,31 @@
         "desc": "Accumulate points"
       }
     }
+  },
+  "title": {
+    "tab": {
+      "unlocked": "Unlocked",
+      "locked": "Locked"
+    },
+    "btn": {
+      "claim": "Claim"
+    },
+    "hidden": "????",
+    "lock": {
+      "title_system_unlock": "Title system unlocks after completing Main Quest Stage 2"
+    },
+    "rookie": "Meme Rookie",
+    "rookie.desc": "Finish Mainline: Meme Rookie",
+    "ssr_collector": "Pro Meme Collector",
+    "ssr_collector.desc": "Obtain ≥1 SSR Pet",
+    "114514": "Iiyo! Koiyo!",
+    "114514.desc": "Equip 114514 reaches Lv.10",
+    "crypto_expert": "Crypto Expert",
+    "crypto_expert.desc_reveal": "BTC Lv10 + DOGE Lv10",
+    "came_anyway": "Came Anyway",
+    "came_anyway.desc_reveal": "Face Mask Lv10 + Dress Lv10",
+    "meme_king": "King of Meme",
+    "meme_king.desc": "Collect all other titles",
+    "all_obtained": "All titles obtained!"
   }
 }
