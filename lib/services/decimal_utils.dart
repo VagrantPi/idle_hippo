@@ -6,7 +6,7 @@ class DecimalUtils {
     final da = Decimal.parse(a.toString());
     final db = b is int ? Decimal.fromInt(b) : Decimal.parse(b.toString());
     final sum = da + db;
-    final roundedStr = double.parse(sum.toString()).toStringAsFixed(scale);
+    final roundedStr = sum.toDouble().toStringAsFixed(scale);
     return double.parse(roundedStr);
   }
 
@@ -15,7 +15,7 @@ class DecimalUtils {
     final da = Decimal.parse(a.toString());
     final db = b is int ? Decimal.fromInt(b) : Decimal.parse(b.toString());
     final diff = da - db;
-    final roundedStr = double.parse(diff.toString()).toStringAsFixed(scale);
+    final roundedStr = diff.toDouble().toStringAsFixed(scale);
     return double.parse(roundedStr);
   }
 
@@ -24,7 +24,7 @@ class DecimalUtils {
     final da = Decimal.parse(a.toString());
     final db = b is int ? Decimal.fromInt(b) : Decimal.parse(b.toString());
     final product = da * db;
-    final roundedStr = double.parse(product.toString()).toStringAsFixed(scale);
+    final roundedStr = product.toDouble().toStringAsFixed(scale);
     return double.parse(roundedStr);
   }
 
@@ -34,7 +34,7 @@ class DecimalUtils {
     final db = b is int ? Decimal.fromInt(b) : Decimal.parse(b.toString());
     if (db == Decimal.zero) return 0.0;
     final quotient = da / db;
-    final roundedStr = double.parse(quotient.toString()).toStringAsFixed(scale);
+    final roundedStr = quotient.toDouble().toStringAsFixed(scale);
     return double.parse(roundedStr);
   }
 
@@ -48,7 +48,7 @@ class DecimalUtils {
       result += d;
     }
     
-    final roundedStr = double.parse(result.toString()).toStringAsFixed(scale);
+    final roundedStr = result.toDouble().toStringAsFixed(scale);
     return double.parse(roundedStr);
   }
 }

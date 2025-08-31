@@ -2,6 +2,71 @@ import 'dart:convert';
 import 'pet.dart';
 import 'package:idle_hippo/services/config_service.dart';
 
+/// 待提交的抽卡批次（兩階段提交用）
+class PendingGachaBatchItem {
+  final String petKey;
+  final String name;
+  final String rarity; // 存字串以降低相依
+  final String imagePath;
+  final int timestamp;
+
+  const PendingGachaBatchItem({
+    required this.petKey,
+    required this.name,
+    required this.rarity,
+    required this.imagePath,
+    required this.timestamp,
+  });
+
+  factory PendingGachaBatchItem.fromMap(Map<String, dynamic> map) {
+    return PendingGachaBatchItem(
+      petKey: map['petKey'] as String,
+      name: map['name'] as String,
+      rarity: map['rarity'] as String,
+      imagePath: map['imagePath'] as String,
+      timestamp: (map['timestamp'] as num).toInt(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'petKey': petKey,
+        'name': name,
+        'rarity': rarity,
+        'imagePath': imagePath,
+        'timestamp': timestamp,
+      };
+}
+
+class PendingGachaBatch {
+  final String batchId;
+  final int createdAt; // epoch ms
+  final List<PendingGachaBatchItem> results;
+
+  const PendingGachaBatch({
+    required this.batchId,
+    required this.createdAt,
+    required this.results,
+  });
+
+  factory PendingGachaBatch.fromMap(Map<String, dynamic> map) {
+    return PendingGachaBatch(
+      batchId: map['batchId'] as String,
+      createdAt: (map['createdAt'] as num).toInt(),
+      results: (map['results'] is List)
+          ? List<Map<String, dynamic>>.from(map['results'] as List)
+              .map(PendingGachaBatchItem.fromMap)
+              .toList()
+          : const <PendingGachaBatchItem>[],
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'batchId': batchId,
+        'createdAt': createdAt,
+        'results': results.map((e) => e.toMap()).toList(),
+      };
+}
+
 /// 抽卡歷史記錄
 class GachaHistoryRecord {
   final String rarity;
@@ -658,6 +723,7 @@ class GameState {
   final List<GachaHistoryRecord> gachaHistory;
   final GachaState? gacha;
   final TitlesState? titles;
+  final PendingGachaBatch? pendingGachaBatch;
 
   const GameState({
     required this.saveVersion,
@@ -674,6 +740,7 @@ class GameState {
     this.gachaHistory = const [],
     this.gacha,
     this.titles,
+    this.pendingGachaBatch,
   });
 
   /// 建立初始狀態
@@ -744,6 +811,9 @@ class GameState {
       titles: map.containsKey('titles') && map['titles'] is Map<String, dynamic>
           ? TitlesState.fromMap(map['titles'] as Map<String, dynamic>)
           : null,
+      pendingGachaBatch: map.containsKey('pendingGachaBatch') && map['pendingGachaBatch'] is Map<String, dynamic>
+          ? PendingGachaBatch.fromMap(map['pendingGachaBatch'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -769,6 +839,7 @@ class GameState {
       'gachaHistory': gachaHistory.map((record) => record.toMap()).toList(),
       if (gacha != null) 'gacha': gacha!.toMap(),
       if (titles != null) 'titles': titles!.toMap(),
+      if (pendingGachaBatch != null) 'pendingGachaBatch': pendingGachaBatch!.toMap(),
     };
   }
 
@@ -820,6 +891,8 @@ class GameState {
     List<GachaHistoryRecord>? gachaHistory,
     GachaState? gacha,
     TitlesState? titles,
+    PendingGachaBatch? pendingGachaBatch,
+    bool? clearPendingGachaBatch,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -836,6 +909,9 @@ class GameState {
       gachaHistory: gachaHistory ?? List<GachaHistoryRecord>.from(this.gachaHistory),
       gacha: gacha ?? this.gacha,
       titles: titles ?? this.titles,
+      pendingGachaBatch: (clearPendingGachaBatch == true)
+          ? null
+          : (pendingGachaBatch ?? this.pendingGachaBatch),
     );
   }
 
@@ -871,7 +947,8 @@ class GameState {
         other.petTickets == petTickets &&
         _listGachaHistoryEquals(other.gachaHistory, gachaHistory) &&
         other.gacha == gacha &&
-        other.titles == titles;
+        other.titles == titles &&
+        _pendingBatchEquals(other.pendingGachaBatch, pendingGachaBatch);
   }
 
   @override
@@ -889,7 +966,8 @@ class GameState {
         petTickets.hashCode ^
         gachaHistory.hashCode ^
         (gacha?.hashCode ?? 0) ^
-        (titles?.hashCode ?? 0);
+        (titles?.hashCode ?? 0) ^
+        (pendingGachaBatch?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {
@@ -923,6 +1001,19 @@ class GameState {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  bool _pendingBatchEquals(PendingGachaBatch? a, PendingGachaBatch? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    if (a.batchId != b.batchId || a.createdAt != b.createdAt) return false;
+    if (a.results.length != b.results.length) return false;
+    for (int i = 0; i < a.results.length; i++) {
+      final x = a.results[i];
+      final y = b.results[i];
+      if (x.petKey != y.petKey || x.rarity != y.rarity || x.timestamp != y.timestamp) return false;
     }
     return true;
   }
