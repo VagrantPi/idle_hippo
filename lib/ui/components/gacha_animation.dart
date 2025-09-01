@@ -174,7 +174,10 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
         _currentIndex = widget.results.length - 1;
       });
       
-      Future.delayed(const Duration(milliseconds: 500), _finish);
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+        _finish();
+      });
     }
   }
 
@@ -183,6 +186,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
     if (widget.onAdvance != null) {
       widget.onAdvance!(widget.results[_currentIndex]);
     }
+    if (!mounted) return;
     Navigator.of(context).pop();
     widget.onComplete();
   }
@@ -335,16 +339,17 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                           if (_adInProgress || disabledForQuota) return null;
                           return () async {
                                 setState(() => _adInProgress = true);
+                                // 預先取得可跨 async gap 使用的 navigator/messenger
+                                final navigator = Navigator.of(context, rootNavigator: true);
+                                final messenger = ScaffoldMessenger.of(context);
                                 try {
-                                  // 以 rootNavigator 的 context 顯示新對話框
-                                  final rootNavigator = Navigator.of(context, rootNavigator: true);
-                                  final rootContext = rootNavigator.context;
-
                                   // 再次檢查 10+1 配額，避免競態
                                   if (widget.results.length > 1) {
                                     final ok = await _rewardedAdService.canShowGachaTenPackAd();
                                     if (!ok) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      // 在 await 後以 mounted 檢查並使用 messenger 顯示訊息
+                                      if (!mounted) return;
+                                      messenger.showSnackBar(
                                         SnackBar(
                                           content: Text(_localization.getString('pets.gacha.ad_draw_no_more', defaultValue: 'No more ads today')),
                                           backgroundColor: Colors.orange,
@@ -354,6 +359,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                                     }
                                   }
 
+                                  if (!context.mounted) return;
                                   final adFuture = _rewardedAdService.showAd(
                                     context: context,
                                     onAdWatched: () async {},
@@ -362,8 +368,11 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                                   );
 
                                   // 關閉目前對話框，等待廣告完成
-                                  Navigator.of(context).pop();
+                                  navigator.pop();
                                   await adFuture;
+
+                                  // 在 async gap 之後再次確認 mounted 並重新取得 rootNavigator/context
+                                  if (!mounted) return;
 
                                   final gacha = GachaService();
                                   List<GachaResult> newResults;
@@ -378,29 +387,29 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                                   }
 
                                   // 重新打開動畫對話框（不再允許廣告獎勵）
-                                  showDialog(
-                                    context: rootContext,
-                                    barrierDismissible: false,
-                                    useRootNavigator: true,
-                                    builder: (ctx) => GachaAnimationDialog(
-                                      results: newResults,
-                                      onComplete: widget.onComplete,
-                                      onReveal: widget.onReveal,
-                                      onAdvance: widget.onAdvance,
-                                      allowAdReward: false,
+                                  navigator.push(
+                                    RawDialogRoute(
+                                      barrierDismissible: false,
+                                      barrierColor: Colors.black54,
+                                      pageBuilder: (ctx, a1, a2) => GachaAnimationDialog(
+                                        results: newResults,
+                                        onComplete: widget.onComplete,
+                                        onReveal: widget.onReveal,
+                                        onAdvance: widget.onAdvance,
+                                        allowAdReward: false,
+                                      ),
                                     ),
                                   );
                                 } catch (_) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          _localization.getString('pets.gacha.ad_failed', defaultValue: 'Ad failed, please try again later'),
-                                        ),
-                                        backgroundColor: Colors.red,
+                                  if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        _localization.getString('pets.gacha.ad_failed', defaultValue: 'Ad failed, please try again later'),
                                       ),
-                                    );
-                                  }
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
                                 } finally {
                                   if (mounted) setState(() => _adInProgress = false);
                                 }

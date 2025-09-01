@@ -4,7 +4,6 @@ import 'package:idle_hippo/models/pet.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/pet_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
-import 'package:idle_hippo/services/secure_save_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/services/rewarded_ad_service.dart';
 
@@ -37,6 +36,8 @@ class GachaResult {
     };
   }
 
+  
+
   factory GachaResult.fromMap(Map<String, dynamic> map) {
     return GachaResult(
       petKey: map['petKey'] as String,
@@ -57,7 +58,6 @@ class GachaService {
   GachaService._internal();
 
   final ConfigService _configService = ConfigService();
-  final SecureSaveService _saveService = SecureSaveService();
   final Random _random = Random();
   final RewardedAdService _rewardedAdService = RewardedAdService();
   final GameStateService _gameStateService = GameStateService();
@@ -120,6 +120,11 @@ class GachaService {
     _emitPetTickets();
     _emitGachaHistory();
     _initialized = true;
+
+    // 自動恢復：若存在未提交的抽卡批次，嘗試提交（冪等）
+    try {
+      await commitPendingBatchIfAny();
+    } catch (_) {}
   }
 
   /// 確保服務已初始化（Hot reload 後可再次觸發）
@@ -131,8 +136,12 @@ class GachaService {
 
   /// 保存狀態
   Future<void> _saveState(GameState state) async {
+    // 先同步更新本地狀態，避免緊接著的讀取看到舊資料（如 pending 未清）
+    _currentState = state;
+    _emitPetTickets();
+    _emitGachaHistory();
     await _gameStateService.updateGameState(state);
-    await PetService().initialize(state.petState); // PetService might need its own state management later
+    await PetService().initialize(state.petState); // TODO: PetService 應拆出自己的狀態管理
   }
 
   /// 執行單次抽卡
@@ -420,17 +429,7 @@ class GachaService {
   /// 執行十一連抽
   Future<List<GachaResult>> performTenPlusOneDraw() async {
     if (_currentState == null) await initialize();
-
-    final currentState = _currentState!;
-    if (currentState.petTickets < 10) {
-      throw Exception('抽獎券不足');
-    }
-
-    // 扣除抽獎券
-    final updatedState = currentState.copyWith(petTickets: currentState.petTickets - 10);
-    await _saveState(updatedState);
-
-    return _performMultipleDraws(11);
+    return await createPendingTenPlusOneBatch();
   }
 
   /// 執行廣告觀看後的十一連抽
@@ -451,16 +450,107 @@ class GachaService {
     return _performMultipleDraws(11);
   }
 
-  /// 執行多次抽卡的內部邏輯
+  /// 執行多次抽卡的內部邏輯（不改變票券）：批次應用並一次保存
   Future<List<GachaResult>> _performMultipleDraws(int count) async {
+    if (_currentState == null) await initialize();
+    final baseState = _currentState!;
+
     final results = <GachaResult>[];
     for (int i = 0; i < count; i++) {
-      final result = _performSingleGacha();
-      results.add(result);
-      await _processGachaResult(result);
-      await _recordGachaHistory(result);
+      results.add(_performSingleGacha());
     }
+
+    final nextState = _applyBatchChanges(baseState, results);
+    await _saveState(nextState);
     return results;
+  }
+
+  // ================= Two-phase commit for 10+1 =================
+
+  /// 建立十加一抽的 Pending 批次：
+  /// 1) 檢查票券並先扣除 10 張
+  /// 2) 產生 11 筆結果，寫入 pendingGachaBatch
+  /// 3) 立即回傳結果給 UI 開始動畫（未套用到寵物/歷史）
+  Future<List<GachaResult>> createPendingTenPlusOneBatch() async {
+    if (_currentState == null) await initialize();
+    final s = _currentState!;
+    if (s.petTickets < 10) {
+      throw Exception('抽獎券不足');
+    }
+
+    // 若已存在未提交批次，先嘗試提交或清除（冪等處理）
+    if (s.pendingGachaBatch != null) {
+      await commitPendingBatchIfAny();
+    }
+
+    // 生成結果
+    final results = <GachaResult>[];
+    for (int i = 0; i < 11; i++) {
+      results.add(_performSingleGacha());
+    }
+
+    final batchId = 'g_${DateTime.now().millisecondsSinceEpoch}_${_random.nextInt(1 << 20)}';
+    final createdAt = DateTime.now().millisecondsSinceEpoch;
+    final pending = PendingGachaBatch(
+      batchId: batchId,
+      createdAt: createdAt,
+      results: results
+          .map((r) => PendingGachaBatchItem(
+                petKey: r.petKey,
+                name: r.name,
+                rarity: r.rarity.value,
+                imagePath: r.imagePath,
+                timestamp: r.timestamp,
+              ))
+          .toList(),
+    );
+
+    final next = s.copyWith(
+      petTickets: s.petTickets - 10,
+      pendingGachaBatch: pending,
+    );
+    await _saveState(next);
+    return results;
+  }
+
+  /// 提交 Pending 批次（若存在）。冪等：
+  /// - 若歷史已含該批次所有 timestamp，視為已提交，僅清除 pending。
+  /// - 否則批次套用到寵物與歷史，然後清除 pending。
+  Future<bool> commitPendingBatchIfAny() async {
+    if (_currentState == null) await initialize();
+    final s = _currentState!;
+    final pending = s.pendingGachaBatch;
+    if (pending == null) return false;
+
+    // 將 pending 轉回 GachaResult 以重用既有批次邏輯
+    List<GachaResult> results = pending.results
+        .map((e) => GachaResult(
+              petKey: e.petKey,
+              name: e.name,
+              rarity: PetRarity.fromString(e.rarity),
+              imagePath: e.imagePath,
+              isNew: !_isPetOwned(e.petKey, PetRarity.fromString(e.rarity)),
+              timestamp: e.timestamp,
+            ))
+        .toList();
+
+    // 冪等檢查：歷史是否已有這批 timestamps（至少大多數匹配視為已寫入）
+    final pendingTimestamps = results.map((r) => r.timestamp).toSet();
+    final existingTs = s.gachaHistory.map((h) => h.timestamp).toSet();
+    final int overlap = pendingTimestamps.where(existingTs.contains).length;
+    final bool alreadyApplied = overlap >= (results.length * 0.8).floor();
+
+    GameState nextState;
+    if (alreadyApplied) {
+      // 僅清除 pending
+      nextState = s.copyWith(clearPendingGachaBatch: true);
+    } else {
+      // 批次套用
+      nextState = _applyBatchChanges(s, results).copyWith(clearPendingGachaBatch: true);
+    }
+
+    await _saveState(nextState);
+    return true;
   }
 
   /// 執行單次抽卡邏輯
@@ -514,6 +604,59 @@ class GachaService {
     }
     // fallback
     return _availablePets[_random.nextInt(_availablePets.length)];
+  }
+
+  /// 將一批抽卡結果批次套用到狀態（只計算，不即時寫入）
+  GameState _applyBatchChanges(GameState state, List<GachaResult> results) {
+    // 1) 更新寵物清單/升級點數
+    final petState = state.petState ?? const PetState();
+    final updatedPets = List<Pet>.from(petState.pets);
+
+    for (final result in results) {
+      final petId = '${result.petKey}_${result.rarity.value}';
+      final idx = updatedPets.indexWhere((p) => '${p.petKey}_${p.rarity.value}' == petId);
+      if (idx != -1) {
+        final existing = updatedPets[idx];
+        updatedPets[idx] = existing.addUpgradePoints(1);
+      } else {
+        final rarityCfg = _configService.getPetRarityConfig(result.petKey, result.rarity.value);
+        if (rarityCfg == null) {
+          // 若配置缺失，跳過該筆以避免整批失敗
+          continue;
+        }
+        final newPet = Pet(
+          petKey: result.petKey,
+          name: result.name,
+          imagePath: result.imagePath,
+          rarity: result.rarity,
+          baseIdlePerSec: (rarityCfg['baseIdlePerSec'] as num).toDouble(),
+          level: 1,
+          upgradePoints: 0,
+          isEquipped: false,
+        );
+        updatedPets.add(newPet);
+      }
+    }
+
+    final nextPetState = petState.copyWith(pets: updatedPets);
+
+    // 2) 批次更新抽卡歷史（插入到開頭，並裁切至上限）
+    final newRecords = results
+        .map((r) => GachaHistoryRecord(
+              rarity: r.rarity.value,
+              name: r.name,
+              timestamp: r.timestamp,
+              petKey: r.petKey,
+            ))
+        .toList();
+    final maxRecords = _configService.getValue('game.gacha.history.maxRecords', defaultValue: 50) as int;
+    final mergedHistory = <GachaHistoryRecord>[...newRecords, ...state.gachaHistory];
+    final limited = mergedHistory.take(maxRecords).toList();
+
+    return state.copyWith(
+      petState: nextPetState,
+      gachaHistory: limited,
+    );
   }
 
   /// 記錄抽卡歷史

@@ -17,6 +17,12 @@
       "maxRecords": 50
     }
   },
+  "checkin": {
+    "config": {
+      "weekStartDow": 1,
+      "tapRange": [20, 50]
+    }
+  },
   "ui": {
     "theme": "green",
     "showDebugPanel": false

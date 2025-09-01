@@ -13,9 +13,12 @@ class GameStateService {
 
   final SecureSaveService _saveService = SecureSaveService();
 
-  late ValueNotifier<GameState> gameState;
+  late ValueNotifier<GameState> gameState = ValueNotifier(GameState.initial(1)); // 使用預設版本號 1
   bool _initialized = false;
   bool _testMode = false;
+
+  /// 向後相容：回傳目前的遊戲狀態（供舊測試使用）
+  GameState get currentState => gameState.value;
 
   /// Initializes the service by loading the game state from secure storage.
   Future<void> initialize() async {

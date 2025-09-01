@@ -25,6 +25,8 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
   final LocalizationService _localization = LocalizationService();
   // 尚未揭示（尚未顯示名稱）的抽卡結果時間戳，暫時不顯示在歷史中
   final Set<int> _pendingRevealTimestamps = <int>{};
+  // 抽卡系統是否完成初始化（避免首次點擊觸發初始化造成延遲）
+  bool _gachaReady = false;
   
   late TabController _tabController;
 
@@ -33,8 +35,11 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     
-    // 初始化抽卡服務
-    _gachaService.initialize();
+    // 初始化抽卡服務（完成後標記為就緒）
+    _gachaService.initialize().then((_) {
+      if (mounted) setState(() => _gachaReady = true);
+    });
+    // 廣告服務的初始化維持現狀（非阻塞 UI）
     _rewardedAdService.initialize(GameStateService());
   }
 
@@ -156,6 +161,31 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
     );
   }
 
+  /// 顯示 Loading 並在背景執行任務（完成後自動關閉 Loading）
+  Future<T> _runWithLoading<T>(Future<T> Function() task) async {
+    if (!mounted) return await task();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
+
+    try {
+      final result = await task();
+      return result;
+    } finally {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
   /// 建構寵物列表 Tab
   Widget _buildPetsListTab() {
     return StreamBuilder<PetState>(
@@ -257,7 +287,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                       text: _localization.getString('pets.gacha.single_draw'),
                       costText: _localization.getString('pets.gacha.single_draw_cost'),
                       onPressed: _performSingleDraw,
-                      isEnabled: tickets >= 1,
+                      isEnabled: tickets >= 1 && _gachaReady,
                       primaryColor: Colors.blue,
                       icon: Icons.casino,
                     );
@@ -275,7 +305,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                       text: _localization.getString('pets.gacha.ten_plus_one_draw'),
                       costText: _localization.getString('pets.gacha.ten_plus_one_cost'),
                       onPressed: _performTenPlusOneDraw,
-                      isEnabled: tickets >= 10,
+                      isEnabled: tickets >= 10 && _gachaReady,
                       primaryColor: Colors.purple,
                       icon: Icons.auto_awesome,
                     );
@@ -399,25 +429,13 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
   /// 執行單抽
   Future<void> _performSingleDraw() async {
     try {
-      final result = await _gachaService.performSingleDraw();
+      final result = await _runWithLoading(() async {
+        return await _gachaService.performSingleDraw();
+      });
+      // 預先快取圖片，避免動畫開啟瞬間卡頓
       if (mounted) {
+        try { await precacheImage(AssetImage(result.imagePath), context); } catch (_) {}
         _showGachaAnimation([result]);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localization.getString('pets.gacha.draw_failed')}: $e')),
-        );
-      }
-    }
-  }
-
-  /// 執行廣告十一連抽
-  Future<void> _performTenPlusOneDrawWithAd() async {
-    try {
-      final results = await _gachaService.drawTenPlusOneWithAd();
-      if (mounted) {
-        _showGachaAnimation(results);
       }
     } catch (e) {
       if (mounted) {
@@ -431,7 +449,10 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
   /// 執行十一連抽
   Future<void> _performTenPlusOneDraw() async {
     try {
-      final results = await _gachaService.performTenPlusOneDraw();
+      final results = await _runWithLoading(() async {
+        return await _gachaService.performTenPlusOneDraw();
+      });
+      // 立即顯示動畫；圖片改為在 onReveal 時非阻塞微前載
       if (mounted) {
         _showGachaAnimation(results);
       }
@@ -457,6 +478,14 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
       builder: (context) => GachaAnimationDialog(
         results: results,
         onReveal: (res) {
+          // 非阻塞微前載：當前與下一張圖片
+          if (mounted) {
+            try { precacheImage(AssetImage(res.imagePath), context); } catch (_) {}
+            final idx = results.indexWhere((e) => e.timestamp == res.timestamp);
+            if (idx != -1 && idx + 1 < results.length) {
+              try { precacheImage(AssetImage(results[idx + 1].imagePath), context); } catch (_) {}
+            }
+          }
           // 單抽：名稱揭示時釋放
           if (results.length == 1 && mounted) {
             setState(() {
@@ -479,6 +508,8 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
               _pendingRevealTimestamps.clear();
             });
           }
+          // 兩階段提交：動畫完成後提交 pending 批次（冪等、非阻塞）
+          try { _gachaService.commitPendingBatchIfAny(); } catch (_) {}
         },
       ),
     );

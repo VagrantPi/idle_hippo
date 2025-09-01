@@ -15,7 +15,8 @@
     "quest": "Quest",
     "settings": "Settings",
     "musicGame": "Music Game",
-    "noAds": "No Ads"
+    "noAds": "No Ads",
+    "checkin": "Check-in"
   },
   "ui": {
     "taskBar": "Task Progress",
@@ -247,20 +248,64 @@
     },
     "hidden": "????",
     "lock": {
-      "title_system_unlock": "Title system unlocks after completing Main Quest Stage 2"
+      "title_system_unlock": "Title system unlocked after completing main quest stage 2"
     },
-    "rookie": "Meme Rookie",
-    "rookie.desc": "Finish Mainline: Meme Rookie",
-    "ssr_collector": "Pro Meme Collector",
-    "ssr_collector.desc": "Obtain ≥1 SSR Pet",
-    "114514": "Iiyo! Koiyo!",
-    "114514.desc": "Equip 114514 reaches Lv.10",
+    "rookie": "Meme Rookie Title",
+    "rookie_desc": "Complete main quest 'Meme Rookie Stage'",
+    "ssr_collector": "Professional Meme Collector",
+    "ssr_collector_desc": "Obtain at least 1 SSR pet",
+    "114514": "いいよ！ こいよ！",
+    "114514_desc": "Equip 114514 to level 10",
     "crypto_expert": "Crypto Expert",
-    "crypto_expert.desc_reveal": "BTC Lv10 + DOGE Lv10",
+    "crypto_expert_desc": "Equip BTC Lv10 + DOGE Lv10",
     "came_anyway": "Came Anyway",
-    "came_anyway.desc_reveal": "Face Mask Lv10 + Dress Lv10",
-    "meme_king": "King of Meme",
-    "meme_king.desc": "Collect all other titles",
+    "came_anyway_desc": "Equip Face Mask Lv10 + Dress Lv10",
+    "meme_king": "Meme King",
+    "meme_king_desc": "Collect all other titles",
     "all_obtained": "All titles obtained!"
+  },
+  "checkin": {
+    "title": "Daily Check-in",
+    "weekly": "This Week",
+    "task": {
+      "tap": "Tap the hippo {n} times",
+      "collect": "Collect {m} meme points today"
+    },
+    "btn": {
+      "skip_ad": "Watch Ad to Skip",
+      "complete": "Complete Check-in"
+    },
+    "status": {
+      "done": "Checked-in",
+      "pending": "Pending",
+      "skipped": "Skipped"
+    },
+    "reward": {
+      "week": "Weekly bonus claimed"
+    },
+    "weekly_bonus": {
+      "title": "Weekly Bonus",
+      "message": "Congrats! You checked in for {total} days and received a weekly bonus."
+    },
+    "toast": {
+      "bonus_halfday": "Half-day idle bonus received!"
+    },
+    "hint": {
+      "open": "Complete today's task to check in"
+    },
+    "streak": {
+      "current": "{n} days streak",
+      "best": "Best: {n} days",
+      "total": "Total check-ins: {n}"
+    },
+    "calendar": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   }
 }
