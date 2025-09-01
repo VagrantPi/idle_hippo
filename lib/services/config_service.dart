@@ -35,6 +35,12 @@ class ConfigService {
     }
   }
 
+  /// 向後相容：部分測試使用 initialize() 名稱
+  /// 實際上等同於呼叫 loadConfig()
+  Future<void> initialize() async {
+    await loadConfig();
+  }
+
   /// 載入單一 JSON 檔案
   Future<Map<String, dynamic>> _loadJsonFile(String path) async {
     try {

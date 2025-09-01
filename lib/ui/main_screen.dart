@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:idle_hippo/services/checkin_service.dart';
 import 'package:idle_hippo/ui/components/daily_cap_progress_bar.dart';
 import 'package:idle_hippo/ui/components/daily_mission_bar.dart';
 import 'package:idle_hippo/ui/components/main_quest_bar.dart';
@@ -17,10 +18,12 @@ import 'package:idle_hippo/ui/pages/quest_page.dart';
 import 'package:idle_hippo/ui/pages/settings_page.dart';
 import 'package:idle_hippo/ui/pages/music_game_page.dart';
 import 'package:idle_hippo/ui/pages/no_ads_page.dart';
+import 'package:idle_hippo/ui/pages/checkin_page.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/config_service.dart';
+
 
 class MainScreen extends StatefulWidget {
   final double memePoints;
@@ -92,6 +95,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final LocalizationService _localization = LocalizationService();
   final PageManager _pageManager = PageManager();
   final GachaService _gachaService = GachaService();
+  final CheckinService _checkinService = CheckinService();
   
   late AnimationController _characterController;
   late final IdleIncomeService _idleIncome;
@@ -270,6 +274,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       widget.onCharacterTap();
       gained = 1; // 舊版預設視為成功以維持舊行為
     }
+
+    // 更新每日打卡任務的點擊進度
+    CheckinService().updateTapProgress();
 
     // 僅在實際加分時生成粒子
     if (gained > 0) {
@@ -621,10 +628,38 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              AnimatedButton(
-                iconPath: 'assets/images/icon/Setting.png',
-                onTap: () => _pageManager.navigateToPage(PageType.settings),
-                size: 50,
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: AnimatedButton(
+                        iconPath: 'assets/images/icon/Setting.png',
+                        onTap: () => _pageManager.navigateToPage(PageType.settings),
+                        size: 50,
+                      ),
+                    ),
+                    // 打卡系統紅點
+                    if (_checkinService.shouldShowRedDot())
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: ScaleTransition(
+                          scale: _badgePulseAnimation,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 5),
               if (_pageManager.isHomePage) _buildPowerSaverButton(),
@@ -1135,6 +1170,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         break;
       case PageType.noAds:
         pageContent = const NoAdsPage();
+        break;
+      case PageType.checkin:
+        pageContent = CheckinPage(
+          previousPage: _pageManager.previousPage ?? PageType.home,
+        );
         break;
       default:
         return [];

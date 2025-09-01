@@ -4,7 +4,6 @@ import 'package:idle_hippo/models/pet.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/pet_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
-import 'package:idle_hippo/services/secure_save_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/services/rewarded_ad_service.dart';
 
@@ -59,7 +58,6 @@ class GachaService {
   GachaService._internal();
 
   final ConfigService _configService = ConfigService();
-  final SecureSaveService _saveService = SecureSaveService();
   final Random _random = Random();
   final RewardedAdService _rewardedAdService = RewardedAdService();
   final GameStateService _gameStateService = GameStateService();

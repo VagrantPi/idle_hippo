@@ -446,22 +446,6 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
     }
   }
 
-  /// 執行廣告十一連抽
-  Future<void> _performTenPlusOneDrawWithAd() async {
-    try {
-      final results = await _gachaService.drawTenPlusOneWithAd();
-      if (mounted) {
-        _showGachaAnimation(results);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localization.getString('pets.gacha.draw_failed')}: $e')),
-        );
-      }
-    }
-  }
-
   /// 執行十一連抽
   Future<void> _performTenPlusOneDraw() async {
     try {

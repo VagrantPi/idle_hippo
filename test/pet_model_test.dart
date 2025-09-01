@@ -20,11 +20,11 @@ void main() {
     });
 
     test('應該返回正確的稀有度顏色', () {
-      expect(PetRarity.rr.getColor().value, 0xFF808080);
-      expect(PetRarity.r.getColor().value, 0xFF00FF00);
-      expect(PetRarity.s.getColor().value, 0xFF0000FF);
-      expect(PetRarity.sr.getColor().value, 0xFF800080);
-      expect(PetRarity.ssr.getColor().value, 0xFFFF0000);
+      expect(PetRarity.rr.getColor().toARGB32(), 0xFF808080);
+      expect(PetRarity.r.getColor().toARGB32(), 0xFF00FF00);
+      expect(PetRarity.s.getColor().toARGB32(), 0xFF0000FF);
+      expect(PetRarity.sr.getColor().toARGB32(), 0xFF800080);
+      expect(PetRarity.ssr.getColor().toARGB32(), 0xFFFF0000);
     });
   });
 

@@ -12,7 +12,8 @@
     "quest": "퀘스트",
     "settings": "설정",
     "musicGame": "음악 게임",
-    "noAds": "광고 없음"
+    "noAds": "광고 없음",
+    "checkin": "출석체크"
   },
   "ui": {
     "taskBar": "작업 진행",
@@ -259,5 +260,49 @@
     "meme_king": "밈의 왕",
     "meme_king.desc": "다른 모든 칭호를 수집",
     "all_obtained": "모든 칭호를 획득했습니다!"
+  },
+  "checkin": {
+    "title": "매일 출석체크",
+    "weekly": "이번 주",
+    "task": {
+      "tap": "캐릭터 {n}회 탭",
+      "collect": "오늘 밈 포인트 {m} 누적"
+    },
+    "btn": {
+      "skip_ad": "광고 보고 건너뛰기",
+      "complete": "출석 완료"
+    },
+    "status": {
+      "done": "출석 완료",
+      "pending": "미완료",
+      "skipped": "건너뜀"
+    },
+    "reward": {
+      "week": "주간 보너스 수령 완료"
+    },
+    "weekly_bonus": {
+      "title": "주간 보너스",
+      "message": "축하합니다! 누적 {total}일 출석으로 주간 보너스를 받았습니다."
+    },
+    "toast": {
+      "bonus_halfday": "반나절 방치 보너스 획득!"
+    },
+    "hint": {
+      "open": "오늘의 과제를 완료하면 출석 가능"
+    },
+    "streak": {
+      "current": "연속 {n}일",
+      "best": "최고 기록: {n}일",
+      "total": "누적 출석: {n}일"
+    },
+    "calendar": {
+      "mon": "월",
+      "tue": "화",
+      "wed": "수",
+      "thu": "목",
+      "fri": "금",
+      "sat": "토",
+      "sun": "일"
+    }
   }
 }

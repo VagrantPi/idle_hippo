@@ -12,7 +12,8 @@
     "quest": "クエスト",
     "settings": "設定",
     "musicGame": "音楽ゲーム",
-    "noAds": "広告なし"
+    "noAds": "広告なし",
+    "checkin": "毎日ログイン"
   },
   "ui": {
     "taskBar": "タスク進行",
@@ -247,17 +248,61 @@
       "title_system_unlock": "称号システムはメインクエスト第2章クリアで解放"
     },
     "rookie": "ミームビギナー",
-    "rookie.desc": "メインライン『ミーム初心者ステージ』を完了",
+    "rookie_desc": "メインライン『ミーム初心者ステージ』を完了",
     "ssr_collector": "プロ・ミームコレクター",
-    "ssr_collector.desc": "SSR ペットを少なくとも1体獲得",
+    "ssr_collector_desc": "SSR ペットを少なくとも1体獲得",
     "114514": "いいよ！ こいよ！",
-    "114514.desc": "装備 114514 のレベルを10に到達",
+    "114514_desc": "装備 114514 のレベルを10に到達",
     "crypto_expert": "暗号通貨エキスパート",
-    "crypto_expert.desc_reveal": "BTC Lv10 + DOGE Lv10",
+    "crypto_expert_desc": "装備 BTC Lv10 + DOGE Lv10",
     "came_anyway": "それでも来た",
-    "came_anyway.desc_reveal": "マスク Lv10 + ワンピース Lv10",
+    "came_anyway_desc": "装備 マスク Lv10 + ワンピース Lv10",
     "meme_king": "ミームの王",
-    "meme_king.desc": "他のすべての称号を収集",
-    "all_obtained": "全ての称号を取得しました！"
+    "meme_king_desc": "他のすべての称号を収集",
+    "all_obtained": "すべてのタイトルを取得しました！"
+  },
+  "checkin": {
+    "title": "毎日ログイン",
+    "weekly": "今週",
+    "task": {
+      "tap": "キャラクターを{n}回タップ",
+      "collect": "今日{m}ミームポイントを蓄積"
+    },
+    "btn": {
+      "skip_ad": "広告を見てスキップ",
+      "complete": "ログイン完了"
+    },
+    "status": {
+      "done": "ログイン済み",
+      "pending": "未完了",
+      "skipped": "スキップ済み"
+    },
+    "reward": {
+      "week": "週間ボーナス受領済み"
+    },
+    "weekly_bonus": {
+      "title": "週間ボーナス",
+      "message": "おめでとうございます！累計 {total} 日ログインし、週間ボーナスを受け取りました。"
+    },
+    "toast": {
+      "bonus_halfday": "半日放置ボーナスを獲得！"
+    },
+    "hint": {
+      "open": "今日のタスクを完了してログイン"
+    },
+    "streak": {
+      "current": "連続{n}日",
+      "best": "最高記録：{n}日",
+      "total": "累計ログイン：{n}日"
+    },
+    "calendar": {
+      "mon": "月",
+      "tue": "火",
+      "wed": "水",
+      "thu": "木",
+      "fri": "金",
+      "sat": "土",
+      "sun": "日"
+    }
   }
 }

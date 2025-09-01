@@ -16,6 +16,7 @@ import 'package:idle_hippo/services/daily_mission_service.dart';
 import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
 import 'package:idle_hippo/services/rewarded_ad_service.dart';
+import 'package:idle_hippo/services/checkin_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -66,6 +67,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   final MainQuestService _mainQuest = MainQuestService();
   final PetTicketQuestService _petTicketQuest = PetTicketQuestService();
   final RewardedAdService _rewardedAdService = RewardedAdService();
+  final CheckinService _checkinService = CheckinService();
 
   late GameState _gameState;
   Timer? _autoSaveTimer;
@@ -107,6 +109,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _initDailyMissionModule();
     _initMainQuestModule();
     _initPetTicketQuestModule();
+    await _initCheckinModule();
     // 初始化 GachaService 並訂閱 tickets，同步到 _gameState
     try {
       await GachaService().ensureInitialized();
@@ -246,6 +249,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         // 處理寵物抽獎券任務進度
         updatedState = _petTicketQuest.addProgress(updatedState, pointsToAdd);
         
+        // 累積任務：同步更新 collect 任務進度
+        CheckinService().updateCollectProgress(pointsToAdd);
+        
         setState(() {
           _gameState = updatedState.copyWith(
             memePoints: DecimalUtils.add(updatedState.memePoints, pointsToAdd),
@@ -275,6 +281,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
         // 將離線獎勵納入每日任務的累積進度（不重複加分，只更新任務狀態）
         if (reward > 0) {
           if (mounted) {
+            // 累積任務：同步更新 collect 任務進度（離線收益）
+            CheckinService().updateCollectProgress(reward);
             setState(() {
               GameState updatedState = _dailyMission.onEarnPoints(_gameState, reward);
               updatedState = _mainQuest.onEarnPoints(updatedState, reward);
@@ -343,6 +351,41 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       setState(() {
         _gameState = updatedState;
       });
+    }
+  }
+
+  Future<void> _initCheckinModule() async {
+    try {
+      // 初始化打卡服務
+      await _checkinService.initialize();
+      
+      // 確保遊戲狀態有打卡資料結構
+      if (_gameState.checkin == null) {
+        setState(() {
+          _gameState = _gameState.copyWith(
+            checkin: CheckinState(
+              today: CheckinToday(
+                date: '',
+                status: 'pending',
+                task: CheckinTask(
+                  type: 'tap',
+                  target: 10,
+                  progress: 0,
+                ),
+              ),
+            ),
+          );
+        });
+      }
+
+      // 註冊週獎勵提示回呼：由服務觸發，UI 顯示提示對話框
+      _checkinService.setWeeklyBonusCallback((double reward, int total) {
+        if (!mounted) return;
+        _showWeeklyBonusDialog(reward: reward, total: total);
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Main] CheckinService init failed: $e');
     }
   }
 
@@ -466,6 +509,150 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             color: Colors.yellow,
                             fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE89A00),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(
+                            confirm,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showWeeklyBonusDialog({required double reward, required int total}) {
+    final title = _localization.getString('checkin.weekly_bonus.title', defaultValue: '週獎勵');
+    final descTpl = _localization.getString('checkin.weekly_bonus.message', defaultValue: '恭喜！你累計簽到 {total} 天，獲得週獎勵');
+    final confirm = _localization.getString('common.ok', defaultValue: '確認');
+
+    final desc = descTpl.replaceFirst('{total}', total.toString());
+    final pointsStr = reward.toStringAsFixed(0);
+
+    showTopSlideDialog(
+      context,
+      barrierDismissible: true,
+      child: Builder(
+        builder: (ctx) {
+          final theme = Theme.of(ctx);
+          return GestureDetector(
+            onTap: () => Navigator.of(ctx).pop(),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xCC002211),
+                    Color(0xCC0AA56B),
+                  ],
+                ),
+                border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                        ),
+                        child: const Icon(Icons.calendar_month, color: Color(0xFF00FFD1)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          desc,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                            const SizedBox(width: 6),
+                            Text(
+                              '+$pointsStr',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.yellow,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _localization.getCommon('memePoints'),
+                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -656,9 +843,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                               rewardContent: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.35),
+                                  color: Colors.red.withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
@@ -782,6 +969,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
     // 重置後更新 IdleIncomeService 的 GameState 參考，確保加成立即生效為 0
     _idleIncome.updateGameState(_gameState);
+
+    // 重置每日任務
+    await _checkinService.initialize();
 
     // 立即存檔
     await _saveGameState();

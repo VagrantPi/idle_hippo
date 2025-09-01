@@ -3,10 +3,10 @@ import 'package:idle_hippo/models/game_state.dart';
 class PetTicketQuestService {
   // 公式中定義的常數
   // 48 小時的秒數：60 * 60 * 48
-  static const double _SECONDS_IN_48_HOURS = 60 * 60 * 48;
-  static const double _K_INCREMENT = 0.05;
-  static const double _BASE_BONUS = 200.0;
-  static const int _UNLOCK_STAGE = 3;
+  static const double secondsIn48Hours = 60 * 60 * 48;
+  static const double kIncrement = 0.05;
+  static const double baseBonus = 200.0;
+  static const int unlockStage = 3;
 
   /// 檢查任務是否應該解鎖
   /// 當主線任務「完成」stage 3 後解鎖。
@@ -20,7 +20,7 @@ class PetTicketQuestService {
     }
 
     final mainQuest = gameState.mainQuest ?? const MainQuestState();
-    if (mainQuest.currentStage > _UNLOCK_STAGE) {
+    if (mainQuest.currentStage > unlockStage) {
       return gameState.copyWith(
         petTicketQuest: quest.copyWith(available: true),
       );
@@ -51,8 +51,8 @@ class PetTicketQuestService {
     }
 
     final rewardAmount = withAd ? 2 : 1;
-    final newK = quest.k + _K_INCREMENT;
-    final newTarget = (currentIdlePerSec * _SECONDS_IN_48_HOURS * (1 + newK)) + _BASE_BONUS;
+    final newK = quest.k + kIncrement;
+    final newTarget = (currentIdlePerSec * secondsIn48Hours * (1 + newK)) + baseBonus;
 
     final newQuest = quest.copyWith(
       k: newK,
@@ -75,7 +75,7 @@ class PetTicketQuestService {
     }
 
     const initialK = 0.0;
-    final newTarget = (currentIdlePerSec * _SECONDS_IN_48_HOURS * (1 + initialK)) + _BASE_BONUS;
+    final newTarget = (currentIdlePerSec * secondsIn48Hours * (1 + initialK)) + baseBonus;
 
     final newQuest = quest.copyWith(
       k: initialK,

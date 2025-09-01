@@ -118,11 +118,13 @@ class RewardedAdService {
   /// [onAdWatched] 廣告觀看完成後的回調，執行實際的獎勵邏輯
   /// [dialogTitle] 成功通知的標題
   /// [rewardContent] 成功通知中顯示獎勵內容的 Widget
+  /// [showSuccessDialog] 是否在完成後顯示成功通知（預設 true）
   Future<void> showAd({
     required BuildContext context,
     required Future<void> Function() onAdWatched,
     required String dialogTitle,
     required Widget rewardContent,
+    bool showSuccessDialog = true,
   }) async {
     // 1. 模擬觀看廣告
     await Future.delayed(const Duration(seconds: 3));
@@ -130,8 +132,8 @@ class RewardedAdService {
     // 2. 執行實際的獎勵邏輯 (例如：發放獎勵、存檔)
     await onAdWatched();
 
-    // 3. 顯示成功通知
-    if (context.mounted) {
+    // 3. 顯示成功通知（可關閉）
+    if (showSuccessDialog && context.mounted) {
       _showSuccessDialog(context, dialogTitle, rewardContent);
     }
   }

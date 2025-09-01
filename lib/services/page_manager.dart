@@ -8,6 +8,7 @@ enum PageType {
   titles,
   quest,
   settings,
+  checkin,
   musicGame,
   noAds,
   powerSaver,
@@ -18,20 +19,36 @@ class PageManager extends ChangeNotifier {
   factory PageManager() => _instance;
   PageManager._internal();
 
-  PageType _currentPage = PageType.home;
-  PageType? _previousPage;
+  final List<PageType> _pageStack = [PageType.home];
   
-  PageType get currentPage => _currentPage;
-  PageType? get previousPage => _previousPage;
-  bool get isHomePage => _currentPage == PageType.home;
+  PageType get currentPage => _pageStack.last;
+  PageType? get previousPage => _pageStack.length > 1 ? _pageStack[_pageStack.length - 2] : null;
+  bool get isHomePage => currentPage == PageType.home;
 
   /// 切換到指定頁面
-  void navigateToPage(PageType page) {
-    if (_currentPage == page) return;
+  void navigateToPage(PageType page, {bool isModal = false}) {
+    if (currentPage == page) return;
     
-    _previousPage = _currentPage;
-    _currentPage = page;
+    if (isModal) {
+      // For modal pages, push to stack without removing previous
+      _pageStack.add(page);
+    } else {
+      // For regular navigation, replace the top of stack
+      if (_pageStack.isNotEmpty) {
+        _pageStack.removeLast();
+      }
+      _pageStack.add(page);
+    }
+    
     notifyListeners();
+  }
+  
+  /// 返回上一頁
+  void navigateBack() {
+    if (_pageStack.length > 1) {
+      _pageStack.removeLast();
+      notifyListeners();
+    }
   }
 
   /// 回到主頁
@@ -56,6 +73,8 @@ class PageManager extends ChangeNotifier {
         return 'quest';
       case PageType.settings:
         return 'settings';
+      case PageType.checkin:
+        return 'checkin';
       case PageType.musicGame:
         return 'musicGame';
       case PageType.noAds:
@@ -81,6 +100,9 @@ class PageManager extends ChangeNotifier {
       case PageType.quest:
         return 'assets/images/icon/Quest.png';
       case PageType.settings:
+        return 'assets/images/icon/Setting.png';
+      case PageType.checkin:
+        // 重用設定圖示，避免缺少資產導致錯誤
         return 'assets/images/icon/Setting.png';
       case PageType.musicGame:
         return 'assets/images/icon/MusicGame.png';

@@ -407,9 +407,9 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                             rewardContent: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.35),
+                                color: Colors.black.withValues(alpha: 0.35),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
