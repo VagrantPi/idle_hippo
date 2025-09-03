@@ -22,9 +22,11 @@ class PetService {
 
   /// 初始化寵物系統
   Future<void> initialize(PetState? savedState) async {
-    // 若有載入存檔則直接使用；否則建立預設 5 種稀有度的寵物清單
+    // 若有載入存檔則直接使用；否則重置為空狀態，避免跨測試汙染
     if (savedState != null) {
       _currentState = savedState;
+    } else {
+      _currentState = const PetState();
     }
     _emitState();
   }
@@ -178,10 +180,9 @@ class PetService {
       final GameState updated = state.copyWith(petState: _currentState);
       await saver.save(updated);
     } catch (e) {
-      // 最小可觀測性：輸出錯誤資訊
-      // ignore: avoid_print
-      print('[PetService] _saveState failed: $e');
-      // 測試環境下不因持久化錯誤而中斷流程
+      // 測試環境下可能缺少平台通道（如 FlutterSecureStorage），
+      // 為避免中斷單元測試，忽略持久化錯誤但仍保留記憶體狀態。
+      // 可於日後導入可觀測性（logger/metrics）追蹤此情況。
     }
   }
 

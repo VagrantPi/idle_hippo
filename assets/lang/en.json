@@ -307,5 +307,16 @@
       "sat": "Sat",
       "sun": "Sun"
     }
+  },
+  "ktv": {
+    "downloading": "Downloading...",
+    "cancel": "Cancel",
+    "back": "Back",
+    "retry": "Retry",
+    "error": "Error",
+    "easy": "Easy",
+    "hard": "Hard",
+    "play": "Play",
+    "choose_difficulty": "Choose Difficulty"
   }
 }

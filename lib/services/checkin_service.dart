@@ -152,10 +152,6 @@ class CheckinService {
     // 更新遊戲狀態
     final newGameState = currentState.copyWith(checkin: newCheckinState);
     await _gameStateService.updateGameState(newGameState);
-    
-    if (kDebugMode) {
-      debugPrint('CheckinService: Day changed to $localToday, new task: ${newTask.type} ${newTask.target}${isNewWeek ? ', new week started' : ''}');
-    }
   }
 
   /// 更新任務進度（點擊或收集）
@@ -293,10 +289,6 @@ class CheckinService {
       newGameState = newGameState.copyWith(
         memePoints: newGameState.memePoints + halfDayReward,
       );
-      
-      if (kDebugMode) {
-        debugPrint('CheckinService: Weekly bonus triggered! Total: $newTotal, Reward: $halfDayReward');
-      }
 
       // 觸發週獎勵提示回呼（由 UI 顯示）
       try {
@@ -307,18 +299,11 @@ class CheckinService {
     }
     
     await _gameStateService.updateGameState(newGameState);
-    
-    if (kDebugMode) {
-      debugPrint('CheckinService: Checkin completed. Status: $newStatus, Streak: $newCurrent, Total: $newTotal');
-    }
   }
 
   /// 計算半日放置獎勵
   Future<double> _calculateHalfDayIdleReward() async {
     double currentIdlePerSec = _idleIncomeService.currentIdlePerSec;
-    if (kDebugMode) {
-      debugPrint('CheckinService: Current idle per sec: $currentIdlePerSec');
-    }
     if (currentIdlePerSec == 0) {
       currentIdlePerSec = 0.3;
     }

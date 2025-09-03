@@ -304,5 +304,16 @@
       "sat": "土",
       "sun": "日"
     }
+  },
+  "ktv": {
+    "downloading": "ダウンロード中...",
+    "cancel": "キャンセル",
+    "back": "戻る",
+    "retry": "再試行",
+    "error": "エラー",
+    "easy": "イージー",
+    "hard": "ハード",
+    "play": "再生",
+    "choose_difficulty": "難易度を選択"
   }
 }

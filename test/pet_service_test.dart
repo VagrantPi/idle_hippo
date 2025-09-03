@@ -73,7 +73,7 @@ void main() {
     });
 
     test('應該正確裝備寵物', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final pets = petService.currentState.pets;
       final firstPet = pets.first;
@@ -85,7 +85,7 @@ void main() {
     });
 
     test('應該正確卸下寵物', () async {
-      await petService.initialize(null);
+      await petService.initialize(PetState(pets: savedPets));
       
       final pets = petService.currentState.pets;
       final firstPet = pets.first;

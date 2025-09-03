@@ -17,6 +17,7 @@ import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
 import 'package:idle_hippo/services/rewarded_ad_service.dart';
 import 'package:idle_hippo/services/checkin_service.dart';
+import 'package:idle_hippo/services/audio_download_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -967,7 +968,11 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       _lastTapDisplayValue = 0.0;
     });
 
-    // 重置後更新 IdleIncomeService 的 GameState 參考，確保加成立即生效為 0
+    // 清除下載的音源快取
+  final audioDownloadService = AudioDownloadService();
+  await audioDownloadService.clearAllCache();
+  
+  // 重置後更新 IdleIncomeService 的 GameState 參考，確保加成立即生效為 0
     _idleIncome.updateGameState(_gameState);
 
     // 重置每日任務
