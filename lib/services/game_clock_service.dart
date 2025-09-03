@@ -93,7 +93,7 @@ class GameClockService with WidgetsBindingObserver {
   /// 取消訂閱
   void unsubscribe(String id) {
     if (_subscribers.remove(id) != null) {
-      print('GameClock: Unsubscribed $id (total: ${_subscribers.length})');
+      debugPrint('GameClock: Unsubscribed $id (total: ${_subscribers.length})');
     }
   }
 

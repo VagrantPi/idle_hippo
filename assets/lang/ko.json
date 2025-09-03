@@ -304,5 +304,16 @@
       "sat": "토",
       "sun": "일"
     }
+  },
+  "ktv": {
+    "downloading": "다운로드 중...",
+    "cancel": "취소",
+    "back": "뒤로",
+    "retry": "다시 시도",
+    "error": "오류",
+    "easy": "이지",
+    "hard": "하드",
+    "play": "재생",
+    "choose_difficulty": "난이도 선택"
   }
 }

@@ -300,5 +300,16 @@
       "sat": "六",
       "sun": "日"
     }
+  },
+  "ktv": {
+    "downloading": "下載中...",
+    "cancel": "取消",
+    "back": "返回",
+    "retry": "重試",
+    "error": "錯誤",
+    "easy": "簡單",
+    "hard": "困難",
+    "play": "播放",
+    "choose_difficulty": "選擇難易度"
   }
 }
