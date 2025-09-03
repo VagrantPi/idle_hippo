@@ -11,7 +11,7 @@ void main() {
 
   // ---- Mock flutter_secure_storage ----
   const MethodChannel secureStorageChannel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
-  final Map<String, String> _inMemorySecure = <String, String>{};
+  final Map<String, String> inMemorySecure = <String, String>{};
 
   setUpAll(() async {
     // 設置 channel 的 mock handler，用於單元測試環境
@@ -20,24 +20,24 @@ void main() {
       final args = (call.arguments is Map) ? Map<String, dynamic>.from(call.arguments as Map) : const <String, dynamic>{};
       switch (call.method) {
         case 'read':
-          return _inMemorySecure[args['key'] as String?];
+          return inMemorySecure[args['key'] as String?];
         case 'write':
           final key = args['key'] as String?;
           final value = args['value'] as String?;
-          if (key != null) _inMemorySecure[key] = value ?? '';
+          if (key != null) inMemorySecure[key] = value ?? '';
           return true;
         case 'delete':
           final key = args['key'] as String?;
-          if (key != null) _inMemorySecure.remove(key);
+          if (key != null) inMemorySecure.remove(key);
           return true;
         case 'readAll':
-          return Map<String, String>.from(_inMemorySecure);
+          return Map<String, String>.from(inMemorySecure);
         case 'deleteAll':
-          _inMemorySecure.clear();
+          inMemorySecure.clear();
           return true;
         case 'containsKey':
           final key = args['key'] as String?;
-          return key != null && _inMemorySecure.containsKey(key);
+          return key != null && inMemorySecure.containsKey(key);
         default:
           return null;
       }

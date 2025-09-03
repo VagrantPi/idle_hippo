@@ -12,7 +12,8 @@
     "quest": "任務",
     "settings": "設定",
     "musicGame": "音樂遊戲",
-    "noAds": "無廣告"
+    "noAds": "無廣告",
+    "checkin": "每日打卡"
   },
   "ui": {
     "taskBar": "任務進度",
@@ -255,5 +256,60 @@
     "meme_king": "迷因之王",
     "meme_king_desc": "收集所有其他稱號",
     "all_obtained": "全部稱號已取得！"
+  },
+  "checkin": {
+    "title": "每日打卡",
+    "weekly": "本週",
+    "task": {
+      "tap": "點擊角色 {n} 次",
+      "collect": "今日累積 {m} 迷因點數"
+    },
+    "btn": {
+      "skip_ad": "看廣告跳過",
+      "complete": "完成簽到"
+    },
+    "status": {
+      "done": "已簽到",
+      "pending": "未完成",
+      "skipped": "已跳過"
+    },
+    "reward": {
+      "week": "週獎勵已領取"
+    },
+    "weekly_bonus": {
+      "title": "週獎勵",
+      "message": "恭喜！你累計簽到 {total} 天，獲得週獎勵。"
+    },
+    "toast": {
+      "bonus_halfday": "獲得半日放置獎勵！"
+    },
+    "hint": {
+      "open": "完成今日任務即可簽到"
+    },
+    "streak": {
+      "current": "連續 {n} 天",
+      "best": "最佳記錄：{n} 天",
+      "total": "累計簽到：{n} 天"
+    },
+    "calendar": {
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六",
+      "sun": "日"
+    }
+  },
+  "ktv": {
+    "downloading": "下載中...",
+    "cancel": "取消",
+    "back": "返回",
+    "retry": "重試",
+    "error": "錯誤",
+    "easy": "簡單",
+    "hard": "困難",
+    "play": "播放",
+    "choose_difficulty": "選擇難易度"
   }
 }

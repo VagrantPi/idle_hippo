@@ -178,10 +178,7 @@ class PetService {
       final GameState updated = state.copyWith(petState: _currentState);
       await saver.save(updated);
     } catch (e) {
-      // 最小可觀測性：輸出錯誤資訊
-      // ignore: avoid_print
-      print('[PetService] _saveState failed: $e');
-      // 測試環境下不因持久化錯誤而中斷流程
+      rethrow;
     }
   }
 

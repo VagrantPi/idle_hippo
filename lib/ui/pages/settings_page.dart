@@ -146,6 +146,43 @@ class _SettingsPageState extends State<SettingsPage> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      // 導向「每日打卡」頁面
+                      GestureDetector(
+                        onTap: () {
+                          final pm = PageManager();
+                          pm.navigateToPage(PageType.checkin, isModal: true);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blueAccent, width: 2),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_month, color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _localization.getPageName('checkin'),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],

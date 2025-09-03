@@ -622,6 +622,368 @@ class MainQuestState {
 }
 
 /// 稱號狀態（持久化）
+/// 每日打卡任務
+class CheckinTask {
+  final String type; // "tap" | "collect"
+  final int target; // tap: n次, collect: m點數
+  final int progress; // 當前進度
+
+  const CheckinTask({
+    required this.type,
+    required this.target,
+    this.progress = 0,
+  });
+
+  factory CheckinTask.fromMap(Map<String, dynamic> map) {
+    return CheckinTask(
+      type: (map['type'] ?? 'tap') as String,
+      target: (map['target'] ?? 0) as int,
+      progress: (map['progress'] ?? 0) as int,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'type': type,
+        'target': target,
+        'progress': progress,
+      };
+
+  CheckinTask copyWith({
+    String? type,
+    int? target,
+    int? progress,
+  }) {
+    return CheckinTask(
+      type: type ?? this.type,
+      target: target ?? this.target,
+      progress: progress ?? this.progress,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CheckinTask &&
+        other.type == type &&
+        other.target == target &&
+        other.progress == progress;
+  }
+
+  @override
+  int get hashCode => type.hashCode ^ target.hashCode ^ progress.hashCode;
+}
+
+/// 打卡今日狀態
+class CheckinToday {
+  final String date; // YYYY-MM-DD in Asia/Taipei
+  final CheckinTask task;
+  final String status; // "pending" | "done" | "skipped"
+  final bool skipViaAdUsed; // 今日是否已用廣告跳過
+  final double idlePerSecSnapshot; // 生成今日任務時拍的 idlePerSec 快照
+
+  const CheckinToday({
+    required this.date,
+    required this.task,
+    this.status = 'pending',
+    this.skipViaAdUsed = false,
+    this.idlePerSecSnapshot = 0.0,
+  });
+
+  factory CheckinToday.fromMap(Map<String, dynamic> map) {
+    return CheckinToday(
+      date: (map['date'] ?? '') as String,
+      task: CheckinTask.fromMap((map['task'] ?? {}) as Map<String, dynamic>),
+      status: (map['status'] ?? 'pending') as String,
+      skipViaAdUsed: (map['skipViaAdUsed'] ?? false) as bool,
+      idlePerSecSnapshot: (map['idlePerSecSnapshot'] ?? 0.0).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'date': date,
+        'task': task.toMap(),
+        'status': status,
+        'skipViaAdUsed': skipViaAdUsed,
+        'idlePerSecSnapshot': idlePerSecSnapshot,
+      };
+
+  CheckinToday copyWith({
+    String? date,
+    CheckinTask? task,
+    String? status,
+    bool? skipViaAdUsed,
+    double? idlePerSecSnapshot,
+  }) {
+    return CheckinToday(
+      date: date ?? this.date,
+      task: task ?? this.task,
+      status: status ?? this.status,
+      skipViaAdUsed: skipViaAdUsed ?? this.skipViaAdUsed,
+      idlePerSecSnapshot: idlePerSecSnapshot ?? this.idlePerSecSnapshot,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CheckinToday &&
+        other.date == date &&
+        other.task == task &&
+        other.status == status &&
+        other.skipViaAdUsed == skipViaAdUsed &&
+        other.idlePerSecSnapshot == idlePerSecSnapshot;
+  }
+
+  @override
+  int get hashCode =>
+      date.hashCode ^
+      task.hashCode ^
+      status.hashCode ^
+      skipViaAdUsed.hashCode ^
+      idlePerSecSnapshot.hashCode;
+}
+
+/// 打卡連續統計
+class CheckinStreak {
+  final int current; // 連續簽到天數
+  final int best; // 歷史最長連續
+  final int total; // 累計簽到天數
+  final String lastDate; // 上次簽到日期（local, YYYY-MM-DD）
+
+  const CheckinStreak({
+    this.current = 0,
+    this.best = 0,
+    this.total = 0,
+    this.lastDate = '',
+  });
+
+  factory CheckinStreak.fromMap(Map<String, dynamic> map) {
+    return CheckinStreak(
+      current: (map['current'] ?? 0) as int,
+      best: (map['best'] ?? 0) as int,
+      total: (map['total'] ?? 0) as int,
+      lastDate: (map['lastDate'] ?? '') as String,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'current': current,
+        'best': best,
+        'total': total,
+        'lastDate': lastDate,
+      };
+
+  CheckinStreak copyWith({
+    int? current,
+    int? best,
+    int? total,
+    String? lastDate,
+  }) {
+    return CheckinStreak(
+      current: current ?? this.current,
+      best: best ?? this.best,
+      total: total ?? this.total,
+      lastDate: lastDate ?? this.lastDate,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CheckinStreak &&
+        other.current == current &&
+        other.best == best &&
+        other.total == total &&
+        other.lastDate == lastDate;
+  }
+
+  @override
+  int get hashCode =>
+      current.hashCode ^ best.hashCode ^ total.hashCode ^ lastDate.hashCode;
+
+  // 向後相容：別名，對應舊測試使用的 longest
+  int get longest => best;
+}
+
+/// 打卡週狀態
+class CheckinWeek {
+  final String weekStart; // 本週起始日（local, YYYY-MM-DD）
+  final int mask; // 7-bit 完成遮罩
+  final bool weeklyBonusClaimed; // 週獎勵是否已領取
+
+  const CheckinWeek({
+    this.weekStart = '',
+    this.mask = 0,
+    this.weeklyBonusClaimed = false,
+  });
+
+  factory CheckinWeek.fromMap(Map<String, dynamic> map) {
+    return CheckinWeek(
+      weekStart: (map['weekStart'] ?? '') as String,
+      mask: (map['mask'] ?? 0) as int,
+      weeklyBonusClaimed: (map['weeklyBonusClaimed'] ?? false) as bool,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'weekStart': weekStart,
+        'mask': mask,
+        'weeklyBonusClaimed': weeklyBonusClaimed,
+      };
+
+  CheckinWeek copyWith({
+    String? weekStart,
+    int? mask,
+    bool? weeklyBonusClaimed,
+  }) {
+    return CheckinWeek(
+      weekStart: weekStart ?? this.weekStart,
+      mask: mask ?? this.mask,
+      weeklyBonusClaimed: weeklyBonusClaimed ?? this.weeklyBonusClaimed,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CheckinWeek &&
+        other.weekStart == weekStart &&
+        other.mask == mask &&
+        other.weeklyBonusClaimed == weeklyBonusClaimed;
+  }
+
+  @override
+  int get hashCode =>
+      weekStart.hashCode ^ mask.hashCode ^ weeklyBonusClaimed.hashCode;
+
+  // 向後相容：別名，對應舊測試使用的 completedMask
+  int get completedMask => mask;
+}
+
+/// 打卡配置
+class CheckinConfig {
+  final int weekStartDow; // 週起始：1=周一
+  final List<int> tapRange; // 點擊任務目標範圍 [min, max]
+
+  const CheckinConfig({
+    this.weekStartDow = 1,
+    this.tapRange = const [20, 50],
+  });
+
+  factory CheckinConfig.fromMap(Map<String, dynamic> map) {
+    return CheckinConfig(
+      weekStartDow: (map['weekStartDow'] ?? 1) as int,
+      tapRange: map.containsKey('tapRange') && map['tapRange'] is List
+          ? List<int>.from(map['tapRange'] as List)
+          : const [20, 50],
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'weekStartDow': weekStartDow,
+        'tapRange': tapRange,
+      };
+
+  CheckinConfig copyWith({
+    int? weekStartDow,
+    List<int>? tapRange,
+  }) {
+    return CheckinConfig(
+      weekStartDow: weekStartDow ?? this.weekStartDow,
+      tapRange: tapRange ?? List<int>.from(this.tapRange),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CheckinConfig &&
+        other.weekStartDow == weekStartDow &&
+        _listIntEquals(other.tapRange, tapRange);
+  }
+
+  @override
+  int get hashCode => weekStartDow.hashCode ^ tapRange.hashCode;
+
+  static bool _listIntEquals(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+}
+
+/// 每日打卡系統狀態
+class CheckinState {
+  final String tz; // 時區，固定 "Asia/Taipei"
+  final CheckinConfig config;
+  final CheckinStreak streak;
+  final CheckinWeek week;
+  final CheckinToday today;
+
+  const CheckinState({
+    this.tz = 'Asia/Taipei',
+    this.config = const CheckinConfig(),
+    this.streak = const CheckinStreak(),
+    this.week = const CheckinWeek(),
+    required this.today,
+  });
+
+  factory CheckinState.fromMap(Map<String, dynamic> map) {
+    return CheckinState(
+      tz: (map['tz'] ?? 'Asia/Taipei') as String,
+      config: CheckinConfig.fromMap((map['config'] ?? {}) as Map<String, dynamic>),
+      streak: CheckinStreak.fromMap((map['streak'] ?? {}) as Map<String, dynamic>),
+      week: CheckinWeek.fromMap((map['week'] ?? {}) as Map<String, dynamic>),
+      today: CheckinToday.fromMap((map['today'] ?? {}) as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'tz': tz,
+        'config': config.toMap(),
+        'streak': streak.toMap(),
+        'week': week.toMap(),
+        'today': today.toMap(),
+      };
+
+  CheckinState copyWith({
+    String? tz,
+    CheckinConfig? config,
+    CheckinStreak? streak,
+    CheckinWeek? week,
+    CheckinToday? today,
+  }) {
+    return CheckinState(
+      tz: tz ?? this.tz,
+      config: config ?? this.config,
+      streak: streak ?? this.streak,
+      week: week ?? this.week,
+      today: today ?? this.today,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CheckinState &&
+        other.tz == tz &&
+        other.config == config &&
+        other.streak == streak &&
+        other.week == week &&
+        other.today == today;
+  }
+
+  @override
+  int get hashCode =>
+      tz.hashCode ^
+      config.hashCode ^
+      streak.hashCode ^
+      week.hashCode ^
+      today.hashCode;
+}
+
 class TitlesState {
   final Map<String, String> states; // titleId -> 'locked' | 'claimable' | 'claimed'
   final Map<String, int> claimedAt; // titleId -> epochMs
@@ -724,6 +1086,7 @@ class GameState {
   final GachaState? gacha;
   final TitlesState? titles;
   final PendingGachaBatch? pendingGachaBatch;
+  final CheckinState? checkin;
 
   const GameState({
     required this.saveVersion,
@@ -741,6 +1104,7 @@ class GameState {
     this.gacha,
     this.titles,
     this.pendingGachaBatch,
+    this.checkin,
   });
 
   /// 建立初始狀態
@@ -814,6 +1178,9 @@ class GameState {
       pendingGachaBatch: map.containsKey('pendingGachaBatch') && map['pendingGachaBatch'] is Map<String, dynamic>
           ? PendingGachaBatch.fromMap(map['pendingGachaBatch'] as Map<String, dynamic>)
           : null,
+      checkin: map.containsKey('checkin') && map['checkin'] is Map<String, dynamic>
+          ? CheckinState.fromMap(map['checkin'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -840,6 +1207,7 @@ class GameState {
       if (gacha != null) 'gacha': gacha!.toMap(),
       if (titles != null) 'titles': titles!.toMap(),
       if (pendingGachaBatch != null) 'pendingGachaBatch': pendingGachaBatch!.toMap(),
+      if (checkin != null) 'checkin': checkin!.toMap(),
     };
   }
 
@@ -893,6 +1261,7 @@ class GameState {
     TitlesState? titles,
     PendingGachaBatch? pendingGachaBatch,
     bool? clearPendingGachaBatch,
+    CheckinState? checkin,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -912,6 +1281,7 @@ class GameState {
       pendingGachaBatch: (clearPendingGachaBatch == true)
           ? null
           : (pendingGachaBatch ?? this.pendingGachaBatch),
+      checkin: checkin ?? this.checkin,
     );
   }
 
@@ -948,7 +1318,8 @@ class GameState {
         _listGachaHistoryEquals(other.gachaHistory, gachaHistory) &&
         other.gacha == gacha &&
         other.titles == titles &&
-        _pendingBatchEquals(other.pendingGachaBatch, pendingGachaBatch);
+        _pendingBatchEquals(other.pendingGachaBatch, pendingGachaBatch) &&
+        other.checkin == checkin;
   }
 
   @override
@@ -967,7 +1338,8 @@ class GameState {
         gachaHistory.hashCode ^
         (gacha?.hashCode ?? 0) ^
         (titles?.hashCode ?? 0) ^
-        (pendingGachaBatch?.hashCode ?? 0);
+        (pendingGachaBatch?.hashCode ?? 0) ^
+        (checkin?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

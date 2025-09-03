@@ -5,9 +5,9 @@ import '../services/idle_income_service.dart';
 import '../services/pet_service.dart';
 import '../services/gacha_service.dart';
 import '../models/game_state.dart';
-import '../models/pet.dart';
 import '../services/tap_service.dart';
 import '../services/daily_mission_service.dart';
+import '../services/checkin_service.dart';
 
 class DebugPanel extends StatefulWidget {
   final GameState? gameState;
@@ -41,6 +41,7 @@ class _DebugPanelState extends State<DebugPanel> {
   final IdleIncomeService _idleIncome = IdleIncomeService();
   final PetService _petService = PetService();
   final GachaService _gachaService = GachaService();
+  final CheckinService _checkinService = CheckinService();
   bool _isVisible = true;
 
   @override
@@ -324,6 +325,23 @@ class _DebugPanelState extends State<DebugPanel> {
 
         const SizedBox(height: 4),
 
+        // Check-in: +1 past day (debug)
+        GestureDetector(
+          onTap: _simulateCheckinPastDay,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: Colors.teal.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Check-in +1 day (past)',
+              style: TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ),
+
         // Offline: +60s
         if (widget.onOfflineSimulate60s != null)
           GestureDetector(
@@ -491,68 +509,6 @@ class _DebugPanelState extends State<DebugPanel> {
     );
   }
 
-  Widget _buildPetActions() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _addPetUpgradePoints(100),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('+100 Pet Points'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _addPetUpgradePoints(1000),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('+1000 Pet Points'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _upgradeAllPets,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Upgrade All Pets'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _addPetUpgradePoints(int points) {
-    _petService.addUpgradePointsToAll(points);
-  }
-
-  void _upgradeAllPets() {
-    final petState = widget.gameState?.petState;
-    if (petState == null) return;
-
-    for (final pet in petState.pets) {
-      while (pet.upgradePoints >= pet.nextLevelRequirement) {
-        _petService.upgradePet(pet);
-      }
-    }
-  }
-
   void _resetIdleStats() {
     _idleIncome.resetStats();
     setState(() {});
@@ -573,38 +529,21 @@ class _DebugPanelState extends State<DebugPanel> {
     setState(() {});
   }
 
-  void _testGachaProbabilities() {
-    final results = _gachaService.simulateGacha1000Times();
-    
-    // 顯示結果對話框
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('抽卡機率測試結果 (1000次)'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('SSR: ${results[PetRarity.ssr]} (${(results[PetRarity.ssr]! / 10).toStringAsFixed(1)}%)'),
-            Text('SR: ${results[PetRarity.sr]} (${(results[PetRarity.sr]! / 10).toStringAsFixed(1)}%)'),
-            Text('S: ${results[PetRarity.s]} (${(results[PetRarity.s]! / 10).toStringAsFixed(1)}%)'),
-            Text('R: ${results[PetRarity.r]} (${(results[PetRarity.r]! / 10).toStringAsFixed(1)}%)'),
-            Text('RR: ${results[PetRarity.rr]} (${(results[PetRarity.rr]! / 10).toStringAsFixed(1)}%)'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('確定'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _clearGachaHistory() async {
     await _gachaService.initialize();
     await _gachaService.clearGachaHistory();
+    setState(() {});
+  }
+
+  Future<void> _simulateCheckinPastDay() async {
+    await _checkinService.debugAddOnePastDay();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Simulated +1 past check-in day'),
+        duration: Duration(seconds: 2),
+      ),
+    );
     setState(() {});
   }
 }
