@@ -24,24 +24,22 @@ Future<T?> showTopSlideDialog<T>(
       return SafeArea(
         child: Align(
           alignment: Alignment.center,
-          child: Material(
-            color: Colors.transparent,
-            child: child,
-          ),
+          child: Material(color: Colors.transparent, child: child),
         ),
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, widget) {
-      final curved = CurvedAnimation(parent: animation, curve: curve, reverseCurve: Curves.easeIn);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: curve,
+        reverseCurve: Curves.easeIn,
+      );
       return SlideTransition(
         position: Tween<Offset>(
           begin: const Offset(0, -1),
           end: Offset.zero,
         ).animate(curved),
-        child: FadeTransition(
-          opacity: curved,
-          child: widget,
-        ),
+        child: FadeTransition(opacity: curved, child: widget),
       );
     },
   );
@@ -74,10 +72,7 @@ class TopSlideDialogCard extends StatelessWidget {
         elevation: elevation,
         shape: RoundedRectangleBorder(borderRadius: borderRadius),
         color: backgroundColor,
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
+        child: Padding(padding: padding, child: child),
       ),
     );
   }

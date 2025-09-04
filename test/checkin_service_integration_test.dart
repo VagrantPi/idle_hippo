@@ -15,7 +15,7 @@ void main() {
       checkinService = CheckinService();
       gameStateService = GameStateService();
       configService = ConfigService();
-      
+
       // 初始化服務
       await configService.initialize();
       await gameStateService.initialize();
@@ -28,7 +28,7 @@ void main() {
 
     test('應該能夠檢查是否有待完成的打卡任務', () async {
       await checkinService.initialize();
-      
+
       // 測試紅點邏輯
       final hasPendingTask = checkinService.hasPendingTask();
       expect(hasPendingTask, isA<bool>());
@@ -36,7 +36,7 @@ void main() {
 
     test('應該能夠處理跨日檢測', () async {
       await checkinService.initialize();
-      
+
       // 模擬跨日情況
       final gameState = gameStateService.currentState;
       if (gameState.checkin != null) {
@@ -46,7 +46,7 @@ void main() {
 
     test('應該能夠完成打卡任務', () async {
       await checkinService.initialize();
-      
+
       final gameState = gameStateService.currentState;
       if (gameState.checkin?.today.status == 'pending') {
         final result = await checkinService.completeCheckin();
@@ -56,7 +56,7 @@ void main() {
 
     test('應該能夠通過廣告跳過任務', () async {
       await checkinService.initialize();
-      
+
       final gameState = gameStateService.currentState;
       if (gameState.checkin?.today.status == 'pending') {
         final result = await checkinService.skipWithAd();
@@ -66,7 +66,7 @@ void main() {
 
     test('應該正確計算連續簽到天數', () async {
       await checkinService.initialize();
-      
+
       final gameState = gameStateService.currentState;
       if (gameState.checkin != null) {
         expect(gameState.checkin!.streak.current, greaterThanOrEqualTo(0));
@@ -76,7 +76,7 @@ void main() {
 
     test('應該正確處理週獎勵邏輯', () async {
       await checkinService.initialize();
-      
+
       final gameState = gameStateService.currentState;
       if (gameState.checkin != null) {
         final weekMask = gameState.checkin!.week.completedMask;

@@ -30,13 +30,9 @@ class _MainQuestBarState extends State<MainQuestBar>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
   }
 
   @override
@@ -67,10 +63,7 @@ class _MainQuestBarState extends State<MainQuestBar>
   String _getTitle() {
     final localization = LocalizationService();
     // 使用 defaultValue 以避免缺少語系字串時出錯
-    return localization.getString(
-      'mainquest.bar.title',
-      defaultValue: '主線任務',
-    );
+    return localization.getString('mainquest.bar.title', defaultValue: '主線任務');
   }
 
   Color _getAccentColor() {
@@ -95,10 +88,7 @@ class _MainQuestBarState extends State<MainQuestBar>
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _getAccentColor(),
-                  width: 2,
-                ),
+                border: Border.all(color: _getAccentColor(), width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: _getAccentColor().withValues(alpha: 0.3),
@@ -153,7 +143,9 @@ class _MainQuestBarState extends State<MainQuestBar>
                   Text(
                     '${widget.progress}/${widget.target}',
                     style: TextStyle(
-                      color: isCompleted ? Colors.orange.shade300 : Colors.white70,
+                      color: isCompleted
+                          ? Colors.orange.shade300
+                          : Colors.white70,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),

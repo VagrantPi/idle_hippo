@@ -8,10 +8,10 @@ class LocalizationService {
 
   Map<String, dynamic> _localizedStrings = {};
   String _currentLanguage = 'en';
-  
+
   // 支援的語言
   static const List<String> supportedLanguages = ['en', 'zh', 'jp', 'ko'];
-  
+
   // 語言顯示名稱
   static const Map<String, String> languageNames = {
     'en': 'English',
@@ -31,7 +31,9 @@ class LocalizationService {
   /// 載入指定語言的字串資源
   Future<void> _loadLanguage(String languageCode) async {
     try {
-      final String jsonString = await rootBundle.loadString('assets/lang/$languageCode.json');
+      final String jsonString = await rootBundle.loadString(
+        'assets/lang/$languageCode.json',
+      );
       _localizedStrings = json.decode(jsonString);
       _currentLanguage = languageCode; // 確保更新當前語言
     } catch (e) {
@@ -47,15 +49,19 @@ class LocalizationService {
     if (!supportedLanguages.contains(languageCode)) {
       return;
     }
-    
+
     if (_currentLanguage == languageCode) return;
-    
+
     _currentLanguage = languageCode;
     await _loadLanguage(languageCode);
   }
 
   /// 取得本地化字串
-  String getString(String key, {Map<String, String>? replacements, String? defaultValue}) {
+  String getString(
+    String key, {
+    Map<String, String>? replacements,
+    String? defaultValue,
+  }) {
     final keys = key.split('.');
     dynamic current = _localizedStrings;
 

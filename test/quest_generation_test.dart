@@ -23,7 +23,10 @@ void main() {
       );
 
       // When
-      final newState = service.generateFirstQuest(gameState, currentIdlePerSec: idlePerSec);
+      final newState = service.generateFirstQuest(
+        gameState,
+        currentIdlePerSec: idlePerSec,
+      );
 
       // Then
       final quest = newState.petTicketQuest!;

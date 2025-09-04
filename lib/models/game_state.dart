@@ -29,12 +29,12 @@ class PendingGachaBatchItem {
   }
 
   Map<String, dynamic> toMap() => {
-        'petKey': petKey,
-        'name': name,
-        'rarity': rarity,
-        'imagePath': imagePath,
-        'timestamp': timestamp,
-      };
+    'petKey': petKey,
+    'name': name,
+    'rarity': rarity,
+    'imagePath': imagePath,
+    'timestamp': timestamp,
+  };
 }
 
 class PendingGachaBatch {
@@ -53,18 +53,18 @@ class PendingGachaBatch {
       batchId: map['batchId'] as String,
       createdAt: (map['createdAt'] as num).toInt(),
       results: (map['results'] is List)
-          ? List<Map<String, dynamic>>.from(map['results'] as List)
-              .map(PendingGachaBatchItem.fromMap)
-              .toList()
+          ? List<Map<String, dynamic>>.from(
+              map['results'] as List,
+            ).map(PendingGachaBatchItem.fromMap).toList()
           : const <PendingGachaBatchItem>[],
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'batchId': batchId,
-        'createdAt': createdAt,
-        'results': results.map((e) => e.toMap()).toList(),
-      };
+    'batchId': batchId,
+    'createdAt': createdAt,
+    'results': results.map((e) => e.toMap()).toList(),
+  };
 }
 
 /// 抽卡歷史記錄
@@ -110,24 +110,27 @@ class GachaHistoryRecord {
   }
 
   @override
-  int get hashCode => rarity.hashCode ^ name.hashCode ^ timestamp.hashCode ^ (petKey?.hashCode ?? 0);
+  int get hashCode =>
+      rarity.hashCode ^
+      name.hashCode ^
+      timestamp.hashCode ^
+      (petKey?.hashCode ?? 0);
 }
 
 class GachaState {
   final String lastDate; // YYYY-MM-DD in Asia/Taipei
   final int tenPackAdRemaining;
 
-  const GachaState({
-    required this.lastDate,
-    this.tenPackAdRemaining = 1,
-  });
+  const GachaState({required this.lastDate, this.tenPackAdRemaining = 1});
 
   factory GachaState.initial() {
     // 從設定檔讀取每日上限，未載入時回退為 1
-    final limit = (ConfigService().getValue(
-          'game.gacha.daily_ad_draw_limit',
-          defaultValue: 1,
-        ) as int);
+    final limit =
+        (ConfigService().getValue(
+              'game.gacha.daily_ad_draw_limit',
+              defaultValue: 1,
+            )
+            as int);
     return GachaState(lastDate: '', tenPackAdRemaining: limit);
   }
 
@@ -139,14 +142,11 @@ class GachaState {
   }
 
   Map<String, dynamic> toMap() => {
-        'lastDate': lastDate,
-        'tenPackAdRemaining': tenPackAdRemaining,
-      };
+    'lastDate': lastDate,
+    'tenPackAdRemaining': tenPackAdRemaining,
+  };
 
-  GachaState copyWith({
-    String? lastDate,
-    int? tenPackAdRemaining,
-  }) {
+  GachaState copyWith({String? lastDate, int? tenPackAdRemaining}) {
     return GachaState(
       lastDate: lastDate ?? this.lastDate,
       tenPackAdRemaining: tenPackAdRemaining ?? this.tenPackAdRemaining,
@@ -191,12 +191,12 @@ class PetTicketQuest {
   }
 
   Map<String, dynamic> toMap() => {
-        'k': k,
-        'target': target,
-        'progress': progress,
-        'idleSnapshot': idleSnapshot,
-        'available': available,
-      };
+    'k': k,
+    'target': target,
+    'progress': progress,
+    'idleSnapshot': idleSnapshot,
+    'available': available,
+  };
 
   PetTicketQuest copyWith({
     double? k,
@@ -234,7 +234,6 @@ class PetTicketQuest {
       available.hashCode;
 }
 
-
 class CompletedMissionRecord {
   final int index;
   final String type;
@@ -258,11 +257,11 @@ class CompletedMissionRecord {
   }
 
   Map<String, dynamic> toMap() => {
-        'index': index,
-        'type': type,
-        'progress': progress,
-        'target': target,
-      };
+    'index': index,
+    'type': type,
+    'progress': progress,
+    'target': target,
+  };
 
   @override
   bool operator ==(Object other) {
@@ -275,7 +274,8 @@ class CompletedMissionRecord {
   }
 
   @override
-  int get hashCode => index.hashCode ^ type.hashCode ^ progress.hashCode ^ target.hashCode;
+  int get hashCode =>
+      index.hashCode ^ type.hashCode ^ progress.hashCode ^ target.hashCode;
 }
 
 class DailyMissionState {
@@ -309,23 +309,23 @@ class DailyMissionState {
       idlePerSecSnapshot: (map['idlePerSecSnapshot'] ?? 0.0).toDouble(),
       todayCompleted: (map['todayCompleted'] ?? 0) as int,
       completed: map.containsKey('completed') && map['completed'] is List
-          ? List<Map<String, dynamic>>.from(map['completed'] as List)
-              .map(CompletedMissionRecord.fromMap)
-              .toList()
+          ? List<Map<String, dynamic>>.from(
+              map['completed'] as List,
+            ).map(CompletedMissionRecord.fromMap).toList()
           : const [],
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'date': date,
-        'index': index,
-        'type': type,
-        'progress': progress,
-        'target': target,
-        'idlePerSecSnapshot': idlePerSecSnapshot,
-        'todayCompleted': todayCompleted,
-        'completed': completed.map((e) => e.toMap()).toList(),
-      };
+    'date': date,
+    'index': index,
+    'type': type,
+    'progress': progress,
+    'target': target,
+    'idlePerSecSnapshot': idlePerSecSnapshot,
+    'todayCompleted': todayCompleted,
+    'completed': completed.map((e) => e.toMap()).toList(),
+  };
 
   DailyMissionState copyWith({
     String? date,
@@ -352,7 +352,7 @@ class DailyMissionState {
   @override
   String toString() {
     return 'DailyMissionState(date: $date, index: $index, type: $type, '
-           'progress: $progress, target: $target, todayCompleted: $todayCompleted)';
+        'progress: $progress, target: $target, todayCompleted: $todayCompleted)';
   }
 
   @override
@@ -381,7 +381,10 @@ class DailyMissionState {
         completed.hashCode;
   }
 
-  static bool _listCompletedEquals(List<CompletedMissionRecord> a, List<CompletedMissionRecord> b) {
+  static bool _listCompletedEquals(
+    List<CompletedMissionRecord> a,
+    List<CompletedMissionRecord> b,
+  ) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;
@@ -409,12 +412,16 @@ class DailyTapState {
     );
   }
   Map<String, dynamic> toMap() => {
-        'date': date,
-        'todayGained': todayGained,
-        'adDoubledToday': adDoubledToday,
-      };
+    'date': date,
+    'todayGained': todayGained,
+    'adDoubledToday': adDoubledToday,
+  };
 
-  DailyTapState copyWith({String? date, int? todayGained, bool? adDoubledToday}) {
+  DailyTapState copyWith({
+    String? date,
+    int? todayGained,
+    bool? adDoubledToday,
+  }) {
     return DailyTapState(
       date: date ?? this.date,
       todayGained: todayGained ?? this.todayGained,
@@ -460,15 +467,15 @@ class OfflineState {
   }
 
   Map<String, dynamic> toMap() => {
-        'lastExitUtcMs': lastExitUtcMs,
-        'idle_rate_snapshot': idleRateSnapshot,
-        'pendingReward': pendingReward,
-        'capHours': capHours,
-        'lastReward': lastReward,
-        'lastRewardSec': lastRewardSec,
-        'lastRewardAtMs': lastRewardAtMs,
-        'lastRewardDoubled': lastRewardDoubled,
-      };
+    'lastExitUtcMs': lastExitUtcMs,
+    'idle_rate_snapshot': idleRateSnapshot,
+    'pendingReward': pendingReward,
+    'capHours': capHours,
+    'lastReward': lastReward,
+    'lastRewardSec': lastRewardSec,
+    'lastRewardAtMs': lastRewardAtMs,
+    'lastRewardDoubled': lastRewardDoubled,
+  };
 
   bool validate() {
     if (lastExitUtcMs < 0) return false;
@@ -505,9 +512,9 @@ class OfflineState {
 
   @override
   String toString() {
-    return 'Offline(lastExitUtcMs: $lastExitUtcMs, snapshot: $idleRateSnapshot, ' 
-           'pending: $pendingReward, capHours: $capHours, lastReward: $lastReward, ' 
-           'lastRewardDoubled: $lastRewardDoubled)';
+    return 'Offline(lastExitUtcMs: $lastExitUtcMs, snapshot: $idleRateSnapshot, '
+        'pending: $pendingReward, capHours: $capHours, lastReward: $lastReward, '
+        'lastRewardDoubled: $lastRewardDoubled)';
   }
 
   @override
@@ -556,7 +563,8 @@ class MainQuestState {
       currentStage: (map['currentStage'] ?? 1) as int,
       tapCountProgress: (map['tapCountProgress'] ?? 0) as int,
       memePointsEarned: (map['memePointsEarned'] ?? 0.0).toDouble(),
-      unlockedRewards: map.containsKey('unlockedRewards') && map['unlockedRewards'] is List
+      unlockedRewards:
+          map.containsKey('unlockedRewards') && map['unlockedRewards'] is List
           ? List<String>.from(map['unlockedRewards'] as List)
           : const [],
       claimable: (map['claimable'] ?? false) as bool,
@@ -564,12 +572,12 @@ class MainQuestState {
   }
 
   Map<String, dynamic> toMap() => {
-        'currentStage': currentStage,
-        'tapCountProgress': tapCountProgress,
-        'memePointsEarned': memePointsEarned,
-        'unlockedRewards': unlockedRewards,
-        'claimable': claimable,
-      };
+    'currentStage': currentStage,
+    'tapCountProgress': tapCountProgress,
+    'memePointsEarned': memePointsEarned,
+    'unlockedRewards': unlockedRewards,
+    'claimable': claimable,
+  };
 
   MainQuestState copyWith({
     int? currentStage,
@@ -582,7 +590,8 @@ class MainQuestState {
       currentStage: currentStage ?? this.currentStage,
       tapCountProgress: tapCountProgress ?? this.tapCountProgress,
       memePointsEarned: memePointsEarned ?? this.memePointsEarned,
-      unlockedRewards: unlockedRewards ?? List<String>.from(this.unlockedRewards),
+      unlockedRewards:
+          unlockedRewards ?? List<String>.from(this.unlockedRewards),
       claimable: claimable ?? this.claimable,
     );
   }
@@ -617,7 +626,7 @@ class MainQuestState {
   @override
   String toString() {
     return 'MainQuestState(currentStage: $currentStage, tapCountProgress: $tapCountProgress, '
-           'memePointsEarned: $memePointsEarned, unlockedRewards: $unlockedRewards, claimable: $claimable)';
+        'memePointsEarned: $memePointsEarned, unlockedRewards: $unlockedRewards, claimable: $claimable)';
   }
 }
 
@@ -643,16 +652,12 @@ class CheckinTask {
   }
 
   Map<String, dynamic> toMap() => {
-        'type': type,
-        'target': target,
-        'progress': progress,
-      };
+    'type': type,
+    'target': target,
+    'progress': progress,
+  };
 
-  CheckinTask copyWith({
-    String? type,
-    int? target,
-    int? progress,
-  }) {
+  CheckinTask copyWith({String? type, int? target, int? progress}) {
     return CheckinTask(
       type: type ?? this.type,
       target: target ?? this.target,
@@ -700,12 +705,12 @@ class CheckinToday {
   }
 
   Map<String, dynamic> toMap() => {
-        'date': date,
-        'task': task.toMap(),
-        'status': status,
-        'skipViaAdUsed': skipViaAdUsed,
-        'idlePerSecSnapshot': idlePerSecSnapshot,
-      };
+    'date': date,
+    'task': task.toMap(),
+    'status': status,
+    'skipViaAdUsed': skipViaAdUsed,
+    'idlePerSecSnapshot': idlePerSecSnapshot,
+  };
 
   CheckinToday copyWith({
     String? date,
@@ -767,11 +772,11 @@ class CheckinStreak {
   }
 
   Map<String, dynamic> toMap() => {
-        'current': current,
-        'best': best,
-        'total': total,
-        'lastDate': lastDate,
-      };
+    'current': current,
+    'best': best,
+    'total': total,
+    'lastDate': lastDate,
+  };
 
   CheckinStreak copyWith({
     int? current,
@@ -826,10 +831,10 @@ class CheckinWeek {
   }
 
   Map<String, dynamic> toMap() => {
-        'weekStart': weekStart,
-        'mask': mask,
-        'weeklyBonusClaimed': weeklyBonusClaimed,
-      };
+    'weekStart': weekStart,
+    'mask': mask,
+    'weeklyBonusClaimed': weeklyBonusClaimed,
+  };
 
   CheckinWeek copyWith({
     String? weekStart,
@@ -865,10 +870,7 @@ class CheckinConfig {
   final int weekStartDow; // 週起始：1=周一
   final List<int> tapRange; // 點擊任務目標範圍 [min, max]
 
-  const CheckinConfig({
-    this.weekStartDow = 1,
-    this.tapRange = const [20, 50],
-  });
+  const CheckinConfig({this.weekStartDow = 1, this.tapRange = const [20, 50]});
 
   factory CheckinConfig.fromMap(Map<String, dynamic> map) {
     return CheckinConfig(
@@ -880,14 +882,11 @@ class CheckinConfig {
   }
 
   Map<String, dynamic> toMap() => {
-        'weekStartDow': weekStartDow,
-        'tapRange': tapRange,
-      };
+    'weekStartDow': weekStartDow,
+    'tapRange': tapRange,
+  };
 
-  CheckinConfig copyWith({
-    int? weekStartDow,
-    List<int>? tapRange,
-  }) {
+  CheckinConfig copyWith({int? weekStartDow, List<int>? tapRange}) {
     return CheckinConfig(
       weekStartDow: weekStartDow ?? this.weekStartDow,
       tapRange: tapRange ?? List<int>.from(this.tapRange),
@@ -933,20 +932,24 @@ class CheckinState {
   factory CheckinState.fromMap(Map<String, dynamic> map) {
     return CheckinState(
       tz: (map['tz'] ?? 'Asia/Taipei') as String,
-      config: CheckinConfig.fromMap((map['config'] ?? {}) as Map<String, dynamic>),
-      streak: CheckinStreak.fromMap((map['streak'] ?? {}) as Map<String, dynamic>),
+      config: CheckinConfig.fromMap(
+        (map['config'] ?? {}) as Map<String, dynamic>,
+      ),
+      streak: CheckinStreak.fromMap(
+        (map['streak'] ?? {}) as Map<String, dynamic>,
+      ),
       week: CheckinWeek.fromMap((map['week'] ?? {}) as Map<String, dynamic>),
       today: CheckinToday.fromMap((map['today'] ?? {}) as Map<String, dynamic>),
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'tz': tz,
-        'config': config.toMap(),
-        'streak': streak.toMap(),
-        'week': week.toMap(),
-        'today': today.toMap(),
-      };
+    'tz': tz,
+    'config': config.toMap(),
+    'streak': streak.toMap(),
+    'week': week.toMap(),
+    'today': today.toMap(),
+  };
 
   CheckinState copyWith({
     String? tz,
@@ -985,7 +988,8 @@ class CheckinState {
 }
 
 class TitlesState {
-  final Map<String, String> states; // titleId -> 'locked' | 'claimable' | 'claimed'
+  final Map<String, String>
+  states; // titleId -> 'locked' | 'claimable' | 'claimed'
   final Map<String, int> claimedAt; // titleId -> epochMs
   final bool hasClaimable; // 供紅點顯示（Navbar/頁籤）
 
@@ -1015,19 +1019,18 @@ class TitlesState {
     return TitlesState(
       states: parsedStates,
       claimedAt: parsedClaimedAt,
-      hasClaimable: (map['redDot'] is Map && (map['redDot']['hasClaimable'] is bool))
+      hasClaimable:
+          (map['redDot'] is Map && (map['redDot']['hasClaimable'] is bool))
           ? (map['redDot']['hasClaimable'] as bool)
           : false,
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'states': states,
-        'claimedAt': claimedAt,
-        'redDot': {
-          'hasClaimable': hasClaimable,
-        },
-      };
+    'states': states,
+    'claimedAt': claimedAt,
+    'redDot': {'hasClaimable': hasClaimable},
+  };
 
   TitlesState copyWith({
     Map<String, String>? states,
@@ -1051,7 +1054,8 @@ class TitlesState {
   }
 
   @override
-  int get hashCode => states.hashCode ^ claimedAt.hashCode ^ hasClaimable.hashCode;
+  int get hashCode =>
+      states.hashCode ^ claimedAt.hashCode ^ hasClaimable.hashCode;
 
   static bool _mapStringEquals(Map<String, String> a, Map<String, String> b) {
     if (a.length != b.length) return false;
@@ -1143,31 +1147,44 @@ class GameState {
       memePoints: (map['memePoints'] as num).toDouble(),
       equipments: Map<String, int>.from(map['equipments'] as Map),
       lastTs: map['lastTs'] as int,
-      dailyTap: map.containsKey('dailyTap') && map['dailyTap'] is Map<String, dynamic>
+      dailyTap:
+          map.containsKey('dailyTap') && map['dailyTap'] is Map<String, dynamic>
           ? DailyTapState.fromMap(map['dailyTap'] as Map<String, dynamic>)
           : null,
-      offline: map.containsKey('offline') && map['offline'] is Map<String, dynamic>
+      offline:
+          map.containsKey('offline') && map['offline'] is Map<String, dynamic>
           ? OfflineState.fromMap(map['offline'] as Map<String, dynamic>)
           : const OfflineState(),
-      dailyMission: map.containsKey('dailyMission') && map['dailyMission'] is Map<String, dynamic>
-          ? DailyMissionState.fromMap(map['dailyMission'] as Map<String, dynamic>)
+      dailyMission:
+          map.containsKey('dailyMission') &&
+              map['dailyMission'] is Map<String, dynamic>
+          ? DailyMissionState.fromMap(
+              map['dailyMission'] as Map<String, dynamic>,
+            )
           : null,
       // 保持與原始資料一致：若未提供 mainQuest，維持為 null
-      mainQuest: map.containsKey('mainQuest') && map['mainQuest'] is Map<String, dynamic>
+      mainQuest:
+          map.containsKey('mainQuest') &&
+              map['mainQuest'] is Map<String, dynamic>
           ? MainQuestState.fromMap(map['mainQuest'] as Map<String, dynamic>)
           : null,
-      petState: map.containsKey('petState') && map['petState'] is Map<String, dynamic>
+      petState:
+          map.containsKey('petState') && map['petState'] is Map<String, dynamic>
           ? PetState.fromMap(map['petState'] as Map<String, dynamic>)
           : null,
       petTicketQuest:
-          map.containsKey('petTicketQuest') && map['petTicketQuest'] is Map<String, dynamic>
-              ? PetTicketQuest.fromMap(map['petTicketQuest'] as Map<String, dynamic>)
-              : null,
+          map.containsKey('petTicketQuest') &&
+              map['petTicketQuest'] is Map<String, dynamic>
+          ? PetTicketQuest.fromMap(
+              map['petTicketQuest'] as Map<String, dynamic>,
+            )
+          : null,
       petTickets: (map['petTickets'] ?? 0) as int,
-      gachaHistory: map.containsKey('gachaHistory') && map['gachaHistory'] is List
-          ? List<Map<String, dynamic>>.from(map['gachaHistory'] as List)
-              .map(GachaHistoryRecord.fromMap)
-              .toList()
+      gachaHistory:
+          map.containsKey('gachaHistory') && map['gachaHistory'] is List
+          ? List<Map<String, dynamic>>.from(
+              map['gachaHistory'] as List,
+            ).map(GachaHistoryRecord.fromMap).toList()
           : const [],
       gacha: map.containsKey('gacha') && map['gacha'] is Map<String, dynamic>
           ? GachaState.fromMap(map['gacha'] as Map<String, dynamic>)
@@ -1175,10 +1192,15 @@ class GameState {
       titles: map.containsKey('titles') && map['titles'] is Map<String, dynamic>
           ? TitlesState.fromMap(map['titles'] as Map<String, dynamic>)
           : null,
-      pendingGachaBatch: map.containsKey('pendingGachaBatch') && map['pendingGachaBatch'] is Map<String, dynamic>
-          ? PendingGachaBatch.fromMap(map['pendingGachaBatch'] as Map<String, dynamic>)
+      pendingGachaBatch:
+          map.containsKey('pendingGachaBatch') &&
+              map['pendingGachaBatch'] is Map<String, dynamic>
+          ? PendingGachaBatch.fromMap(
+              map['pendingGachaBatch'] as Map<String, dynamic>,
+            )
           : null,
-      checkin: map.containsKey('checkin') && map['checkin'] is Map<String, dynamic>
+      checkin:
+          map.containsKey('checkin') && map['checkin'] is Map<String, dynamic>
           ? CheckinState.fromMap(map['checkin'] as Map<String, dynamic>)
           : null,
     );
@@ -1206,7 +1228,8 @@ class GameState {
       'gachaHistory': gachaHistory.map((record) => record.toMap()).toList(),
       if (gacha != null) 'gacha': gacha!.toMap(),
       if (titles != null) 'titles': titles!.toMap(),
-      if (pendingGachaBatch != null) 'pendingGachaBatch': pendingGachaBatch!.toMap(),
+      if (pendingGachaBatch != null)
+        'pendingGachaBatch': pendingGachaBatch!.toMap(),
       if (checkin != null) 'checkin': checkin!.toMap(),
     };
   }
@@ -1218,7 +1241,7 @@ class GameState {
       if (saveVersion < 0) return false;
       if (memePoints < 0.0) return false;
       if (lastTs <= 0) return false;
-      
+
       // 檢查 equipments 中的值都是非負數
       for (final level in equipments.values) {
         if (level < 0) return false;
@@ -1236,7 +1259,7 @@ class GameState {
           if (ts < 0) return false;
         }
       }
-      
+
       return true;
     } catch (e) {
       return false;
@@ -1275,7 +1298,8 @@ class GameState {
       petState: petState ?? this.petState,
       petTicketQuest: petTicketQuest ?? this.petTicketQuest,
       petTickets: petTickets ?? this.petTickets,
-      gachaHistory: gachaHistory ?? List<GachaHistoryRecord>.from(this.gachaHistory),
+      gachaHistory:
+          gachaHistory ?? List<GachaHistoryRecord>.from(this.gachaHistory),
       gacha: gacha ?? this.gacha,
       titles: titles ?? this.titles,
       pendingGachaBatch: (clearPendingGachaBatch == true)
@@ -1287,17 +1311,15 @@ class GameState {
 
   /// 更新時間戳
   GameState updateTimestamp() {
-    return copyWith(
-      lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
-    );
+    return copyWith(lastTs: DateTime.now().toUtc().millisecondsSinceEpoch);
   }
 
   @override
   String toString() {
     return 'GameState(saveVersion: $saveVersion, memePoints: $memePoints, '
-           'equipments: $equipments, lastTs: $lastTs, offline: $offline, '
-           'petTickets: $petTickets, pets: ${petState?.pets.length ?? 0}, '
-           'equipped: ${petState?.equippedPetId}, gachaHistory: ${gachaHistory.length}, gacha: ${gacha != null})';
+        'equipments: $equipments, lastTs: $lastTs, offline: $offline, '
+        'petTickets: $petTickets, pets: ${petState?.pets.length ?? 0}, '
+        'equipped: ${petState?.equippedPetId}, gachaHistory: ${gachaHistory.length}, gacha: ${gacha != null})';
   }
 
   @override
@@ -1353,7 +1375,9 @@ class GameState {
   bool _dailyTapEquals(DailyTapState? a, DailyTapState? b) {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
-    return a.date == b.date && a.todayGained == b.todayGained && a.adDoubledToday == b.adDoubledToday;
+    return a.date == b.date &&
+        a.todayGained == b.todayGained &&
+        a.adDoubledToday == b.adDoubledToday;
   }
 
   bool _dailyMissionEquals(DailyMissionState? a, DailyMissionState? b) {
@@ -1368,8 +1392,10 @@ class GameState {
     return a == b;
   }
 
-
-  bool _listGachaHistoryEquals(List<GachaHistoryRecord> a, List<GachaHistoryRecord> b) {
+  bool _listGachaHistoryEquals(
+    List<GachaHistoryRecord> a,
+    List<GachaHistoryRecord> b,
+  ) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;
@@ -1385,7 +1411,10 @@ class GameState {
     for (int i = 0; i < a.results.length; i++) {
       final x = a.results[i];
       final y = b.results[i];
-      if (x.petKey != y.petKey || x.rarity != y.rarity || x.timestamp != y.timestamp) return false;
+      if (x.petKey != y.petKey ||
+          x.rarity != y.rarity ||
+          x.timestamp != y.timestamp)
+        return false;
     }
     return true;
   }

@@ -1,14 +1,14 @@
- import 'dart:async';
- import 'package:flutter/material.dart';
- import 'package:flutter/services.dart' show rootBundle;
- import 'package:flame/game.dart';
- import 'package:just_audio/just_audio.dart';
- import 'package:idle_hippo/services/audio_download_service.dart';
- import 'package:idle_hippo/services/localization_service.dart';
- import 'package:idle_hippo/services/config_service.dart';
- import 'package:idle_hippo/models/ktv_models.dart';
- import 'package:idle_hippo/ui/components/ktv_lane_layout.dart';
- import 'package:idle_hippo/ui/game/ktv_game.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flame/game.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:idle_hippo/services/audio_download_service.dart';
+import 'package:idle_hippo/services/localization_service.dart';
+import 'package:idle_hippo/services/config_service.dart';
+import 'package:idle_hippo/models/ktv_models.dart';
+import 'package:idle_hippo/ui/components/ktv_lane_layout.dart';
+import 'package:idle_hippo/ui/game/ktv_game.dart';
 
 class KtvGamePlayPage extends StatefulWidget {
   final String songId;
@@ -34,19 +34,19 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   final _player = AudioPlayer();
   final _loc = LocalizationService();
   final _config = ConfigService();
-  
+
   bool _isCountingDown = true;
   int _countdownValue = 3;
   Timer? _countdownTimer;
   bool _isPlaying = false;
   bool _isPaused = false;
-  
+
   // KTV 遊戲
   LaneLayout? _laneLayout;
   KtvGame? _game;
   KtvSong? _song;
   KtvDifficulty? _difficulty; // 由 assets/audio/collect.json 載入
-  
+
   // 遊戲配置
   late double _approachTimeMs;
   late double _judgelineY;
@@ -54,7 +54,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   late double _lanePadding;
   late double _perspectiveDepth;
   late double _despawnGraceMs;
-  
+
   // 遊戲狀態
   int _score = 0;
   int _combo = 0;
@@ -67,23 +67,37 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     _loadBeatmapFromAssets();
     _startCountdown();
   }
-  
+
   void _loadGameConfig() {
-    _approachTimeMs = _config.getValue('game.ktv.approachTimeMs', defaultValue: 1500.0).toDouble();
-    _judgelineY = _config.getValue('game.ktv.judgelineY', defaultValue: 0.82).toDouble();
-    _spawnY = _config.getValue('game.ktv.spawnY', defaultValue: -0.10).toDouble();
-    _lanePadding = _config.getValue('game.ktv.lanePadding', defaultValue: 16.0).toDouble();
-    _perspectiveDepth = _config.getValue('game.ktv.perspectiveDepth', defaultValue: 0.22).toDouble();
-    _despawnGraceMs = _config.getValue('game.ktv.despawnGraceMs', defaultValue: 150.0).toDouble();
+    _approachTimeMs = _config
+        .getValue('game.ktv.approachTimeMs', defaultValue: 1500.0)
+        .toDouble();
+    _judgelineY = _config
+        .getValue('game.ktv.judgelineY', defaultValue: 0.82)
+        .toDouble();
+    _spawnY = _config
+        .getValue('game.ktv.spawnY', defaultValue: -0.10)
+        .toDouble();
+    _lanePadding = _config
+        .getValue('game.ktv.lanePadding', defaultValue: 16.0)
+        .toDouble();
+    _perspectiveDepth = _config
+        .getValue('game.ktv.perspectiveDepth', defaultValue: 0.22)
+        .toDouble();
+    _despawnGraceMs = _config
+        .getValue('game.ktv.despawnGraceMs', defaultValue: 150.0)
+        .toDouble();
   }
-  
+
   void _initializeGame() {
     // LaneLayout 需等 build 時拿到螢幕尺寸
   }
-  
+
   Future<void> _loadBeatmapFromAssets() async {
     try {
-      final jsonString = await rootBundle.loadString('assets/audio/collect.json');
+      final jsonString = await rootBundle.loadString(
+        'assets/audio/collect.json',
+      );
       final songs = KtvCollectionParser.parse(jsonString);
       final song = songs.firstWhere(
         (s) => s.id == widget.songId,
@@ -147,15 +161,15 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   Future<void> _startPlayback() async {
     try {
       await _player.setFilePath(widget.filePath);
-      
+
       // 先啟動 Flame 遊戲時序
       _game?.start();
-      
+
       // 然後開始播放音樂
       await _player.play();
-      
+
       setState(() => _isPlaying = true);
-      
+
       _player.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed) {
           if (mounted) {
@@ -165,13 +179,13 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Playback error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Playback error: $e')));
       }
     }
   }
-  
+
   void _togglePause() {
     if (_isPaused) {
       _player.play();
@@ -182,9 +196,9 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     }
     setState(() => _isPaused = !_isPaused);
   }
-  
+
   // 與 Flame 重構後無需保留的列表比較邏輯已移除
-  
+
   // 已改由 Flame 控制更新與渲染
 
   @override
@@ -205,17 +219,10 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
           duration: const Duration(milliseconds: 200),
           transitionBuilder: (Widget child, Animation<double> animation) {
             return ScaleTransition(
-              scale: Tween<double>(
-                begin: 0.5,
-                end: 1.0,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeInQuart,
-              )),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
+              scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeInQuart),
               ),
+              child: FadeTransition(opacity: animation, child: child),
             );
           },
           child: Text(
@@ -276,17 +283,16 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
             _game!.start();
           }
         }
-        
+
         return Stack(
           fit: StackFit.expand,
           children: [
             // 背景
             Container(color: Colors.black),
-            
+
             // Flame 遊戲畫面
-            if (_game != null)
-              GameWidget(game: _game!),
-            
+            if (_game != null) GameWidget(game: _game!),
+
             // UI 覆蓋層
             _buildGameUI(),
           ],
@@ -294,7 +300,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
       },
     );
   }
-  
+
   Widget _buildGameUI() {
     return Stack(
       children: [
@@ -313,7 +319,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
-                  
+
                   // 歌曲資訊
                   Expanded(
                     child: Column(
@@ -330,9 +336,12 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          widget.difficulty == 'hard' 
+                          widget.difficulty == 'hard'
                               ? _loc.getString('ktv.hard', defaultValue: 'Hard')
-                              : _loc.getString('ktv.easy', defaultValue: 'Easy'),
+                              : _loc.getString(
+                                  'ktv.easy',
+                                  defaultValue: 'Easy',
+                                ),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -341,7 +350,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                       ],
                     ),
                   ),
-                  
+
                   // 暫停按鈕
                   IconButton(
                     icon: Icon(
@@ -355,7 +364,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
             ),
           ),
         ),
-        
+
         // 分數顯示
         Positioned(
           top: 100,
@@ -366,7 +375,10 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
               children: [
                 // 分數
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(20),
@@ -380,13 +392,16 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // 連擊數（只在有連擊時顯示）
                 if (_combo > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(20),

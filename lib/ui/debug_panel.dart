@@ -18,7 +18,7 @@ class DebugPanel extends StatefulWidget {
   final Future<void> Function()? onOfflineClearPending;
   final VoidCallback? onForceCompleteMission;
   final VoidCallback? onSimulateDayReset;
-  
+
   const DebugPanel({
     super.key,
     this.gameState,
@@ -70,88 +70,119 @@ class _DebugPanelState extends State<DebugPanel> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Debug Panel',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Debug Panel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => setState(() => _isVisible = false),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => setState(() => _isVisible = false),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 16,
+                const SizedBox(height: 8),
+
+                // Config Section
+                if (_configService.isLoaded) ...[
+                  _buildSectionTitle('Config'),
+                  _buildConfigRow(
+                    'tap.base',
+                    _configService.getValue('game.tap.base'),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            
-            // Config Section
-            if (_configService.isLoaded) ...[
-              _buildSectionTitle('Config'),
-              _buildConfigRow('tap.base', _configService.getValue('game.tap.base')),
-              _buildConfigRow('tap.base_gain', _configService.getValue('game.tap.base_gain')),
-              _buildConfigRow('tap.daily_cap_base', _configService.getValue('game.tap.daily_cap_base')),
-              _buildConfigRow('idle.base_per_sec', _configService.getValue('game.idle.base_per_sec')),
-              const SizedBox(height: 8),
-            ],
-            
-            // Game State Section
-            if (widget.gameState != null) ...[
-              _buildSectionTitle('Game State'),
-              _buildConfigRow('saveVersion', widget.gameState!.saveVersion),
-              _buildConfigRow('memePoints', widget.gameState!.memePoints),
-              _buildConfigRow('equipments', widget.gameState!.equipments.length),
-              _buildConfigRow('lastTs', _formatTimestamp(widget.gameState!.lastTs)),
-              const SizedBox(height: 8),
-            ],
+                  _buildConfigRow(
+                    'tap.base_gain',
+                    _configService.getValue('game.tap.base_gain'),
+                  ),
+                  _buildConfigRow(
+                    'tap.daily_cap_base',
+                    _configService.getValue('game.tap.daily_cap_base'),
+                  ),
+                  _buildConfigRow(
+                    'idle.base_per_sec',
+                    _configService.getValue('game.idle.base_per_sec'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
-            // Offline Section
-            if (widget.gameState != null) ...[
-              _buildSectionTitle('Offline'),
-              _buildConfigRow('offline.lastExitUtcMs', widget.gameState!.offline.lastExitUtcMs),
-              _buildConfigRow('offline.idle_rate_snapshot', widget.gameState!.offline.idleRateSnapshot),
-              _buildConfigRow('offline.pendingReward', widget.gameState!.offline.pendingReward),
-              _buildConfigRow('offline.capHours', widget.gameState!.offline.capHours),
-              const SizedBox(height: 8),
-            ],
+                // Game State Section
+                if (widget.gameState != null) ...[
+                  _buildSectionTitle('Game State'),
+                  _buildConfigRow('saveVersion', widget.gameState!.saveVersion),
+                  _buildConfigRow('memePoints', widget.gameState!.memePoints),
+                  _buildConfigRow(
+                    'equipments',
+                    widget.gameState!.equipments.length,
+                  ),
+                  _buildConfigRow(
+                    'lastTs',
+                    _formatTimestamp(widget.gameState!.lastTs),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
-            // GameClock Section
-            _buildSectionTitle('GameClock'),
-            _buildGameClockStats(),
-            const SizedBox(height: 8),
+                // Offline Section
+                if (widget.gameState != null) ...[
+                  _buildSectionTitle('Offline'),
+                  _buildConfigRow(
+                    'offline.lastExitUtcMs',
+                    widget.gameState!.offline.lastExitUtcMs,
+                  ),
+                  _buildConfigRow(
+                    'offline.idle_rate_snapshot',
+                    widget.gameState!.offline.idleRateSnapshot,
+                  ),
+                  _buildConfigRow(
+                    'offline.pendingReward',
+                    widget.gameState!.offline.pendingReward,
+                  ),
+                  _buildConfigRow(
+                    'offline.capHours',
+                    widget.gameState!.offline.capHours,
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
-            // IdleIncome Section
-            _buildSectionTitle('IdleIncome'),
-            _buildIdleIncomeStats(),
-            const SizedBox(height: 8),
+                // GameClock Section
+                _buildSectionTitle('GameClock'),
+                _buildGameClockStats(),
+                const SizedBox(height: 8),
 
-            // Daily Mission Section
-            if (widget.dailyMissionService != null && widget.gameState != null) ...[
-              _buildSectionTitle('Daily Mission'),
-              _buildDailyMissionStats(),
-              const SizedBox(height: 8),
-            ],
+                // IdleIncome Section
+                _buildSectionTitle('IdleIncome'),
+                _buildIdleIncomeStats(),
+                const SizedBox(height: 8),
 
-            // Pet Section
-            if (widget.gameState?.petState != null) ...[
-              _buildSectionTitle('Pets'),
-              _buildPetStats(),
-              const SizedBox(height: 8),
-              // _buildPetActions(),
-              // const SizedBox(height: 8),
-            ],
-            
-            // Actions
-            _buildActions(),
+                // Daily Mission Section
+                if (widget.dailyMissionService != null &&
+                    widget.gameState != null) ...[
+                  _buildSectionTitle('Daily Mission'),
+                  _buildDailyMissionStats(),
+                  const SizedBox(height: 8),
+                ],
+
+                // Pet Section
+                if (widget.gameState?.petState != null) ...[
+                  _buildSectionTitle('Pets'),
+                  _buildPetStats(),
+                  const SizedBox(height: 8),
+                  // _buildPetActions(),
+                  // const SizedBox(height: 8),
+                ],
+
+                // Actions
+                _buildActions(),
               ],
             ),
           ),
@@ -193,8 +224,14 @@ class _DebugPanelState extends State<DebugPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildConfigRow('fps', stats['currentFps']?.toStringAsFixed(1) ?? '0.0'),
-        _buildConfigRow('avgDelta(ms)', stats['averageDeltaMs']?.toStringAsFixed(1) ?? '0.0'),
+        _buildConfigRow(
+          'fps',
+          stats['currentFps']?.toStringAsFixed(1) ?? '0.0',
+        ),
+        _buildConfigRow(
+          'avgDelta(ms)',
+          stats['averageDeltaMs']?.toStringAsFixed(1) ?? '0.0',
+        ),
         _buildConfigRow('state', _gameClock.lifecycleState),
         _buildConfigRow('subscribers', stats['subscribersCount']),
         _buildConfigRow('isRunning', stats['isRunning']),
@@ -209,9 +246,18 @@ class _DebugPanelState extends State<DebugPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildConfigRow('idlePerSec', stats['currentIdlePerSec']),
-        _buildConfigRow('totalTime(s)', stats['totalIdleTime']?.toStringAsFixed(1) ?? '0.0'),
-        _buildConfigRow('totalIncome', stats['totalIdleIncome']?.toStringAsFixed(2) ?? '0.0'),
-        _buildConfigRow('avgIncome/s', stats['averageIncomePerSec']?.toStringAsFixed(3) ?? '0.0'),
+        _buildConfigRow(
+          'totalTime(s)',
+          stats['totalIdleTime']?.toStringAsFixed(1) ?? '0.0',
+        ),
+        _buildConfigRow(
+          'totalIncome',
+          stats['totalIdleIncome']?.toStringAsFixed(2) ?? '0.0',
+        ),
+        _buildConfigRow(
+          'avgIncome/s',
+          stats['averageIncomePerSec']?.toStringAsFixed(3) ?? '0.0',
+        ),
         _buildConfigRow('subscribed', stats['isSubscribed']),
       ],
     );
@@ -232,14 +278,11 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             child: const Text(
               'Reload Config',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
-        
+
         // Toggle Fixed Step Mode Button
         GestureDetector(
           onTap: _toggleFixedStepMode,
@@ -247,19 +290,16 @@ class _DebugPanelState extends State<DebugPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(
-              color: _gameClock.getStats()['isFixedStepMode'] == true 
+              color: _gameClock.getStats()['isFixedStepMode'] == true
                   ? Colors.orange.withValues(alpha: 0.3)
                   : Colors.blue.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              _gameClock.getStats()['isFixedStepMode'] == true 
-                  ? 'Disable Fixed Step' 
+              _gameClock.getStats()['isFixedStepMode'] == true
+                  ? 'Disable Fixed Step'
                   : 'Enable Fixed Step',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
@@ -276,10 +316,7 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             child: const Text(
               'Add 10 Pet Tickets',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
@@ -296,10 +333,7 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             child: const Text(
               'Clear Gacha History',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
@@ -315,10 +349,7 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             child: const Text(
               'Reset Idle Stats',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
@@ -408,10 +439,7 @@ class _DebugPanelState extends State<DebugPanel> {
             ),
             child: const Text(
               'Reset All State',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
         ),
@@ -450,15 +478,20 @@ class _DebugPanelState extends State<DebugPanel> {
 
   void _toggleFixedStepMode() {
     final isCurrentlyFixed = _gameClock.getStats()['isFixedStepMode'] == true;
-    _gameClock.setFixedStepMode(!isCurrentlyFixed, fixedDelta: 0.05); // 20fps for testing
+    _gameClock.setFixedStepMode(
+      !isCurrentlyFixed,
+      fixedDelta: 0.05,
+    ); // 20fps for testing
     setState(() {});
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isCurrentlyFixed 
-              ? 'Fixed step mode disabled' 
-              : 'Fixed step mode enabled (20fps)'),
+          content: Text(
+            isCurrentlyFixed
+                ? 'Fixed step mode disabled'
+                : 'Fixed step mode enabled (20fps)',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -482,7 +515,10 @@ class _DebugPanelState extends State<DebugPanel> {
         _buildConfigRow('type', mission.type),
         _buildConfigRow('progress', mission.progress.toStringAsFixed(0)),
         _buildConfigRow('target', mission.target.toStringAsFixed(0)),
-        _buildConfigRow('snapshot', mission.idlePerSecSnapshot.toStringAsFixed(2)),
+        _buildConfigRow(
+          'snapshot',
+          mission.idlePerSecSnapshot.toStringAsFixed(2),
+        ),
         _buildConfigRow('completed', mission.todayCompleted),
       ],
     );
@@ -492,8 +528,13 @@ class _DebugPanelState extends State<DebugPanel> {
     final petState = widget.gameState?.petState;
     if (petState == null) return const SizedBox.shrink();
 
-    final equippedPet = petState.pets.where((pet) => pet.isEquipped).firstOrNull;
-    final totalUpgradePoints = petState.pets.fold<int>(0, (sum, pet) => sum + pet.upgradePoints);
+    final equippedPet = petState.pets
+        .where((pet) => pet.isEquipped)
+        .firstOrNull;
+    final totalUpgradePoints = petState.pets.fold<int>(
+      0,
+      (sum, pet) => sum + pet.upgradePoints,
+    );
     final petIdleIncome = _petService.getCurrentPetIdlePerSec();
 
     return Column(
@@ -502,7 +543,10 @@ class _DebugPanelState extends State<DebugPanel> {
         _buildConfigRow('Equipped Pet', equippedPet?.name ?? 'None'),
         if (equippedPet != null) ...[
           _buildConfigRow('Pet Level', '${equippedPet.level}'),
-          _buildConfigRow('Pet Idle Income', '${petIdleIncome.toStringAsFixed(2)}/s'),
+          _buildConfigRow(
+            'Pet Idle Income',
+            '${petIdleIncome.toStringAsFixed(2)}/s',
+          ),
         ],
         _buildConfigRow('Total Upgrade Points', '$totalUpgradePoints'),
       ],
@@ -512,7 +556,7 @@ class _DebugPanelState extends State<DebugPanel> {
   void _resetIdleStats() {
     _idleIncome.resetStats();
     setState(() {});
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -550,7 +594,7 @@ class _DebugPanelState extends State<DebugPanel> {
 
 class DebugToggleButton extends StatefulWidget {
   final VoidCallback onToggle;
-  
+
   const DebugToggleButton({super.key, required this.onToggle});
 
   @override
@@ -571,11 +615,7 @@ class _DebugToggleButtonState extends State<DebugToggleButton> {
             color: Colors.green.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Icon(
-            Icons.bug_report,
-            color: Colors.white,
-            size: 20,
-          ),
+          child: const Icon(Icons.bug_report, color: Colors.white, size: 20),
         ),
       ),
     );

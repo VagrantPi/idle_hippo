@@ -5,8 +5,8 @@ class AnimatedButton extends StatefulWidget {
   final VoidCallback onTap;
   final double size;
   final bool isNavButton;
-  final bool showTitle;  // 新增：是否顯示標題
-  final String? title;   // 新增：標題文字
+  final bool showTitle; // 新增：是否顯示標題
+  final String? title; // 新增：標題文字
   final Color? borderColor;
   final double borderWidth;
 
@@ -35,7 +35,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 120),
       vsync: this,
@@ -46,27 +46,18 @@ class _AnimatedButtonState extends State<AnimatedButton>
       _scaleXAnimation = Tween<double>(
         begin: 1.0,
         end: 1.5,
-      ).animate(CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ));
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
       _scaleYAnimation = Tween<double>(
         begin: 1.0,
         end: 0.98,
-      ).animate(CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ));
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     } else {
       // 其他按鈕：一般縮放動畫
       _scaleXAnimation = Tween<double>(
         begin: 1.0,
         end: 0.95,
-      ).animate(CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ));
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
       _scaleYAnimation = _scaleXAnimation;
     }
@@ -102,8 +93,12 @@ class _AnimatedButtonState extends State<AnimatedButton>
         animation: _controller,
         builder: (context, child) {
           return Container(
-            width: widget.isNavButton ? MediaQuery.of(context).size.width / 5 : widget.size + (widget.showTitle ? 24 : 0),
-            height: widget.isNavButton ? kBottomNavigationBarHeight * 2 : widget.size + (widget.showTitle ? 36 : 0),
+            width: widget.isNavButton
+                ? MediaQuery.of(context).size.width / 5
+                : widget.size + (widget.showTitle ? 24 : 0),
+            height: widget.isNavButton
+                ? kBottomNavigationBarHeight * 2
+                : widget.size + (widget.showTitle ? 36 : 0),
             alignment: Alignment.center,
             decoration: widget.isNavButton && widget.borderColor != null
                 ? BoxDecoration(
@@ -120,11 +115,13 @@ class _AnimatedButtonState extends State<AnimatedButton>
               child: Container(
                 width: widget.isNavButton ? null : widget.size,
                 height: widget.isNavButton ? null : widget.size,
-                padding: widget.isNavButton ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8) : null,
+                padding: widget.isNavButton
+                    ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+                    : null,
                 decoration: !widget.isNavButton
                     ? BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: widget.borderColor != null 
+                        border: widget.borderColor != null
                             ? Border.all(
                                 color: widget.borderColor!,
                                 width: widget.borderWidth,
@@ -166,7 +163,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
                           textAlign: TextAlign.center,
                           maxLines: 1,
                         ),
-                      )
+                      ),
                   ],
                 ),
               ),

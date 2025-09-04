@@ -25,22 +25,30 @@ void main() {
 
     test('成功下載：進度回報且最終檔案存在', () async {
       final data = utf8.encode('hello world');
-      svc.downloadImpl = (url, savePath, {onReceiveProgress, cancelToken}) async {
-        final file = File(savePath);
-        final sink = file.openWrite();
-        // 模擬分段寫入與進度
-        for (int i = 0; i < data.length; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 5));
-          sink.add([data[i]]);
-          onReceiveProgress?.call(i + 1, data.length);
-        }
-        await sink.flush();
-        await sink.close();
-        return Response(requestOptions: RequestOptions(path: url), statusCode: 200);
-      };
+      svc.downloadImpl =
+          (url, savePath, {onReceiveProgress, cancelToken}) async {
+            final file = File(savePath);
+            final sink = file.openWrite();
+            // 模擬分段寫入與進度
+            for (int i = 0; i < data.length; i++) {
+              await Future<void>.delayed(const Duration(milliseconds: 5));
+              sink.add([data[i]]);
+              onReceiveProgress?.call(i + 1, data.length);
+            }
+            await sink.flush();
+            await sink.close();
+            return Response(
+              requestOptions: RequestOptions(path: url),
+              statusCode: 200,
+            );
+          };
 
       final progresses = <DownloadProgress>[];
-      await svc.download('EchoesOfTheVoid', 'https://github.com/VagrantPi/idle_hippo_music_resource/raw/refs/heads/main/EchoesOfTheVoid.mp3')
+      await svc
+          .download(
+            'EchoesOfTheVoid',
+            'https://github.com/VagrantPi/idle_hippo_music_resource/raw/refs/heads/main/EchoesOfTheVoid.mp3',
+          )
           .listen(progresses.add)
           .asFuture<void>();
 
@@ -59,35 +67,43 @@ void main() {
     test('取消下載：刪除半成品，不留下 .part 或最終檔', () async {
       final cancelToken = CancelToken();
 
-      svc.downloadImpl = (url, savePath, {onReceiveProgress, cancelToken}) async {
-        final file = File(savePath);
-        final sink = file.openWrite();
-        final total = 100;
-        for (int i = 1; i <= total; i++) {
-          if (cancelToken?.isCancelled ?? false) {
+      svc.downloadImpl =
+          (url, savePath, {onReceiveProgress, cancelToken}) async {
+            final file = File(savePath);
+            final sink = file.openWrite();
+            final total = 100;
+            for (int i = 1; i <= total; i++) {
+              if (cancelToken?.isCancelled ?? false) {
+                await sink.close();
+                throw DioException(
+                  requestOptions: RequestOptions(path: url),
+                  type: DioExceptionType.cancel,
+                );
+              }
+              sink.add([i % 256]);
+              onReceiveProgress?.call(i, total);
+              await Future<void>.delayed(const Duration(milliseconds: 2));
+              if (i == 20) {
+                // 測試端在 20% 時取消
+                cancelToken?.cancel('test cancel');
+              }
+            }
+            await sink.flush();
             await sink.close();
-            throw DioException(
+            return Response(
               requestOptions: RequestOptions(path: url),
-              type: DioExceptionType.cancel,
+              statusCode: 200,
             );
-          }
-          sink.add([i % 256]);
-          onReceiveProgress?.call(i, total);
-          await Future<void>.delayed(const Duration(milliseconds: 2));
-          if (i == 20) {
-            // 測試端在 20% 時取消
-            cancelToken?.cancel('test cancel');
-          }
-        }
-        await sink.flush();
-        await sink.close();
-        return Response(requestOptions: RequestOptions(path: url), statusCode: 200);
-      };
+          };
 
       // 監聽但忽略錯誤（預期為取消）
       try {
         await svc
-            .download('EchoesOfTheVoid', 'https://github.com/VagrantPi/idle_hippo_music_resource/raw/refs/heads/main/EchoesOfTheVoid.mp3', cancelToken: cancelToken)
+            .download(
+              'EchoesOfTheVoid',
+              'https://github.com/VagrantPi/idle_hippo_music_resource/raw/refs/heads/main/EchoesOfTheVoid.mp3',
+              cancelToken: cancelToken,
+            )
             .drain<void>();
         fail('should throw cancel');
       } catch (_) {}
@@ -100,17 +116,23 @@ void main() {
     });
 
     test('錯誤時清理半成品', () async {
-      svc.downloadImpl = (url, savePath, {onReceiveProgress, cancelToken}) async {
-        final file = File(savePath);
-        await file.writeAsBytes([0, 1, 2]); // 先寫一點點
-        throw DioException(
-          requestOptions: RequestOptions(path: url),
-          type: DioExceptionType.badResponse,
-        );
-      };
+      svc.downloadImpl =
+          (url, savePath, {onReceiveProgress, cancelToken}) async {
+            final file = File(savePath);
+            await file.writeAsBytes([0, 1, 2]); // 先寫一點點
+            throw DioException(
+              requestOptions: RequestOptions(path: url),
+              type: DioExceptionType.badResponse,
+            );
+          };
 
       try {
-        await svc.download('EchoesOfTheVoid', 'https://github.com/VagrantPi/idle_hippo_music_resource/raw/refs/heads/main/EchoesOfTheVoid.mp3').drain<void>();
+        await svc
+            .download(
+              'EchoesOfTheVoid',
+              'https://github.com/VagrantPi/idle_hippo_music_resource/raw/refs/heads/main/EchoesOfTheVoid.mp3',
+            )
+            .drain<void>();
         fail('should throw');
       } catch (_) {}
 

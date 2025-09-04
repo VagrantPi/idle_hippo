@@ -24,13 +24,13 @@ import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/config_service.dart';
 
-
 class MainScreen extends StatefulWidget {
   final double memePoints;
   final Map<String, int> equipments;
 
   final VoidCallback onCharacterTap;
-  final int Function()? onCharacterTapWithResult; // optional: returns gained points
+  final int Function()?
+  onCharacterTapWithResult; // optional: returns gained points
   final int dailyCapTodayGained;
   final int dailyCapEffective;
   final bool adDoubledToday;
@@ -38,22 +38,24 @@ class MainScreen extends StatefulWidget {
   final void Function(String id)? onEquipmentUpgrade;
   final void Function(String id)? onIdleEquipmentUpgrade;
   final VoidCallback? onToggleDebug; // optional: toggle debug panel from parent
-  final double? lastTapDisplayValue; // optional: display base+bonus value for particle
-  final double? displayMemePoints; // optional: for UI display only (includes fractional idle accumulation)
-  
+  final double?
+  lastTapDisplayValue; // optional: display base+bonus value for particle
+  final double?
+  displayMemePoints; // optional: for UI display only (includes fractional idle accumulation)
+
   // Daily Mission parameters
   final String? missionType; // 'tapX', 'accumulateX', 'completed'
   final int? missionProgress;
   final int? missionTarget;
   final int? missionPoints; // for accumulateX display
   final VoidCallback? onMissionTap;
-  
+
   // Daily Mission list for QuestPage
   final List<Map<String, dynamic>>? missionPlan;
   final int? missionsTodayCompleted;
   final VoidCallback? onClaimCurrentMission;
   final VoidCallback? onClaimCurrentStage;
-  
+
   // GameState for MainQuest
   final GameState gameState;
   // 寵物抽獎券領取回調
@@ -96,7 +98,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final PageManager _pageManager = PageManager();
   final GachaService _gachaService = GachaService();
   final CheckinService _checkinService = CheckinService();
-  
+
   late AnimationController _characterController;
   late final IdleIncomeService _idleIncome;
   late Animation<double> _characterScaleAnimation;
@@ -144,10 +146,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     try {
       final normalized = _normalizeEquipId(equipId);
       final altLower = normalized.toLowerCase();
-      final currentLevel = widget.gameState.equipments[normalized]
-          ?? widget.gameState.equipments[altLower]
-          ?? widget.gameState.equipments[equipId]
-          ?? 0;
+      final currentLevel =
+          widget.gameState.equipments[normalized] ??
+          widget.gameState.equipments[altLower] ??
+          widget.gameState.equipments[equipId] ??
+          0;
       return currentLevel >= requiredLevel;
     } catch (_) {
       return false;
@@ -170,39 +173,36 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
-    
-    _characterScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _characterController,
-      curve: Curves.easeOut,
-    ));
+
+    _characterScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _characterController, curve: Curves.easeOut),
+    );
 
     // 添加搖擺動畫控制器
     _swingController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     // 設置左右各1度的搖擺動畫
-    _swingAnimation = Tween<double>(
-      begin: -0.5 * (3.1415927 / 180), // 轉換為弧度
-      end: 0.5 * (3.1415927 / 180),    // 轉換為弧度
-    ).animate(CurvedAnimation(
-      parent: _swingController,
-      curve: Curves.easeInOut,
-    ));
+    _swingAnimation =
+        Tween<double>(
+          begin: -0.5 * (3.1415927 / 180), // 轉換為弧度
+          end: 0.5 * (3.1415927 / 180), // 轉換為弧度
+        ).animate(
+          CurvedAnimation(parent: _swingController, curve: Curves.easeInOut),
+        );
 
     // 添加隨機移動動畫控制器
-    _randomMoveController = AnimationController(
-      duration: Duration(seconds: _random.nextInt(3) + 2),
-      vsync: this,
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _setupRandomMoveAnimation();
-        }
-      });
+    _randomMoveController =
+        AnimationController(
+          duration: Duration(seconds: _random.nextInt(3) + 2),
+          vsync: this,
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _setupRandomMoveAnimation();
+          }
+        });
 
     _setupRandomMoveAnimation();
 
@@ -215,13 +215,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       vsync: this,
     )..repeat(reverse: true);
     _badgePulseAnimation = Tween<double>(begin: 0.9, end: 1.2).animate(
-      CurvedAnimation(
-        parent: _badgePulseController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _badgePulseController, curve: Curves.easeInOut),
     );
   }
-
 
   // 在 _MainScreenState 類別中添加這個變數
   Offset _currentOffset = Offset.zero;
@@ -233,16 +229,16 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       _random.nextDouble() * 160 - 80, // -80 到 80 之間
     );
 
-    _randomMoveAnimation = Tween<Offset>(
-      begin: _currentOffset,
-      end: targetOffset,
-    ).animate(CurvedAnimation(
-      parent: _randomMoveController,
-      curve: Curves.easeInOut,
-    ));
+    _randomMoveAnimation =
+        Tween<Offset>(begin: _currentOffset, end: targetOffset).animate(
+          CurvedAnimation(
+            parent: _randomMoveController,
+            curve: Curves.easeInOut,
+          ),
+        );
 
     _currentOffset = targetOffset;
-    
+
     _randomMoveController.forward(from: 0);
   }
 
@@ -301,12 +297,13 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     final random = math.Random();
     final angle = random.nextDouble() * 2 * math.pi;
     final distance = random.nextDouble() * characterRadius;
-    
+
     final particleX = characterCenterX + math.cos(angle) * distance;
     final particleY = characterCenterY + math.sin(angle) * distance;
 
     final particleKey = UniqueKey();
-    final displayValue = (widget.lastTapDisplayValue != null && widget.lastTapDisplayValue! > 0)
+    final displayValue =
+        (widget.lastTapDisplayValue != null && widget.lastTapDisplayValue! > 0)
         ? widget.lastTapDisplayValue!
         : gained;
     final particle = PlusMemeParticle(
@@ -338,9 +335,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           errorBuilder: (context, error, stackTrace) {
             return Container(
               color: Colors.blue[100],
-              child: const Center(
-                child: Text('Background Image Missing'),
-              ),
+              child: const Center(child: Text('Background Image Missing')),
             );
           },
         ),
@@ -360,13 +355,12 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: Colors.green.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1,
+            ),
           ),
-          child: const Icon(
-            Icons.bug_report,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: const Icon(Icons.bug_report, color: Colors.white, size: 24),
         ),
       ),
     );
@@ -402,7 +396,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                               decoration: BoxDecoration(
                                 color: Colors.grey[300],
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.orange, width: 3),
+                                border: Border.all(
+                                  color: Colors.orange,
+                                  width: 3,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.pets,
@@ -489,7 +486,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     }
 
     // 如果沒有任務資料，不顯示任務條
-    if (widget.missionType == null || widget.missionProgress == null || widget.missionTarget == null) {
+    if (widget.missionType == null ||
+        widget.missionProgress == null ||
+        widget.missionTarget == null) {
       return const SizedBox.shrink();
     }
 
@@ -529,77 +528,81 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           children: [
             // 迷因點數區塊
             Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _localization.getCommon('memePoints'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${_formatPerSecond(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
+                      style: const TextStyle(
+                        color: Colors.yellow,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _formatNumber(widget.displayMemePoints ?? widget.memePoints),
+                  textAlign: TextAlign.right,
+                  softWrap: false,
+                  style: const TextStyle(
+                    color: Colors.yellow,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // 抽獎券數量顯示（僅圖示 + 數值，避免新增多語系字串）
+            if ((widget.gameState.mainQuest?.currentStage ?? 0) > 3)
+              StreamBuilder<int>(
+                stream: _gachaService.petTicketsStream,
+                initialData: widget.gameState.petTickets,
+                builder: (context, snapshot) {
+                  final tickets = snapshot.data ?? widget.gameState.petTickets;
+                  return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        _localization.getCommon('memePoints'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Image.asset(
+                        'assets/images/icon/Lottery.png',
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.confirmation_num,
+                            color: Colors.cyanAccent,
+                            size: 20,
+                          );
+                        },
                       ),
+                      const SizedBox(width: 6),
                       Text(
-                        '${_formatPerSecond(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
+                        '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
                         style: const TextStyle(
-                          color: Colors.yellow,
-                          fontSize: 12,
+                          color: Colors.cyanAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatNumber(widget.displayMemePoints ?? widget.memePoints),
-                    textAlign: TextAlign.right,
-                    softWrap: false,
-                    style: const TextStyle(
-                      color: Colors.yellow,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-
-              const SizedBox(height: 8),
-
-              // 抽獎券數量顯示（僅圖示 + 數值，避免新增多語系字串）
-              if ((widget.gameState.mainQuest?.currentStage ?? 0) > 3)
-                StreamBuilder<int>(
-                  stream: _gachaService.petTicketsStream,
-                  initialData: widget.gameState.petTickets,
-                  builder: (context, snapshot) {
-                    final tickets = snapshot.data ?? widget.gameState.petTickets;
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          'assets/images/icon/Lottery.png',
-                          width: 20,
-                          height: 20,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.confirmation_num, color: Colors.cyanAccent, size: 20);
-                          },
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
-                          style: const TextStyle(
-                            color: Colors.cyanAccent,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
           ],
         ),
       ),
@@ -637,7 +640,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     Positioned.fill(
                       child: AnimatedButton(
                         iconPath: 'assets/images/icon/Setting.png',
-                        onTap: () => _pageManager.navigateToPage(PageType.settings),
+                        onTap: () =>
+                            _pageManager.navigateToPage(PageType.settings),
                         size: 50,
                       ),
                     ),
@@ -702,22 +706,16 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           _pageManager.navigateToPage(PageType.quest);
         });
       },
-      child: MainQuestBar(
-        progress: progress.clamp(0, target),
-        target: target,
-      ),
+      child: MainQuestBar(progress: progress.clamp(0, target), target: target),
     );
   }
-
 
   Widget _buildPowerSaverButton() {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const PowerSaverPage(),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const PowerSaverPage()));
       },
       child: Container(
         padding: const EdgeInsets.all(10),
@@ -726,26 +724,26 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(50),
         ),
         child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/icon/SavePower.png',
-                width: 24,
-                height: 24,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.power_settings_new,
-                    color: Colors.white,
-                    size: 24,
-                  );
-                },
-              ),
-            ],
-          ),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/icon/SavePower.png',
+              width: 24,
+              height: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.power_settings_new,
+                  color: Colors.white,
+                  size: 24,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
-  
+
   // 判斷是否需要顯示「寵物抽獎任務完成」紅點
   bool _isPetTicketQuestCompleted() {
     final q = widget.gameState.petTicketQuest;
@@ -754,8 +752,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     if (q.target <= 0) return false;
     return q.progress >= q.target;
   }
-
-
 
   Widget _buildRightSideButtons() {
     return Positioned(
@@ -888,7 +884,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       }
     }
 
-    final bottomNavigationBarHeight = isSelected ? MediaQuery.of(context).size.height / 14 + 20: MediaQuery.of(context).size.height / 14;
+    final bottomNavigationBarHeight = isSelected
+        ? MediaQuery.of(context).size.height / 14 + 20
+        : MediaQuery.of(context).size.height / 14;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -912,7 +910,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   _pageManager.navigateToPage(pageType);
                 }
               },
-              borderColor: isSelected 
+              borderColor: isSelected
                   ? const Color(0xFF00FFD1)
                   : const Color(0xFF6B7BD6),
               borderWidth: 2,
@@ -948,10 +946,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     if (currentStage <= 2) return false;
     // 直接依據 config 與當前 GameState 計算是否存在可領取稱號（含 hidden 與 collect_all_titles_except）
     try {
-      final list = (ConfigService().getValue('titles.titles', defaultValue: []) as List)
-          .cast<Map<String, dynamic>?>()
-          .whereType<Map<String, dynamic>>()
-          .toList();
+      final list =
+          (ConfigService().getValue('titles.titles', defaultValue: []) as List)
+              .cast<Map<String, dynamic>?>()
+              .whereType<Map<String, dynamic>>()
+              .toList();
 
       final claimedIds = titles.states.entries
           .where((e) => e.value == 'claimed')
@@ -959,7 +958,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           .toSet();
 
       // 預先蒐集全部 ID（供 collect_all_titles_except 使用）
-      final allIds = list.map((e) => e['id']?.toString() ?? '').where((id) => id.isNotEmpty).toSet();
+      final allIds = list
+          .map((e) => e['id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet();
 
       bool isCondMet(Map<String, dynamic>? condition) {
         if (condition == null) return false;
@@ -977,13 +979,17 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           if (pairs == null) return false;
           return pairs.every((pair) {
             final equipId = pair is Map ? pair['equip_id'] as String? : null;
-            final level = pair is Map ? (pair['level'] as num?)?.toInt() ?? 0 : 0;
+            final level = pair is Map
+                ? (pair['level'] as num?)?.toInt() ?? 0
+                : 0;
             return equipId != null && _isEquipmentLevelReached(equipId, level);
           });
         } else if (kind == 'gacha_obtained_rarity') {
           final rarity = (condition['rarity'] as String?)?.toUpperCase() ?? '';
           final count = (condition['count'] as num?)?.toInt() ?? 1;
-          final got = widget.gameState.gachaHistory.where((r) => r.rarity.toUpperCase() == rarity).length;
+          final got = widget.gameState.gachaHistory
+              .where((r) => r.rarity.toUpperCase() == rarity)
+              .length;
           return got >= count;
         } else if (kind == 'collect_all_titles_except') {
           // 此條件在迭代 item 時由外層判斷：
@@ -1003,8 +1009,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         var met = isCondMet(condition);
 
         // 特別處理 collect_all_titles_except：除 self 與 exclude 外皆為 claimed
-        if (!met && (condition?['kind']?.toString() == 'collect_all_titles_except')) {
-          final exclude = (condition?['exclude'] as List?)?.cast<String>() ?? const [];
+        if (!met &&
+            (condition?['kind']?.toString() == 'collect_all_titles_except')) {
+          final exclude =
+              (condition?['exclude'] as List?)?.cast<String>() ?? const [];
           final targetSet = allIds.difference({id, ...exclude});
           final allClaimed = targetSet.every((tid) => claimedIds.contains(tid));
           met = allClaimed;
@@ -1018,10 +1026,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     // 最後再檢查既有的 states 中被標記為 claimable 的是否仍符合條件（避免舊狀態造成誤亮）
     try {
-      final list = (ConfigService().getValue('titles.titles', defaultValue: []) as List)
-          .cast<Map<String, dynamic>?>()
-          .whereType<Map<String, dynamic>>()
-          .toList();
+      final list =
+          (ConfigService().getValue('titles.titles', defaultValue: []) as List)
+              .cast<Map<String, dynamic>?>()
+              .whereType<Map<String, dynamic>>()
+              .toList();
       final byId = {for (final m in list) (m['id']?.toString() ?? ''): m};
       bool validate(String id) {
         final m = byId[id];
@@ -1043,17 +1052,22 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           if (pairs == null) return false;
           return pairs.every((pair) {
             final equipId = pair is Map ? pair['equip_id'] as String? : null;
-            final level = pair is Map ? (pair['level'] as num?)?.toInt() ?? 0 : 0;
+            final level = pair is Map
+                ? (pair['level'] as num?)?.toInt() ?? 0
+                : 0;
             return equipId != null && _isEquipmentLevelReached(equipId, level);
           });
         } else if (kind == 'gacha_obtained_rarity') {
           final rarity = (cond['rarity'] as String?)?.toUpperCase() ?? '';
           final count = (cond['count'] as num?)?.toInt() ?? 1;
-          final got = widget.gameState.gachaHistory.where((r) => r.rarity.toUpperCase() == rarity).length;
+          final got = widget.gameState.gachaHistory
+              .where((r) => r.rarity.toUpperCase() == rarity)
+              .length;
           return got >= count;
         } else if (kind == 'collect_all_titles_except') {
           final allIds = byId.keys.where((e) => e.isNotEmpty).toSet();
-          final exclude = (cond['exclude'] as List?)?.cast<String>() ?? const [];
+          final exclude =
+              (cond['exclude'] as List?)?.cast<String>() ?? const [];
           final claimedIds = titles.states.entries
               .where((e) => e.value == 'claimed')
               .map((e) => e.key)
@@ -1081,7 +1095,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           offstage: !_pageManager.isHomePage,
           child: const SizedBox.shrink(),
         ),
-        
+
         // 其他頁面內容
         ..._buildPageContent(),
       ],
@@ -1090,16 +1104,17 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   List<Widget> _buildPageContent() {
     if (_pageManager.isHomePage) return [];
-    
+
     Widget pageContent;
     switch (_pageManager.currentPage) {
       case PageType.equipment:
         pageContent = EquipmentPage(
           memePoints: widget.memePoints,
           equipments: widget.equipments,
-          onUpgrade: widget.onEquipmentUpgrade ?? (_){},
-          onUpgradeIdle: widget.onIdleEquipmentUpgrade ?? (_){},
-          unlockedRewards: widget.gameState.mainQuest?.unlockedRewards ?? const [],
+          onUpgrade: widget.onEquipmentUpgrade ?? (_) {},
+          onUpgradeIdle: widget.onIdleEquipmentUpgrade ?? (_) {},
+          unlockedRewards:
+              widget.gameState.mainQuest?.unlockedRewards ?? const [],
           initialTabIndex: _equipmentInitialTabIndex,
         );
         break;
@@ -1132,7 +1147,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             final reward = currentQuest != null
                 ? currentQuest['reward'] as Map<String, dynamic>?
                 : null;
-            final rewardType = reward != null ? reward['type'] as String? : null;
+            final rewardType = reward != null
+                ? reward['type'] as String?
+                : null;
             final rewardId = reward != null ? reward['id'] as String? : null;
 
             widget.onClaimCurrentStage?.call();
@@ -1179,15 +1196,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       default:
         return [];
     }
-    
-    return [
-      Offstage(
-        offstage: _pageManager.isHomePage,
-        child: pageContent,
-      )
-    ];
+
+    return [Offstage(offstage: _pageManager.isHomePage, child: pageContent)];
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1195,35 +1207,35 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         children: [
           // 背景
           _buildBackground(),
-          
+
           // 當前頁面內容
           _buildCurrentPage(),
-          
+
           // 只在首頁顯示的元素
           if (_pageManager.isHomePage) ...[
             // 角色
             _buildCharacter(),
-            
+
             // 粒子特效
             ..._particles,
-            
+
             // 左側按鈕
             _buildLeftSideButtons(),
-            
+
             // 右側按鈕
             _buildRightSideButtons(),
-            
+
             // 日常點數顯示
             _buildDailyCapDisplay(),
 
             // 資源顯示
             _buildResourceDisplay(),
           ],
-          
+
           // 始終顯示的元素
           // 右上角按鈕
           _buildTopRightSideButtons(),
-          
+
           // 底部導航欄
           _buildBottomNavigation(),
 

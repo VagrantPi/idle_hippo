@@ -32,27 +32,19 @@ class _GachaButtonState extends State<GachaButton>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -145,13 +137,9 @@ class _GachaButtonState extends State<GachaButton>
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      widget.icon,
-                      size: 32,
-                      color: Colors.white,
-                    ),
+                    child: Icon(widget.icon, size: 32, color: Colors.white),
                   ),
-                  
+
                   // 文字區域
                   Expanded(
                     child: Column(
@@ -163,8 +151,8 @@ class _GachaButtonState extends State<GachaButton>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            color: widget.isEnabled 
-                                ? Colors.white 
+                            color: widget.isEnabled
+                                ? Colors.white
                                 : Colors.grey.withValues(alpha: 0.7),
                           ),
                         ),
@@ -173,7 +161,7 @@ class _GachaButtonState extends State<GachaButton>
                           widget.costText,
                           style: TextStyle(
                             fontSize: 10,
-                            color: widget.isEnabled 
+                            color: widget.isEnabled
                                 ? Colors.white.withValues(alpha: 0.8)
                                 : Colors.grey.withValues(alpha: 0.5),
                           ),
@@ -181,13 +169,13 @@ class _GachaButtonState extends State<GachaButton>
                       ],
                     ),
                   ),
-                  
+
                   // 箭頭指示器
                   Container(
                     margin: const EdgeInsets.only(right: 16),
                     child: Icon(
                       Icons.arrow_forward_ios,
-                      color: widget.isEnabled 
+                      color: widget.isEnabled
                           ? Colors.white.withValues(alpha: 0.8)
                           : Colors.grey.withValues(alpha: 0.5),
                       size: 20,
@@ -224,10 +212,7 @@ class TicketDisplay extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            backgroundColor,
-            backgroundColor.withValues(alpha: 0.8),
-          ],
+          colors: [backgroundColor, backgroundColor.withValues(alpha: 0.8)],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -245,11 +230,7 @@ class TicketDisplay extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.confirmation_number,
-            color: textColor,
-            size: 24,
-          ),
+          Icon(Icons.confirmation_number, color: textColor, size: 24),
           const SizedBox(width: 8),
           Text(
             '${LocalizationService().getString('pets.ticket', defaultValue: 'Tickets')}: $ticketCount',
@@ -303,10 +284,7 @@ class GachaHistoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: rarityColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: rarityColor.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         children: [
@@ -326,9 +304,9 @@ class GachaHistoryCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // 寵物名稱
           Expanded(
             child: Text(
@@ -340,7 +318,7 @@ class GachaHistoryCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // 時間
           Text(
             _formatTime(timestamp),

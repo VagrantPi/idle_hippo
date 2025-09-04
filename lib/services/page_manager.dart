@@ -20,15 +20,16 @@ class PageManager extends ChangeNotifier {
   PageManager._internal();
 
   final List<PageType> _pageStack = [PageType.home];
-  
+
   PageType get currentPage => _pageStack.last;
-  PageType? get previousPage => _pageStack.length > 1 ? _pageStack[_pageStack.length - 2] : null;
+  PageType? get previousPage =>
+      _pageStack.length > 1 ? _pageStack[_pageStack.length - 2] : null;
   bool get isHomePage => currentPage == PageType.home;
 
   /// 切換到指定頁面
   void navigateToPage(PageType page, {bool isModal = false}) {
     if (currentPage == page) return;
-    
+
     if (isModal) {
       // For modal pages, push to stack without removing previous
       _pageStack.add(page);
@@ -39,10 +40,10 @@ class PageManager extends ChangeNotifier {
       }
       _pageStack.add(page);
     }
-    
+
     notifyListeners();
   }
-  
+
   /// 返回上一頁
   void navigateBack() {
     if (_pageStack.length > 1) {

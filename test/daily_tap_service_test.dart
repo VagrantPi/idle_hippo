@@ -4,7 +4,14 @@ import 'package:idle_hippo/services/daily_tap_service.dart';
 
 void main() {
   group('每日點擊服務（DailyTapService）', () {
-    DateTime baseUtc = DateTime.utc(2025, 8, 20, 15, 59, 50); // = 2025-08-21 23:59:50+08
+    DateTime baseUtc = DateTime.utc(
+      2025,
+      8,
+      20,
+      15,
+      59,
+      50,
+    ); // = 2025-08-21 23:59:50+08
     DateTime now() => baseUtc;
 
     late DailyTapService svc;
@@ -74,7 +81,14 @@ void main() {
       expect(res.allowedGain, 5);
 
       // advance baseUtc 20 seconds to cross +08 date boundary
-      baseUtc = DateTime.utc(2025, 8, 20, 16, 0, 10); // = 2025-08-22 00:00:10+08
+      baseUtc = DateTime.utc(
+        2025,
+        8,
+        20,
+        16,
+        0,
+        10,
+      ); // = 2025-08-22 00:00:10+08
 
       // ensure block resets on ensureDailyBlock/applyTap
       final s1 = svc.ensureDailyBlock(res.state);

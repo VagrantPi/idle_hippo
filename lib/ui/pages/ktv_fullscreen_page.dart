@@ -76,7 +76,10 @@ class _KtvFullscreenPageState extends State<KtvFullscreenPage> {
             children: [
               // Header with back button and song info
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     IconButton(
@@ -90,20 +93,20 @@ class _KtvFullscreenPageState extends State<KtvFullscreenPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.title, 
+                            widget.title,
                             style: const TextStyle(
-                              color: Colors.white, 
-                              fontSize: 18, 
+                              color: Colors.white,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            diffLabel, 
+                            diffLabel,
                             style: const TextStyle(
-                              color: Colors.white70, 
-                              fontSize: 12
+                              color: Colors.white70,
+                              fontSize: 12,
                             ),
                           ),
                         ],
@@ -112,49 +115,52 @@ class _KtvFullscreenPageState extends State<KtvFullscreenPage> {
                   ],
                 ),
               ),
-              
+
               // Main content area
               Expanded(
                 child: Center(
                   child: _loading
                       ? const CircularProgressIndicator()
                       : _error != null
-                          ? Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.error_outline, 
-                                    color: Colors.redAccent, 
-                                    size: 48,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _loc.getString('ktv.error', defaultValue: 'Error'), 
-                                    style: const TextStyle(
-                                      color: Colors.redAccent, 
-                                      fontSize: 18,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _error!, 
-                                    style: const TextStyle(color: Colors.white70),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                      ? Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.redAccent,
+                                size: 48,
                               ),
-                            )
-                          : const Icon(
-                              Icons.music_note, 
-                              color: Colors.white24, 
-                              size: 120,
-                            ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _loc.getString(
+                                  'ktv.error',
+                                  defaultValue: 'Error',
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 18,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _error!,
+                                style: const TextStyle(color: Colors.white70),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      : const Icon(
+                          Icons.music_note,
+                          color: Colors.white24,
+                          size: 120,
+                        ),
                 ),
               ),
-              
+
               // Playback controls
               Container(
                 padding: EdgeInsets.only(
@@ -178,12 +184,12 @@ class _KtvFullscreenPageState extends State<KtvFullscreenPage> {
                         setState(() {});
                       },
                       icon: Icon(
-                        playing ? Icons.pause : Icons.play_arrow, 
+                        playing ? Icons.pause : Icons.play_arrow,
                         size: 28,
                       ),
                       label: Text(
                         _loc.getString(
-                          playing ? 'ktv.pause' : 'ktv.play', 
+                          playing ? 'ktv.pause' : 'ktv.play',
                           defaultValue: playing ? 'Pause' : 'Play',
                         ),
                         style: const TextStyle(fontSize: 16),

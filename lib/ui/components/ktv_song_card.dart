@@ -57,7 +57,10 @@ class KtvSongCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
-                    imagePath.replaceAll(RegExp(r'[/\\]'), '/'), // Normalize path separators
+                    imagePath.replaceAll(
+                      RegExp(r'[/\\]'),
+                      '/',
+                    ), // Normalize path separators
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
@@ -66,7 +69,10 @@ class KtvSongCard extends StatelessWidget {
                         width: 80,
                         height: 80,
                         color: Colors.grey[700],
-                        child: const Icon(Icons.music_note, color: Colors.white),
+                        child: const Icon(
+                          Icons.music_note,
+                          color: Colors.white,
+                        ),
                       );
                     },
                   ),
@@ -76,12 +82,25 @@ class KtvSongCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(_formatLen(lengthSeconds), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(
+                        _formatLen(lengthSeconds),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -119,7 +138,7 @@ class KtvSongCard extends StatelessWidget {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

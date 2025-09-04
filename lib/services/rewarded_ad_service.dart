@@ -71,16 +71,19 @@ class RewardedAdService {
     final today = _currentDateTaipei();
 
     if (gachaState.lastDate != today) {
-      final dailyLimit = _configService.getValue(
-            'game.gacha.daily_ad_draw_limit',
-            defaultValue: 1,
-          ) as int;
+      final dailyLimit =
+          _configService.getValue(
+                'game.gacha.daily_ad_draw_limit',
+                defaultValue: 1,
+              )
+              as int;
       final updatedGachaState = gachaState.copyWith(
         lastDate: today,
         tenPackAdRemaining: dailyLimit,
       );
-      await _gameStateService
-          .updateGameState(currentState.copyWith(gacha: updatedGachaState));
+      await _gameStateService.updateGameState(
+        currentState.copyWith(gacha: updatedGachaState),
+      );
     }
   }
 
@@ -101,8 +104,9 @@ class RewardedAdService {
     final updated = gachaState.copyWith(
       tenPackAdRemaining: gachaState.tenPackAdRemaining - 1,
     );
-    await _gameStateService
-        .updateGameState(currentState.copyWith(gacha: updated));
+    await _gameStateService.updateGameState(
+      currentState.copyWith(gacha: updated),
+    );
     return true;
   }
 
@@ -157,12 +161,12 @@ class RewardedAdService {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xCC113300),
-                    Color(0xCC1F5E1F),
-                  ],
+                  colors: [Color(0xCC113300), Color(0xCC1F5E1F)],
                 ),
-                border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+                border: Border.all(
+                  color: const Color(0xFF00FFD1).withValues(alpha: 0.8),
+                  width: 2,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -182,11 +186,19 @@ class RewardedAdService {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFF00FFD1,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                          border: Border.all(
+                            color: const Color(0xFF00FFD1),
+                            width: 1,
+                          ),
                         ),
-                        child: const Icon(Icons.check_circle, color: Color(0xFF00FFD1)),
+                        child: const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF00FFD1),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -216,7 +228,10 @@ class RewardedAdService {
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                              side: const BorderSide(
+                                color: Color(0xFF00FFD1),
+                                width: 2,
+                              ),
                             ),
                           ),
                           onPressed: () => Navigator.of(ctx).pop(),

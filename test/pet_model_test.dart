@@ -67,10 +67,10 @@ void main() {
 
     test('應該正確計算下一級升級需求', () {
       expect(testPet.getUpgradeRequirement(1), 1); // Level 1 -> 2 需要 1 點
-      
+
       final level2Pet = testPet.copyWith(level: 2);
       expect(level2Pet.getUpgradeRequirement(2), 2); // Level 2 -> 3 需要 2 點
-      
+
       final level3Pet = testPet.copyWith(level: 3);
       expect(level3Pet.getUpgradeRequirement(3), 3); // Level 3 -> 4 需要 2 點
     });
@@ -78,7 +78,7 @@ void main() {
     test('應該正確判斷是否可以升級', () {
       final level1Pet = testPet.copyWith(level: 0, upgradePoints: 0);
       expect(level1Pet.canUpgrade, false); // 0 點，需要 1 點
-      
+
       final level1Pet2 = testPet.copyWith(level: 0, upgradePoints: 1);
       expect(level1Pet2.canUpgrade, true); // 1 點，需要 1 點
 
@@ -90,66 +90,101 @@ void main() {
       const levelUpUpgradeBase = 0.5;
       const decayLevels = 10;
       const decayRate = 0.5;
-      
+
       // Level 1 應該沒有加成
-      expect(testPet.getLevelUpgradeMultiplier(levelUpUpgradeBase, decayLevels, decayRate), 1.0);
-      
+      expect(
+        testPet.getLevelUpgradeMultiplier(
+          levelUpUpgradeBase,
+          decayLevels,
+          decayRate,
+        ),
+        1.0,
+      );
+
       // Level 2 應該有 0.5 加成
       final level2Pet = testPet.copyWith(level: 2);
-      expect(level2Pet.getLevelUpgradeMultiplier(levelUpUpgradeBase, decayLevels, decayRate), 1.5);
-      
+      expect(
+        level2Pet.getLevelUpgradeMultiplier(
+          levelUpUpgradeBase,
+          decayLevels,
+          decayRate,
+        ),
+        1.5,
+      );
+
       // Level 3 應該有 1.0 加成
       final level3Pet = testPet.copyWith(level: 3);
-      expect(level3Pet.getLevelUpgradeMultiplier(levelUpUpgradeBase, decayLevels, decayRate), 2.0);
+      expect(
+        level3Pet.getLevelUpgradeMultiplier(
+          levelUpUpgradeBase,
+          decayLevels,
+          decayRate,
+        ),
+        2.0,
+      );
     });
 
     test('應該正確計算當前 idlePerSec', () {
       const levelUpUpgradeBase = 0.5;
       const decayLevels = 10;
       const decayRate = 0.5;
-      
+
       // Level 1: 10.0 * 1.0 = 10.0
-      expect(testPet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate), 10.0);
-      
+      expect(
+        testPet.getCurrentIdlePerSec(
+          levelUpUpgradeBase,
+          decayLevels,
+          decayRate,
+        ),
+        10.0,
+      );
+
       // Level 2: 10.0 * 1.5 = 15.0
       final level2Pet = testPet.copyWith(level: 2);
-      expect(level2Pet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate), 15.0);
+      expect(
+        level2Pet.getCurrentIdlePerSec(
+          levelUpUpgradeBase,
+          decayLevels,
+          decayRate,
+        ),
+        15.0,
+      );
     });
 
     test('應該正確執行升級', () {
       final testPetThis = testPet.copyWith(level: 0);
-      
+
       final petWith5Points = testPetThis.copyWith(upgradePoints: 5);
       final upgradedPet = petWith5Points.upgrade();
-      
+
       expect(upgradedPet.level, 1);
       expect(upgradedPet.upgradePoints, 4); // 5 - 1 = 4
     });
 
     test('升級點數不足時不應該升級', () {
       final upgradedPet = testPet.upgrade(); // 0 點，需要 1 點
-      
+
       expect(upgradedPet.level, 1); // 等級不變
       expect(upgradedPet.upgradePoints, 0); // 點數不變
     });
 
     test('應該正確增加升級點數', () {
       final petWithMorePoints = testPet.addUpgradePoints(10);
-      
+
       expect(petWithMorePoints.upgradePoints, 10);
       expect(petWithMorePoints.level, 1); // 其他屬性不變
     });
 
     test('應該正確設定裝備狀態', () {
       final equippedPet = testPet.setEquipped(true);
-      
+
       expect(equippedPet.isEquipped, true);
       expect(equippedPet.level, 1); // 其他屬性不變
     });
 
     test('應該正確轉換為 Map', () {
       final map = testPet.toMap();
-      
+
       expect(map['petKey'], 'MooDeng');
       expect(map['name'], '彈跳豬 MooDeng');
       expect(map['rarity'], 'R');
@@ -170,9 +205,9 @@ void main() {
         'upgradePoints': 100,
         'isEquipped': true,
       };
-      
+
       final pet = Pet.fromMap(map);
-      
+
       expect(pet.petKey, 'TestPet');
       expect(pet.name, '測試寵物');
       expect(pet.rarity, PetRarity.ssr);
@@ -186,7 +221,7 @@ void main() {
   group('PetState', () {
     test('應該正確建立空的 PetState', () {
       const petState = PetState();
-      
+
       expect(petState.pets, isEmpty);
       expect(petState.equippedPetId, isNull);
       expect(petState.equippedPet, isNull);
@@ -201,7 +236,7 @@ void main() {
         baseIdlePerSec: 10.0,
         isEquipped: false,
       );
-      
+
       final pet2 = const Pet(
         petKey: 'Pet2',
         name: '寵物2',
@@ -210,12 +245,9 @@ void main() {
         baseIdlePerSec: 15.0,
         isEquipped: true,
       );
-      
-      final petState = PetState(
-        pets: [pet1, pet2],
-        equippedPetId: 'Pet2_S',
-      );
-      
+
+      final petState = PetState(pets: [pet1, pet2], equippedPetId: 'Pet2_S');
+
       expect(petState.equippedPet, pet2);
     });
   });

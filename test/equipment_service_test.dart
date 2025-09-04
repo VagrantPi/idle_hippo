@@ -21,7 +21,7 @@ void main() {
           {'level': 4, 'cost': 50, 'bonus': 4},
           {'level': 5, 'cost': 80, 'bonus': 5},
         ],
-      }
+      },
     ]);
   });
 
@@ -31,7 +31,10 @@ void main() {
 
   test('computeTapGain：無裝備時 base(1) + sumTapBonus(0) = 1', () {
     final state = GameState.initial(1);
-    expect(equipment.computeTapGain(state), 1); // base=1 from assets/config/game.json
+    expect(
+      equipment.computeTapGain(state),
+      1,
+    ); // base=1 from assets/config/game.json
   });
 
   test('升級成功：扣除成本並提升等級', () {
@@ -61,7 +64,10 @@ void main() {
   test('資源不足：無法升級', () {
     var state = GameState.initial(1).copyWith(memePoints: 19.0);
     // first ensure at level 1 already (so next cost is 20)
-    state = equipment.upgrade(state.copyWith(memePoints: 29.0), 'rgbKeyboard'); // lv1, mp=19
+    state = equipment.upgrade(
+      state.copyWith(memePoints: 29.0),
+      'rgbKeyboard',
+    ); // lv1, mp=19
 
     expect(equipment.canUpgrade(state, 'rgbKeyboard'), false);
     final next = equipment.upgrade(state, 'rgbKeyboard');

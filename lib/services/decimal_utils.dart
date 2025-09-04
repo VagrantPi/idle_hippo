@@ -41,13 +41,15 @@ class DecimalUtils {
   // 累加多個數值
   static double sum(List<num> values, {int scale = 4}) {
     if (values.isEmpty) return 0.0;
-    
+
     Decimal result = Decimal.zero;
     for (final value in values) {
-      final d = value is int ? Decimal.fromInt(value) : Decimal.parse(value.toString());
+      final d = value is int
+          ? Decimal.fromInt(value)
+          : Decimal.parse(value.toString());
       result += d;
     }
-    
+
     final roundedStr = result.toDouble().toStringAsFixed(scale);
     return double.parse(roundedStr);
   }

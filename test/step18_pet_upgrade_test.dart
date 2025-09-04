@@ -45,9 +45,17 @@ void main() {
       expect(pet.level, 5);
       expect(pet.upgradePoints, 0);
 
-      final multiplier = pet.getLevelUpgradeMultiplier(levelUpUpgradeBase, decayLevels, decayRate);
+      final multiplier = pet.getLevelUpgradeMultiplier(
+        levelUpUpgradeBase,
+        decayLevels,
+        decayRate,
+      );
       expect(multiplier, closeTo(expectedMultiplier(5), 1e-9));
-      final idle = pet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate);
+      final idle = pet.getCurrentIdlePerSec(
+        levelUpUpgradeBase,
+        decayLevels,
+        decayRate,
+      );
       expect(idle, closeTo(0.3 * expectedMultiplier(5), 1e-9));
     });
 
@@ -74,9 +82,17 @@ void main() {
       }
 
       expect(pet.level, 10);
-      final multiplier = pet.getLevelUpgradeMultiplier(levelUpUpgradeBase, decayLevels, decayRate);
+      final multiplier = pet.getLevelUpgradeMultiplier(
+        levelUpUpgradeBase,
+        decayLevels,
+        decayRate,
+      );
       expect(multiplier, closeTo(expectedMultiplier(10), 1e-9));
-      final idle = pet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate);
+      final idle = pet.getCurrentIdlePerSec(
+        levelUpUpgradeBase,
+        decayLevels,
+        decayRate,
+      );
       expect(idle, closeTo(0.3 * expectedMultiplier(10), 1e-9));
     });
 
@@ -126,10 +142,18 @@ void main() {
         isEquipped: false,
       );
 
-      final before = pet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate);
+      final before = pet.getCurrentIdlePerSec(
+        levelUpUpgradeBase,
+        decayLevels,
+        decayRate,
+      );
       expect(pet.canUpgrade, isTrue);
       pet = pet.upgrade();
-      final after = pet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate);
+      final after = pet.getCurrentIdlePerSec(
+        levelUpUpgradeBase,
+        decayLevels,
+        decayRate,
+      );
       expect(after, greaterThan(before));
     });
   });

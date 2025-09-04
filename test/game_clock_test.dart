@@ -33,9 +33,9 @@ void main() {
 
     test('應正確處理訂閱', () {
       gameClock.subscribe('test', (_) {});
-      
+
       expect(gameClock.subscribersCount, 1);
-      
+
       gameClock.unsubscribe('test');
       expect(gameClock.subscribersCount, 0);
     });
@@ -43,33 +43,33 @@ void main() {
     test('應能處理多個訂閱者', () {
       int tickCountA = 0;
       int tickCountB = 0;
-      
+
       gameClock.subscribe('testA', (delta) => tickCountA++);
       gameClock.subscribe('testB', (delta) => tickCountB++);
-      
+
       expect(gameClock.subscribersCount, 2);
-      
+
       gameClock.unsubscribe('testB');
       expect(gameClock.subscribersCount, 1);
-      
+
       gameClock.unsubscribe('testA');
       expect(gameClock.subscribersCount, 0);
     });
 
     test('應可切換固定步長模式', () {
       expect(gameClock.getStats()['isFixedStepMode'], false);
-      
+
       gameClock.setFixedStepMode(true, fixedDelta: 0.05);
       expect(gameClock.getStats()['isFixedStepMode'], true);
       expect(gameClock.getStats()['fixedDelta'], 0.05);
-      
+
       gameClock.setFixedStepMode(false);
       expect(gameClock.getStats()['isFixedStepMode'], false);
     });
 
     test('應正確提供統計資訊', () {
       final stats = gameClock.getStats();
-      
+
       expect(stats, isA<Map<String, dynamic>>());
       expect(stats.containsKey('isRunning'), true);
       expect(stats.containsKey('isInForeground'), true);
@@ -86,10 +86,9 @@ void main() {
     setUp(() {
       gameClock = GameClockService();
       gameClock.init();
-      
+
       idleIncome = IdleIncomeService();
-      idleIncome.init(onIncomeGenerated: (double points) {
-      });
+      idleIncome.init(onIncomeGenerated: (double points) {});
     });
 
     tearDown(() {
@@ -106,12 +105,14 @@ void main() {
     test('應可正確處理收益回呼', () {
       // 模擬手動觸發收益生成
       final testIncome = 5.0;
-      
+
       // 直接測試回調機制
-      idleIncome.init(onIncomeGenerated: (double points) {
-        expect(points, equals(testIncome));
-      });
-      
+      idleIncome.init(
+        onIncomeGenerated: (double points) {
+          expect(points, equals(testIncome));
+        },
+      );
+
       // 這裡我們無法直接測試 _onTick，因為它是私有方法
       // 實際測試會在整合測試中進行
     });
@@ -119,7 +120,7 @@ void main() {
     test('應可正確重置統計', () {
       // 手動設定一些統計數據來測試重置
       // 由於統計數據是私有的，我們通過 getStats 來驗證
-      
+
       idleIncome.resetStats();
       expect(idleIncome.totalIdleTime, 0.0);
       expect(idleIncome.totalIdleIncome, 0.0);
@@ -127,7 +128,7 @@ void main() {
 
     test('應正確提供統計資訊', () {
       final stats = idleIncome.getStats();
-      
+
       expect(stats, isA<Map<String, dynamic>>());
       expect(stats.containsKey('currentIdlePerSec'), true);
       expect(stats.containsKey('totalIdleTime'), true);
@@ -144,10 +145,9 @@ void main() {
     setUp(() {
       gameClock = GameClockService();
       gameClock.init();
-      
+
       idleIncome = IdleIncomeService();
-      idleIncome.init(onIncomeGenerated: (double points) {
-      });
+      idleIncome.init(onIncomeGenerated: (double points) {});
     });
 
     tearDown(() {
@@ -255,20 +255,20 @@ void main() {
       gameClock.subscribe('error_handler', (delta) {
         throw Exception('Test error');
       });
-      
+
       // 訂閱一個正常的處理器
       bool normalHandlerCalled = false;
       gameClock.subscribe('normal_handler', (delta) {
         normalHandlerCalled = true;
       });
-      
+
       gameClock.start();
-      
+
       // 等待一些 tick，確保錯誤處理正常
       await Future.delayed(const Duration(milliseconds: 50));
-      
+
       gameClock.stop();
-      
+
       // 正常處理器應該仍然被呼叫
       expect(normalHandlerCalled, true);
     });
@@ -287,27 +287,26 @@ void main() {
     });
 
     test('應能優雅處理訂閱者錯誤', () async {
-      
       // 訂閱一個會拋出錯誤的處理器
       gameClock.subscribe('error_handler', (delta) {
         throw Exception('Test error');
       });
-      
+
       // 訂閱一個正常的處理器
       gameClock.subscribe('normal_handler', (delta) {});
-      
+
       gameClock.start();
-      
+
       // 等待一些 tick，確保錯誤處理正常
       await Future.delayed(const Duration(milliseconds: 50));
-      
+
       gameClock.stop();
     });
 
     test('應能處理多次 dispose 呼叫', () {
       gameClock.start();
       gameClock.dispose();
-      
+
       // 第二次 dispose 不應該拋出錯誤
       expect(() => gameClock.dispose(), returnsNormally);
     });

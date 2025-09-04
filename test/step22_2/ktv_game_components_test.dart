@@ -33,7 +33,7 @@ void main() {
 
         // 測試音符移動到一半的位置
         note.update(8.75, 1500.0); // 距離目標時間 1.25 秒，在 approachTime 1.5 秒範圍內
-        
+
         // 應該移動到接近判定線的位置
         expect(note.currentY, greaterThan(-100.0));
         expect(note.currentY, lessThan(800.0));
@@ -50,7 +50,7 @@ void main() {
 
         // 測試音符到達判定線
         note.update(10.0, 1500.0);
-        
+
         expect(note.hasReachedJudgeline, isTrue);
         expect(note.currentY, equals(800.0));
         expect(note.reachTime, equals(10.0));
@@ -104,7 +104,7 @@ void main() {
     group('NotePool 測試', () {
       test('音符池初始化正確', () {
         final pool = NotePool(maxPoolSize: 10);
-        
+
         expect(pool.activeNotes, isEmpty);
         expect(pool.getStats()['active'], equals(0));
         expect(pool.getStats()['total'], equals(0));
@@ -112,16 +112,16 @@ void main() {
 
       test('音符池獲取和釋放正確', () {
         final pool = NotePool(maxPoolSize: 3);
-        
+
         // 獲取音符
         final note1 = pool.acquire(10.0, 1, -100.0, 800.0);
         expect(note1, isNotNull);
         expect(pool.activeNotes.length, equals(1));
-        
+
         final note2 = pool.acquire(11.0, 2, -100.0, 800.0);
         expect(note2, isNotNull);
         expect(pool.activeNotes.length, equals(2));
-        
+
         // 釋放音符
         pool.release(note1!);
         expect(pool.activeNotes.length, equals(1));
@@ -130,11 +130,11 @@ void main() {
 
       test('音符池達到上限時拒絕創建', () {
         final pool = NotePool(maxPoolSize: 2);
-        
+
         final note1 = pool.acquire(10.0, 1, -100.0, 800.0);
         final note2 = pool.acquire(11.0, 2, -100.0, 800.0);
         final note3 = pool.acquire(12.0, 3, -100.0, 800.0);
-        
+
         expect(note1, isNotNull);
         expect(note2, isNotNull);
         expect(note3, isNull); // 應該拒絕創建
@@ -143,12 +143,12 @@ void main() {
 
       test('音符池清空功能正確', () {
         final pool = NotePool(maxPoolSize: 10);
-        
+
         pool.acquire(10.0, 1, -100.0, 800.0);
         pool.acquire(11.0, 2, -100.0, 800.0);
-        
+
         expect(pool.activeNotes.length, equals(2));
-        
+
         pool.clear();
         expect(pool.activeNotes.length, equals(0));
       });
@@ -188,7 +188,7 @@ void main() {
 
         expect(lane0X, lessThan(lane1X));
         expect(lane1X, lessThan(lane2X));
-        
+
         // 第一條軌道應該在左側
         expect(lane0X, greaterThan(0));
         // 最後一條軌道應該在右側
@@ -225,14 +225,14 @@ void main() {
         );
 
         final lane = layout.getLane(1);
-        
+
         // 上方應該比下方窄（透視效果）
         expect(lane.topWidth, lessThan(lane.bottomWidth));
-        
+
         // 檢查不同 Y 位置的寬度
         final topWidth = lane.getWidthAtY(lane.topY);
         final bottomWidth = lane.getWidthAtY(lane.bottomY);
-        
+
         expect(topWidth, equals(lane.topWidth));
         expect(bottomWidth, equals(lane.bottomWidth));
       });
@@ -246,7 +246,7 @@ void main() {
           'beatmap': [
             {'time': 1.0, 'position': 1},
             {'time': 2.0, 'position': 3},
-          ]
+          ],
         };
 
         final difficulty = KtvDifficulty.fromJson(difficultyData);

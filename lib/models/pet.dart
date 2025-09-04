@@ -106,10 +106,10 @@ class Pet {
   int getUpgradeRequirement(int targetLevel) {
     if (targetLevel <= 1) return 1;
     if (targetLevel == 2) return 2;
-    
+
     int prev = 1;
     int curr = 2;
-    
+
     for (int i = 3; i <= targetLevel; i++) {
       int next = prev + curr;
       prev = curr;
@@ -118,7 +118,7 @@ class Pet {
         return curr;
       }
     }
-    
+
     return curr;
   }
 
@@ -129,27 +129,39 @@ class Pet {
   bool get canUpgrade => upgradePoints >= nextLevelRequirement;
 
   /// 計算當前等級加成倍率
-  double getLevelUpgradeMultiplier(double levelUpUpgradeBase, int decayLevels, double decayRate) {
+  double getLevelUpgradeMultiplier(
+    double levelUpUpgradeBase,
+    int decayLevels,
+    double decayRate,
+  ) {
     if (level <= 1) return 1.0;
-    
+
     double totalUpgrade = 0.0;
     double currentUpgrade = levelUpUpgradeBase;
-    
+
     for (int i = 2; i <= level; i++) {
       totalUpgrade += currentUpgrade;
-      
+
       // 每過 decayLevels 等級，升級加成減半
       if (i % decayLevels == 0) {
         currentUpgrade *= decayRate;
       }
     }
-    
+
     return 1.0 + totalUpgrade;
   }
 
   /// 計算當前實際 idlePerSec
-  double getCurrentIdlePerSec(double levelUpUpgradeBase, int decayLevels, double decayRate) {
-    final multiplier = getLevelUpgradeMultiplier(levelUpUpgradeBase, decayLevels, decayRate);
+  double getCurrentIdlePerSec(
+    double levelUpUpgradeBase,
+    int decayLevels,
+    double decayRate,
+  ) {
+    final multiplier = getLevelUpgradeMultiplier(
+      levelUpUpgradeBase,
+      decayLevels,
+      decayRate,
+    );
     return baseIdlePerSec * multiplier;
   }
 
@@ -179,7 +191,7 @@ class Pet {
   /// 升級寵物
   Pet upgrade() {
     if (!canUpgrade) return this;
-    
+
     final requiredPoints = nextLevelRequirement;
     return copyWith(
       level: level + 1,
@@ -200,7 +212,7 @@ class Pet {
   @override
   String toString() {
     return 'Pet(petKey: $petKey, rarity: ${rarity.value}, level: $level, '
-           'upgradePoints: $upgradePoints, isEquipped: $isEquipped)';
+        'upgradePoints: $upgradePoints, isEquipped: $isEquipped)';
   }
 
   @override
@@ -235,10 +247,7 @@ class PetState {
   final List<Pet> pets; // 所有寵物列表
   final String? equippedPetId; // 當前裝備的寵物 ID (petKey + rarity)
 
-  const PetState({
-    this.pets = const [],
-    this.equippedPetId,
-  });
+  const PetState({this.pets = const [], this.equippedPetId});
 
   /// 從 Map 建立 PetState
   factory PetState.fromMap(Map<String, dynamic> map) {
@@ -247,10 +256,7 @@ class PetState {
         .map((petData) => Pet.fromMap(petData as Map<String, dynamic>))
         .toList();
 
-    return PetState(
-      pets: pets,
-      equippedPetId: map['equippedPetId'] as String?,
-    );
+    return PetState(pets: pets, equippedPetId: map['equippedPetId'] as String?);
   }
 
   /// 轉換為 Map
@@ -275,10 +281,7 @@ class PetState {
   String _getPetId(Pet pet) => '${pet.petKey}_${pet.rarity.value}';
 
   /// 複製並更新部分欄位
-  PetState copyWith({
-    List<Pet>? pets,
-    String? equippedPetId,
-  }) {
+  PetState copyWith({List<Pet>? pets, String? equippedPetId}) {
     return PetState(
       pets: pets ?? List<Pet>.from(this.pets),
       equippedPetId: equippedPetId ?? this.equippedPetId,
@@ -301,26 +304,22 @@ class PetState {
   PetState equipPet(Pet pet) {
     // 先將所有寵物設為未裝備
     final updatedPets = pets.map((p) => p.setEquipped(false)).toList();
-    
+
     // 設定目標寵物為已裝備
-    final targetIndex = updatedPets.indexWhere((p) => _getPetId(p) == _getPetId(pet));
+    final targetIndex = updatedPets.indexWhere(
+      (p) => _getPetId(p) == _getPetId(pet),
+    );
     if (targetIndex != -1) {
       updatedPets[targetIndex] = updatedPets[targetIndex].setEquipped(true);
     }
 
-    return PetState(
-      pets: updatedPets,
-      equippedPetId: _getPetId(pet),
-    );
+    return PetState(pets: updatedPets, equippedPetId: _getPetId(pet));
   }
 
   /// 取消裝備
   PetState unequipAll() {
     final updatedPets = pets.map((pet) => pet.setEquipped(false)).toList();
-    return PetState(
-      pets: updatedPets,
-      equippedPetId: null,
-    );
+    return PetState(pets: updatedPets, equippedPetId: null);
   }
 
   @override

@@ -35,7 +35,9 @@ class CheckinService {
 
   /// 獲取當前本地日期字串 (YYYY-MM-DD)
   String _getLocalDateString() {
-    final now = DateTime.now().toUtc().add(const Duration(hours: 8)); // Asia/Taipei UTC+8
+    final now = DateTime.now().toUtc().add(
+      const Duration(hours: 8),
+    ); // Asia/Taipei UTC+8
     return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
@@ -43,7 +45,11 @@ class CheckinService {
   DateTime _parseLocalDate(String dateStr) {
     final parts = dateStr.split('-');
     if (parts.length != 3) throw ArgumentError('Invalid date format: $dateStr');
-    return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
   }
 
   /// 計算週起始日期
@@ -65,12 +71,16 @@ class CheckinService {
   }
 
   /// 生成隨機任務
-  CheckinTask _generateRandomTask(double currentIdlePerSec, List<int> tapRange) {
+  CheckinTask _generateRandomTask(
+    double currentIdlePerSec,
+    List<int> tapRange,
+  ) {
     final taskTypes = ['tap', 'collect'];
     final taskType = taskTypes[_random.nextInt(taskTypes.length)];
-    
+
     if (taskType == 'tap') {
-      final target = tapRange[0] + _random.nextInt(tapRange[1] - tapRange[0] + 1);
+      final target =
+          tapRange[0] + _random.nextInt(tapRange[1] - tapRange[0] + 1);
       return CheckinTask(type: 'tap', target: target);
     } else {
       // collect: floor(idlePerSec * 8 * 3600)
@@ -84,7 +94,7 @@ class CheckinService {
   Future<void> _checkAndHandleDayChange() async {
     final currentState = _gameStateService.gameState.value;
     final localToday = _getLocalDateString();
-    
+
     final checkinState = currentState.checkin;
     if (checkinState == null || checkinState.today.date != localToday) {
       await _handleDayChange(localToday);
@@ -95,25 +105,33 @@ class CheckinService {
   Future<void> _handleDayChange(String localToday) async {
     final currentState = _gameStateService.gameState.value;
     final existingCheckin = currentState.checkin;
-    
+
     // 獲取配置
-    final tapRange = _configService.getValue('checkin.config.tapRange', defaultValue: [20, 50]) as List<dynamic>;
-    final weekStartDow = _configService.getValue('checkin.config.weekStartDow', defaultValue: 1) as int;
+    final tapRange =
+        _configService.getValue(
+              'checkin.config.tapRange',
+              defaultValue: [20, 50],
+            )
+            as List<dynamic>;
+    final weekStartDow =
+        _configService.getValue('checkin.config.weekStartDow', defaultValue: 1)
+            as int;
     final tapRangeInt = tapRange.map((e) => (e as num).toInt()).toList();
-    
+
     // 獲取當前 idle 速率
     final currentIdlePerSec = _idleIncomeService.currentIdlePerSec;
-    
+
     // 生成新任務
     final newTask = _generateRandomTask(currentIdlePerSec, tapRangeInt);
-    
+
     // 計算週起始日
     final weekStart = _getWeekStart(localToday, weekStartDow);
-    
+
     // 檢查是否跨週
     bool isNewWeek = false;
     CheckinWeek newWeek;
-    if (existingCheckin == null || existingCheckin.week.weekStart != weekStart) {
+    if (existingCheckin == null ||
+        existingCheckin.week.weekStart != weekStart) {
       // 跨週：重置週狀態
       isNewWeek = true;
       newWeek = CheckinWeek(
@@ -124,7 +142,7 @@ class CheckinService {
     } else {
       newWeek = existingCheckin.week;
     }
-    
+
     // 建立新的今日狀態
     final snapshotIdle = (newTask.type == 'collect' && currentIdlePerSec == 0)
         ? 0.3
@@ -136,19 +154,16 @@ class CheckinService {
       skipViaAdUsed: false,
       idlePerSecSnapshot: snapshotIdle,
     );
-    
+
     // 建立新的打卡狀態
     final newCheckinState = CheckinState(
       tz: _timezone,
-      config: CheckinConfig(
-        weekStartDow: weekStartDow,
-        tapRange: tapRangeInt,
-      ),
+      config: CheckinConfig(weekStartDow: weekStartDow, tapRange: tapRangeInt),
       streak: existingCheckin?.streak ?? const CheckinStreak(),
       week: newWeek,
       today: newToday,
     );
-    
+
     // 更新遊戲狀態
     final newGameState = currentState.copyWith(checkin: newCheckinState);
     await _gameStateService.updateGameState(newGameState);
@@ -158,24 +173,24 @@ class CheckinService {
   Future<void> updateTaskProgress(String taskType, int amount) async {
     final currentState = _gameStateService.gameState.value;
     final checkinState = currentState.checkin;
-    
+
     if (checkinState == null || checkinState.today.status != 'pending') {
       return; // 無打卡狀態或今日已完成
     }
-    
+
     if (checkinState.today.task.type != taskType) {
       return; // 任務類型不符
     }
-    
+
     final currentProgress = checkinState.today.task.progress;
     // 進度上限為目標值
     final target = checkinState.today.task.target;
     final newProgress = (currentProgress + amount).clamp(0, target);
-    
+
     final updatedTask = checkinState.today.task.copyWith(progress: newProgress);
     final updatedToday = checkinState.today.copyWith(task: updatedTask);
     final updatedCheckin = checkinState.copyWith(today: updatedToday);
-    
+
     final newGameState = currentState.copyWith(checkin: updatedCheckin);
     await _gameStateService.updateGameState(newGameState);
     // 不自動完成；需由使用者點擊「完成簽到」按鈕觸發
@@ -190,13 +205,13 @@ class CheckinService {
   Future<void> updateCollectProgress(double memePointsGained) async {
     final currentState = _gameStateService.gameState.value;
     final checkinState = currentState.checkin;
-    
-    if (checkinState == null || 
-        checkinState.today.status != 'pending' || 
+
+    if (checkinState == null ||
+        checkinState.today.status != 'pending' ||
         checkinState.today.task.type != 'collect') {
       return;
     }
-    
+
     // collect 任務的進度是從今日首次進入開始累積的總點數
     // 這裡需要與其他服務協調來追蹤今日累積點數
     // 暫時直接更新進度，實際實作時需要整合 idle_income_service 的今日累積邏輯
@@ -207,13 +222,13 @@ class CheckinService {
   Future<void> skipViaAd() async {
     final currentState = _gameStateService.gameState.value;
     final checkinState = currentState.checkin;
-    
-    if (checkinState == null || 
+
+    if (checkinState == null ||
         checkinState.today.status != 'pending' ||
         checkinState.today.skipViaAdUsed) {
       return; // 無打卡狀態、已完成或已用過廣告跳過
     }
-    
+
     await _completeCheckin(true); // 跳過完成
   }
 
@@ -234,55 +249,55 @@ class CheckinService {
   Future<void> _completeCheckin(bool isSkipped) async {
     final currentState = _gameStateService.gameState.value;
     final checkinState = currentState.checkin;
-    
+
     if (checkinState == null || checkinState.today.status != 'pending') {
       return;
     }
-    
+
     final localToday = _getLocalDateString();
-    
+
     // 更新今日狀態
     final newStatus = isSkipped ? 'skipped' : 'done';
     final updatedToday = checkinState.today.copyWith(
       status: newStatus,
       skipViaAdUsed: isSkipped,
     );
-    
+
     // 計算位元索引並設置週遮罩
     final weekStartDate = _parseLocalDate(checkinState.week.weekStart);
     final todayDate = _parseLocalDate(localToday);
     final bitIndex = todayDate.difference(weekStartDate).inDays;
-    
+
     int newMask = checkinState.week.mask;
     if (bitIndex >= 0 && bitIndex < 7) {
       newMask |= (1 << bitIndex);
     }
-    
+
     final updatedWeek = checkinState.week.copyWith(mask: newMask);
-    
+
     // 更新連續統計
     final lastDate = checkinState.streak.lastDate;
     final isConsecutive = _isConsecutiveDay(lastDate, localToday);
-    
+
     final newCurrent = isConsecutive ? checkinState.streak.current + 1 : 1;
     final newBest = math.max(checkinState.streak.best, newCurrent);
     final newTotal = checkinState.streak.total + 1;
-    
+
     final updatedStreak = checkinState.streak.copyWith(
       current: newCurrent,
       best: newBest,
       total: newTotal,
       lastDate: localToday,
     );
-    
+
     final updatedCheckin = checkinState.copyWith(
       today: updatedToday,
       week: updatedWeek,
       streak: updatedStreak,
     );
-    
+
     var newGameState = currentState.copyWith(checkin: updatedCheckin);
-    
+
     // 檢查週獎勵（策略 A：每逢 7 的倍數）
     if (newTotal % 7 == 0) {
       final halfDayReward = await _calculateHalfDayIdleReward();
@@ -297,7 +312,7 @@ class CheckinService {
         // 避免 UI 回呼異常影響主流程
       }
     }
-    
+
     await _gameStateService.updateGameState(newGameState);
   }
 
@@ -319,24 +334,24 @@ class CheckinService {
   bool shouldShowRedDot() {
     final checkinState = getCurrentCheckinState();
     if (checkinState == null) return false;
-    
+
     final localToday = _getLocalDateString();
-    return checkinState.today.date == localToday && 
-           checkinState.today.status == 'pending';
+    return checkinState.today.date == localToday &&
+        checkinState.today.status == 'pending';
   }
 
   /// 獲取週曆顯示資料
   List<bool> getWeeklyCalendar() {
     final checkinState = getCurrentCheckinState();
     if (checkinState == null) return List.filled(7, false);
-    
+
     final mask = checkinState.week.mask;
     final calendar = <bool>[];
-    
+
     for (int i = 0; i < 7; i++) {
       calendar.add((mask & (1 << i)) != 0);
     }
-    
+
     return calendar;
   }
 
@@ -344,10 +359,10 @@ class CheckinService {
   double getTodayProgress() {
     final checkinState = getCurrentCheckinState();
     if (checkinState == null) return 0.0;
-    
+
     final task = checkinState.today.task;
     if (task.target <= 0) return 0.0;
-    
+
     return (task.progress / task.target).clamp(0.0, 1.0);
   }
 
@@ -355,18 +370,18 @@ class CheckinService {
   bool canCompleteToday() {
     final checkinState = getCurrentCheckinState();
     if (checkinState == null) return false;
-    
-    return checkinState.today.status == 'pending' && 
-           checkinState.today.task.progress >= checkinState.today.task.target;
+
+    return checkinState.today.status == 'pending' &&
+        checkinState.today.task.progress >= checkinState.today.task.target;
   }
 
   /// 檢查是否可以使用廣告跳過
   bool canSkipViaAd() {
     final checkinState = getCurrentCheckinState();
     if (checkinState == null) return false;
-    
-    return checkinState.today.status == 'pending' && 
-           !checkinState.today.skipViaAdUsed;
+
+    return checkinState.today.status == 'pending' &&
+        !checkinState.today.skipViaAdUsed;
   }
 
   /// 向後相容：是否有待完成的今日任務
@@ -385,8 +400,12 @@ class CheckinService {
 
     // 若尚未達標，為了測試向後相容，將進度補到目標
     if (checkin.today.task.progress < checkin.today.task.target) {
-      final filledTask = checkin.today.task.copyWith(progress: checkin.today.task.target);
-      final updated = checkin.copyWith(today: checkin.today.copyWith(task: filledTask));
+      final filledTask = checkin.today.task.copyWith(
+        progress: checkin.today.task.target,
+      );
+      final updated = checkin.copyWith(
+        today: checkin.today.copyWith(task: filledTask),
+      );
       await _gameStateService.updateGameState(state.copyWith(checkin: updated));
     }
 
@@ -424,7 +443,8 @@ class CheckinService {
     final nowLocalStr = _getLocalDateString();
     final nowLocal = _parseLocalDate(nowLocalStr);
     final yesterday = nowLocal.subtract(const Duration(days: 1));
-    final yesterdayStr = '${yesterday.year.toString().padLeft(4, '0')}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+    final yesterdayStr =
+        '${yesterday.year.toString().padLeft(4, '0')}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
 
     final newCurrent = checkin.streak.current + 1;
     final newBest = math.max(checkin.streak.best, newCurrent);
@@ -449,7 +469,9 @@ class CheckinService {
       );
 
       if (kDebugMode) {
-        debugPrint('CheckinService(debug): Weekly bonus simulated. Total: $newTotal, Reward: $halfDayReward');
+        debugPrint(
+          'CheckinService(debug): Weekly bonus simulated. Total: $newTotal, Reward: $halfDayReward',
+        );
       }
 
       try {
@@ -462,7 +484,9 @@ class CheckinService {
     await _gameStateService.updateGameState(newGameState);
 
     if (kDebugMode) {
-      debugPrint('CheckinService(debug): Simulated +1 past day. Streak(current=${updatedStreak.current}, best=${updatedStreak.best}, total=${updatedStreak.total}, lastDate=${updatedStreak.lastDate})');
+      debugPrint(
+        'CheckinService(debug): Simulated +1 past day. Streak(current=${updatedStreak.current}, best=${updatedStreak.best}, total=${updatedStreak.total}, lastDate=${updatedStreak.lastDate})',
+      );
     }
   }
 
@@ -470,7 +494,7 @@ class CheckinService {
   String getTodayTaskDescription() {
     final checkinState = getCurrentCheckinState();
     if (checkinState == null) return '';
-    
+
     final task = checkinState.today.task;
     if (task.type == 'tap') {
       return '點擊角色 ${task.target} 次';

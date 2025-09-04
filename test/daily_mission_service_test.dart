@@ -7,7 +7,14 @@ void main() {
   group('DailyMissionService 測試', () {
     late DailyMissionService service;
     late IdleIncomeService idleService;
-    DateTime fixedTime = DateTime(2025, 8, 24, 12, 0, 0); // 2025-08-24 12:00:00 UTC
+    DateTime fixedTime = DateTime(
+      2025,
+      8,
+      24,
+      12,
+      0,
+      0,
+    ); // 2025-08-24 12:00:00 UTC
 
     setUp(() {
       service = DailyMissionService(now: () => fixedTime);
@@ -140,10 +147,9 @@ void main() {
         idlePerSecSnapshot: 0.0,
         todayCompleted: 0,
       );
-      final state = GameState.initial(1).copyWith(
-        memePoints: 100.0,
-        dailyMission: mission,
-      );
+      final state = GameState.initial(
+        1,
+      ).copyWith(memePoints: 100.0, dailyMission: mission);
 
       // 先達標（不會自動完成）
       final s1 = service.onValidTap(state);
@@ -188,7 +194,7 @@ void main() {
 
       // 模擬完成多個任務
       GameState state = GameState.initial(1).copyWith(memePoints: 0.0);
-      
+
       for (int i = 1; i <= 5; i++) {
         state = service.ensureDailyMissionBlock(state);
         state = service.generateNextMission(state);
@@ -209,7 +215,9 @@ void main() {
         idlePerSecSnapshot: 0.6,
         todayCompleted: 1,
       );
-      final state1 = GameState.initial(1).copyWith(dailyMission: accumulateTask);
+      final state1 = GameState.initial(
+        1,
+      ).copyWith(dailyMission: accumulateTask);
       final result1 = service.onValidTap(state1);
       expect(result1.dailyMission!.progress, 25.0); // 無變化
 

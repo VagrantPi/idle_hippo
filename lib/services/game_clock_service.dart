@@ -13,7 +13,8 @@ class GameClockService with WidgetsBindingObserver {
   static const double _emaAlpha = 0.2;
   // 以 _targetFps 計算 tick 週期（微秒），讓節拍與目標 FPS 對齊
   static final Duration _tickInterval = Duration(
-      microseconds: (1000000 / _targetFps).round());
+    microseconds: (1000000 / _targetFps).round(),
+  );
 
   // 狀態變數
   Timer? _gameTimer;
@@ -40,10 +41,13 @@ class GameClockService with WidgetsBindingObserver {
   int get subscribersCount => _subscribers.length;
   double get currentFps {
     if (_fpsCountStartTime == null || _frameCount == 0) return 0.0;
-    final elapsed = DateTime.now().difference(_fpsCountStartTime!).inMilliseconds;
+    final elapsed = DateTime.now()
+        .difference(_fpsCountStartTime!)
+        .inMilliseconds;
     if (elapsed == 0) return 0.0;
     return _frameCount * 1000.0 / elapsed;
   }
+
   double get averageDeltaMs => _smoothDelta * 1000.0;
   String get lifecycleState => _isInForeground ? 'foreground' : 'background';
 
@@ -60,11 +64,11 @@ class GameClockService with WidgetsBindingObserver {
   /// 啟動時間系統
   void start() {
     if (_isRunning) return;
-    
+
     _isRunning = true;
     _lastTickMicros = _stopwatch.elapsedMicroseconds;
     _resetFpsCounter();
-    
+
     if (_isInForeground) {
       _startTimer();
     }
@@ -73,7 +77,7 @@ class GameClockService with WidgetsBindingObserver {
   /// 停止時間系統
   void stop() {
     if (!_isRunning) return;
-    
+
     _isRunning = false;
     _stopTimer();
   }
@@ -108,7 +112,7 @@ class GameClockService with WidgetsBindingObserver {
   /// 啟動計時器
   void _startTimer() {
     if (_gameTimer?.isActive == true) return;
-    
+
     _gameTimer = Timer.periodic(_tickInterval, (timer) {
       if (_isInForeground && _isRunning) {
         _tick();
@@ -160,15 +164,16 @@ class GameClockService with WidgetsBindingObserver {
   /// 更新統計資料
   void _updateStats(double rawDelta) {
     _frameCount++;
-    
+
     // 保持最近的 delta 記錄用於分析
     _recentDeltas.add(rawDelta);
-    if (_recentDeltas.length > 60) { // 保持最近 60 幀
+    if (_recentDeltas.length > 60) {
+      // 保持最近 60 幀
       _recentDeltas.removeAt(0);
     }
 
     // 每秒重置 fps 計數器
-    if (_fpsCountStartTime != null && 
+    if (_fpsCountStartTime != null &&
         DateTime.now().difference(_fpsCountStartTime!).inSeconds >= 1) {
       _resetFpsCounter();
     }
@@ -203,7 +208,8 @@ class GameClockService with WidgetsBindingObserver {
     for (int i = 0; i < times; i++) {
       // 在 fixedStep 模式下，以固定值進行
       final deltaForStats = _isFixedStepMode ? _fixedDelta : clamped;
-      _smoothDelta = _emaAlpha * deltaForStats + (1.0 - _emaAlpha) * _smoothDelta;
+      _smoothDelta =
+          _emaAlpha * deltaForStats + (1.0 - _emaAlpha) * _smoothDelta;
       _updateStats(deltaForStats);
       final deltaToBroadcast = _isFixedStepMode ? _fixedDelta : clamped;
       _broadcastTick(deltaToBroadcast);
@@ -214,15 +220,15 @@ class GameClockService with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     final wasInForeground = _isInForeground;
     _isInForeground = state == AppLifecycleState.resumed;
-    
+
     if (_isInForeground && !wasInForeground) {
       // 回到前台 - 重置時間基準避免大 delta
       _lastTickMicros = _stopwatch.elapsedMicroseconds;
       _resetFpsCounter();
-      
+
       if (_isRunning) {
         _startTimer();
       }

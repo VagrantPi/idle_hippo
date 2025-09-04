@@ -16,7 +16,7 @@ void main() {
         'levels': [
           {'level': 1, 'cost': 0, 'bonus': 0.8},
         ],
-      }
+      },
     ]);
   });
 
@@ -26,10 +26,9 @@ void main() {
 
   test('tap_gain=1.8 連續兩次後，memePoints 應近似 3.6', () {
     // Given: base=1（來自預設 game.json），+ 裝備加成 0.8 at Lv1
-    var state = GameState.initial(1).copyWith(
-      memePoints: 0.0,
-      equipments: {'tester_item': 1},
-    );
+    var state = GameState.initial(
+      1,
+    ).copyWith(memePoints: 0.0, equipments: {'tester_item': 1});
 
     final gain = equipment.computeTapGain(state); // 應為 1.8
     expect(gain, closeTo(1.8, 1e-9));

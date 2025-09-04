@@ -18,7 +18,8 @@ class PetsPage extends StatefulWidget {
   State<PetsPage> createState() => _PetsPageState();
 }
 
-class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin {
+class _PetsPageState extends State<PetsPage>
+    with SingleTickerProviderStateMixin {
   final PetService _petService = PetService();
   final GachaService _gachaService = GachaService();
   final RewardedAdService _rewardedAdService = RewardedAdService();
@@ -27,14 +28,14 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
   final Set<int> _pendingRevealTimestamps = <int>{};
   // 抽卡系統是否完成初始化（避免首次點擊觸發初始化造成延遲）
   bool _gachaReady = false;
-  
+
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // 初始化抽卡服務（完成後標記為就緒）
     _gachaService.initialize().then((_) {
       if (mounted) setState(() => _gachaReady = true);
@@ -70,10 +71,26 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
           ColorFiltered(
             colorFilter: isLocked
                 ? const ColorFilter.matrix(<double>[
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0,      0,      0,      1, 0,
+                    0.2126,
+                    0.7152,
+                    0.0722,
+                    0,
+                    0,
+                    0.2126,
+                    0.7152,
+                    0.0722,
+                    0,
+                    0,
+                    0.2126,
+                    0.7152,
+                    0.0722,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
                   ])
                 : const ColorFilter.mode(Colors.transparent, BlendMode.srcOver),
             child: Column(
@@ -107,24 +124,23 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                     indicatorColor: const Color(0xFF00FFD1),
                     tabs: [
                       Tab(text: _localization.getPageName('pets')),
-                      Tab(text: _localization.getString('pets.gacha.tab_title')),
+                      Tab(
+                        text: _localization.getString('pets.gacha.tab_title'),
+                      ),
                     ],
                   ),
                 ),
-              
-              // Tab 內容區域
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildPetsListTab(),
-                    _buildGachaTab(),
-                  ],
+
+                // Tab 內容區域
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [_buildPetsListTab(), _buildGachaTab()],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
           // 鎖定覆蓋層（主線 < 3）
           isLocked
@@ -133,11 +149,16 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                     color: Colors.black.withValues(alpha: 0.6),
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
                         ),
                         child: Text(
                           _localization.getString(
@@ -201,7 +222,11 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.pets, color: Colors.white.withValues(alpha: 0.7), size: 72),
+                Icon(
+                  Icons.pets,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  size: 72,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   _localization.getString('pets.no_pets_available'),
@@ -212,7 +237,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                   onPressed: () => _tabController.animateTo(1),
                   icon: const Icon(Icons.casino),
                   label: Text(_localization.getString('pets.gacha.tab_title')),
-                )
+                ),
               ],
             ),
           );
@@ -271,9 +296,9 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
               );
             },
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // 抽卡按鈕（左右兩欄）
           Row(
             children: [
@@ -285,7 +310,9 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                     final tickets = snapshot.data ?? 0;
                     return GachaButton(
                       text: _localization.getString('pets.gacha.single_draw'),
-                      costText: _localization.getString('pets.gacha.single_draw_cost'),
+                      costText: _localization.getString(
+                        'pets.gacha.single_draw_cost',
+                      ),
                       onPressed: _performSingleDraw,
                       isEnabled: tickets >= 1 && _gachaReady,
                       primaryColor: Colors.blue,
@@ -302,8 +329,12 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                   builder: (context, snapshot) {
                     final tickets = snapshot.data ?? 0;
                     return GachaButton(
-                      text: _localization.getString('pets.gacha.ten_plus_one_draw'),
-                      costText: _localization.getString('pets.gacha.ten_plus_one_cost'),
+                      text: _localization.getString(
+                        'pets.gacha.ten_plus_one_draw',
+                      ),
+                      costText: _localization.getString(
+                        'pets.gacha.ten_plus_one_cost',
+                      ),
                       onPressed: _performTenPlusOneDraw,
                       isEnabled: tickets >= 10 && _gachaReady,
                       primaryColor: Colors.purple,
@@ -316,7 +347,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
           ),
 
           const SizedBox(height: 16),
-          
+
           // 抽卡歷史
           Expanded(
             child: Container(
@@ -337,9 +368,7 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                     ),
                   ),
                   // const SizedBox(height: 8),
-                  Expanded(
-                    child: _buildGachaHistory(),
-                  ),
+                  Expanded(child: _buildGachaHistory()),
                 ],
               ),
             ),
@@ -379,8 +408,14 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
 
             final petKey = (record.petKey ?? '').trim();
             final localizedName = petKey.isNotEmpty
-                ? _localization.getString('pets.names.$petKey', defaultValue: record.name)
-                : _localization.getString(record.name, defaultValue: record.name);
+                ? _localization.getString(
+                    'pets.names.$petKey',
+                    defaultValue: record.name,
+                  )
+                : _localization.getString(
+                    record.name,
+                    defaultValue: record.name,
+                  );
             return GachaHistoryCard(
               rarity: record.rarity,
               name: localizedName,
@@ -434,13 +469,19 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
       });
       // 預先快取圖片，避免動畫開啟瞬間卡頓
       if (mounted) {
-        try { await precacheImage(AssetImage(result.imagePath), context); } catch (_) {}
+        try {
+          await precacheImage(AssetImage(result.imagePath), context);
+        } catch (_) {}
         _showGachaAnimation([result]);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localization.getString('pets.gacha.draw_failed')}: $e')),
+          SnackBar(
+            content: Text(
+              '${_localization.getString('pets.gacha.draw_failed')}: $e',
+            ),
+          ),
         );
       }
     }
@@ -458,9 +499,9 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('抽卡失敗: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('抽卡失敗: $e')));
       }
     }
   }
@@ -480,10 +521,14 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
         onReveal: (res) {
           // 非阻塞微前載：當前與下一張圖片
           if (mounted) {
-            try { precacheImage(AssetImage(res.imagePath), context); } catch (_) {}
+            try {
+              precacheImage(AssetImage(res.imagePath), context);
+            } catch (_) {}
             final idx = results.indexWhere((e) => e.timestamp == res.timestamp);
             if (idx != -1 && idx + 1 < results.length) {
-              try { precacheImage(AssetImage(results[idx + 1].imagePath), context); } catch (_) {}
+              try {
+                precacheImage(AssetImage(results[idx + 1].imagePath), context);
+              } catch (_) {}
             }
           }
           // 單抽：名稱揭示時釋放
@@ -509,12 +554,13 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
             });
           }
           // 兩階段提交：動畫完成後提交 pending 批次（冪等、非阻塞）
-          try { _gachaService.commitPendingBatchIfAny(); } catch (_) {}
+          try {
+            _gachaService.commitPendingBatchIfAny();
+          } catch (_) {}
         },
       ),
     );
   }
-
 
   /// 建構當前裝備寵物資訊
   Widget _buildEquippedPetInfo(Pet pet) {
@@ -620,22 +666,36 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                 children: [
                   Expanded(
                     child: Text(
-                      _localization.getString('pets.names.${pet.petKey}', defaultValue: pet.name),
+                      _localization.getString(
+                        'pets.names.${pet.petKey}',
+                        defaultValue: pet.name,
+                      ),
                       maxLines: 2,
                       softWrap: true,
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: pet.rarity.getColor(),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       pet.rarity.value,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -653,21 +713,30 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                           '${_localization.getUI('level')}: ${pet.level}',
                           maxLines: 2,
                           softWrap: true,
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           '${_localization.getString('pets.idle_income', defaultValue: '放置收益')}: ${currentIdlePerSec.toStringAsFixed(2)}${_localization.getString('common.perSecond', defaultValue: '/s')}',
                           maxLines: 2,
                           softWrap: true,
-                          style: const TextStyle(color: Colors.lightGreenAccent, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.lightGreenAccent,
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           '${_localization.getString('pets.upgrade_points', defaultValue: '升級點數')}: ${pet.upgradePoints}/${pet.nextLevelRequirement}',
                           maxLines: 2,
                           softWrap: true,
-                          style: const TextStyle(color: Colors.orange, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -684,18 +753,31 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                           child: ElevatedButton(
                             onPressed: () => _onPetTap(pet),
                             style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              backgroundColor: isEquipped ? Colors.green : const Color(0xFF00FFD1),
-                              foregroundColor: isEquipped ? Colors.white : Colors.black,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              backgroundColor: isEquipped
+                                  ? Colors.green
+                                  : const Color(0xFF00FFD1),
+                              foregroundColor: isEquipped
+                                  ? Colors.white
+                                  : Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                isEquipped ? _localization.getUI('unequip') : _localization.getUI('equip'),
+                                isEquipped
+                                    ? _localization.getUI('unequip')
+                                    : _localization.getUI('equip'),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -705,14 +787,23 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                           height: 40,
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: pet.canUpgrade ? () => _upgradePet(pet) : null,
+                            onPressed: pet.canUpgrade
+                                ? () => _upgradePet(pet)
+                                : null,
                             style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              backgroundColor: pet.canUpgrade ? Colors.blue : Colors.grey,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              backgroundColor: pet.canUpgrade
+                                  ? Colors.blue
+                                  : Colors.grey,
                               disabledBackgroundColor: Colors.grey,
                               disabledForegroundColor: Colors.white70,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: FittedBox(
@@ -729,7 +820,6 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
                   ),
                 ],
               ),
-              
             ],
           );
         },
@@ -760,5 +850,4 @@ class _PetsPageState extends State<PetsPage> with SingleTickerProviderStateMixin
       );
     }
   }
-
 }

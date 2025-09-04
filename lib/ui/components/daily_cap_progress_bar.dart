@@ -38,9 +38,7 @@ class DailyCapProgressBar extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   height: height,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                  ),
+                  decoration: BoxDecoration(color: backgroundColor),
                 ),
                 // 填充
                 AnimatedContainer(
@@ -48,9 +46,7 @@ class DailyCapProgressBar extends StatelessWidget {
                   curve: Curves.easeOut,
                   width: fillWidth,
                   height: height,
-                  decoration: BoxDecoration(
-                    color: fillColor,
-                  ),
+                  decoration: BoxDecoration(color: fillColor),
                 ),
               ],
             ),

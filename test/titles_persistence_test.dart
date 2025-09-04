@@ -9,14 +9,8 @@ void main() {
   group('TitlesState 序列化與持久化', () {
     test('TitlesState toMap/fromMap round-trip', () {
       final origin = TitlesState(
-        states: {
-          't_a': 'locked',
-          't_b': 'claimable',
-          't_c': 'claimed',
-        },
-        claimedAt: {
-          't_c': 1700000000000,
-        },
+        states: {'t_a': 'locked', 't_b': 'claimable', 't_c': 'claimed'},
+        claimedAt: {'t_c': 1700000000000},
         hasClaimable: true,
       );
 
@@ -43,14 +37,8 @@ void main() {
       final current = svc.gameState.value;
       final titles = current.titles ?? const TitlesState();
       final updatedTitles = titles.copyWith(
-        states: {
-          ...titles.states,
-          't_x': 'claimed',
-        },
-        claimedAt: {
-          ...titles.claimedAt,
-          't_x': now,
-        },
+        states: {...titles.states, 't_x': 'claimed'},
+        claimedAt: {...titles.claimedAt, 't_x': now},
         hasClaimable: false,
       );
 

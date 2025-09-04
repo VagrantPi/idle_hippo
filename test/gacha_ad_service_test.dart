@@ -68,11 +68,11 @@ void main() {
       final ymd = DateFormat('yyyy-MM-dd').format(yesterday);
 
       final currentState = gameStateService.gameState.value;
-      final forcedYesterday = (currentState.gacha ?? GachaState.initial()).copyWith(
-        lastDate: ymd,
-        tenPackAdRemaining: 0,
+      final forcedYesterday = (currentState.gacha ?? GachaState.initial())
+          .copyWith(lastDate: ymd, tenPackAdRemaining: 0);
+      await gameStateService.updateGameState(
+        currentState.copyWith(gacha: forcedYesterday),
       );
-      await gameStateService.updateGameState(currentState.copyWith(gacha: forcedYesterday));
 
       // 觸發服務的日重置檢查
       remaining = await rewardedAdService.getRemainingGachaTenPackAd();
@@ -81,7 +81,10 @@ void main() {
 
     test('剩餘次數變化時，Stream 應發出新值', () async {
       // 初始值 1，消耗後 0
-      expect(rewardedAdService.remainingGachaTenPackAdStream, emitsInOrder([1, 0]));
+      expect(
+        rewardedAdService.remainingGachaTenPackAdStream,
+        emitsInOrder([1, 0]),
+      );
       await rewardedAdService.consumeGachaTenPackAd();
     });
   });

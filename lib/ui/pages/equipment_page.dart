@@ -24,13 +24,18 @@ class EquipmentPage extends StatefulWidget {
   State<EquipmentPage> createState() => _EquipmentPageState();
 }
 
-class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProviderStateMixin {
+class _EquipmentPageState extends State<EquipmentPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex.clamp(0, 1));
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 1),
+    );
   }
 
   @override
@@ -48,7 +53,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final localization = LocalizationService();
-    
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 80, 16, 16),
       child: Column(
@@ -78,19 +83,14 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
               indicatorColor: const Color(0xFF00FFD1),
-              labelStyle: const TextStyle(
-                fontSize: 18,
-              ),
+              labelStyle: const TextStyle(fontSize: 18),
             ),
           ),
           const SizedBox(height: 16),
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [
-                _buildTapEquipmentGrid(),
-                _buildIdleEquipmentGrid(),
-              ],
+              children: [_buildTapEquipmentGrid(), _buildIdleEquipmentGrid()],
             ),
           ),
         ],
@@ -102,7 +102,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
     final localization = LocalizationService();
     final equipmentService = EquipmentService();
     final items = equipmentService.listTapEquipments();
-    
+
     return GridView.builder(
       padding: const EdgeInsets.only(top: 10),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -120,11 +120,18 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
         final currentLevel = widget.equipments[id] ?? 0;
         final nextCost = equipmentService.getNextCost(id, currentLevel);
         final unlocked = equipmentService.isUnlockedBy(widget.equipments, id);
-        final canUpgrade = nextCost != null && unlocked && widget.memePoints >= nextCost;
+        final canUpgrade =
+            nextCost != null && unlocked && widget.memePoints >= nextCost;
         final isMax = nextCost == null;
 
-        final currentBonus = equipmentService.cumulativeBonusFor(id, currentLevel);
-        final nextBonus = equipmentService.cumulativeBonusFor(id, currentLevel + 1);
+        final currentBonus = equipmentService.cumulativeBonusFor(
+          id,
+          currentLevel,
+        );
+        final nextBonus = equipmentService.cumulativeBonusFor(
+          id,
+          currentLevel + 1,
+        );
 
         return Stack(
           children: [
@@ -152,7 +159,10 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                           errorBuilder: (c, e, s) => Container(
                             alignment: Alignment.topCenter,
                             color: Colors.white10,
-                            child: const Icon(Icons.videogame_asset, color: Colors.white54),
+                            child: const Icon(
+                              Icons.videogame_asset,
+                              color: Colors.white54,
+                            ),
                           ),
                         ),
                       ),
@@ -161,7 +171,11 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                   const SizedBox(height: 1),
                   Text(
                     localization.getString(nameKey),
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -175,18 +189,26 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                           children: [
                             Text(
                               '${localization.getUI('level')}: $currentLevel',
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 1),
                             Builder(
                               builder: (_) {
-                                final double delta = !isMax ? (nextBonus - currentBonus) : 0.0;
+                                final double delta = !isMax
+                                    ? (nextBonus - currentBonus)
+                                    : 0.0;
                                 final bonusText = !isMax
                                     ? '+${_fmt(currentBonus)}(+${_fmt(delta)})'
                                     : '+${_fmt(currentBonus)}';
                                 return Text(
                                   '${localization.getUI('bonus')}: $bonusText',
-                                  style: const TextStyle(color: Colors.lightGreenAccent, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Colors.lightGreenAccent,
+                                    fontSize: 12,
+                                  ),
                                 );
                               },
                             ),
@@ -194,7 +216,9 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                             Text(
                               '${localization.getUI('cost')}: ${nextCost ?? '-'}',
                               style: TextStyle(
-                                color: (!isMax && canUpgrade) ? Colors.yellow : Colors.white54,
+                                color: (!isMax && canUpgrade)
+                                    ? Colors.yellow
+                                    : Colors.white54,
                                 fontSize: 12,
                               ),
                             ),
@@ -207,10 +231,16 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                         width: 44,
                         height: 44,
                         child: ElevatedButton(
-                          onPressed: (!isMax && canUpgrade) ? () => widget.onUpgrade(id) : null,
+                          onPressed: (!isMax && canUpgrade)
+                              ? () => widget.onUpgrade(id)
+                              : null,
                           style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            backgroundColor: (!isMax && canUpgrade) ? const Color(0xFF00FFD1) : Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: (!isMax && canUpgrade)
+                                ? const Color(0xFF00FFD1)
+                                : Colors.grey,
                             foregroundColor: Colors.black,
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
@@ -219,9 +249,13 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              !isMax ? localization.getUI('upgrade') : localization.getUI('maxLevel'),
+                              !isMax
+                                  ? localization.getUI('upgrade')
+                                  : localization.getUI('maxLevel'),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -247,14 +281,20 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                           if (req == null) return localization.getUI('locked');
                           final rid = req['id'] as String? ?? '';
                           final lv = (req['level'] as num?)?.toInt() ?? 0;
-                          final ridName = localization.getString('equip.$rid.name', defaultValue: rid);
+                          final ridName = localization.getString(
+                            'equip.$rid.name',
+                            defaultValue: rid,
+                          );
                           final requires = localization.getUI('requires');
                           final toLevel = localization.getUI('toLevel');
                           // e.g. Requires <name> to Lv<lv>
                           return '$requires $ridName $toLevel$lv';
                         }(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -270,7 +310,7 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
     final localization = LocalizationService();
     final equipmentService = EquipmentService();
     final items = equipmentService.listIdleEquipments();
-    
+
     return GridView.builder(
       padding: const EdgeInsets.only(top: 10),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -287,15 +327,25 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
         final nameKey = (e['name_key'] ?? '') as String;
         final currentLevel = widget.equipments[id] ?? 0;
         final nextCost = equipmentService.getIdleNextCost(id, currentLevel);
-        final unlocked = equipmentService.isIdleEquipmentUnlocked(widget.equipments, id);
+        final unlocked = equipmentService.isIdleEquipmentUnlocked(
+          widget.equipments,
+          id,
+        );
         // 需同時滿足主線解鎖（僅針對 youtube）
         final questUnlocked = widget.unlockedRewards.contains('equipment.$id');
         final uiUnlocked = unlocked && (id != 'youtube' || questUnlocked);
-        final canUpgrade = nextCost != null && uiUnlocked && widget.memePoints >= nextCost;
+        final canUpgrade =
+            nextCost != null && uiUnlocked && widget.memePoints >= nextCost;
         final isMax = nextCost == null;
 
-        final currentBonus = equipmentService.cumulativeIdleBonusFor(id, currentLevel);
-        final nextBonus = equipmentService.cumulativeIdleBonusFor(id, currentLevel + 1);
+        final currentBonus = equipmentService.cumulativeIdleBonusFor(
+          id,
+          currentLevel,
+        );
+        final nextBonus = equipmentService.cumulativeIdleBonusFor(
+          id,
+          currentLevel + 1,
+        );
 
         return Stack(
           children: [
@@ -324,17 +374,36 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                             errorBuilder: (c, e, s) => Container(
                               alignment: Alignment.topCenter,
                               color: Colors.white10,
-                              child: const Icon(Icons.auto_awesome, color: Colors.white54),
+                              child: const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.white54,
+                              ),
                             ),
                           );
                           if (!uiUnlocked) {
                             // 鎖定時套用灰階
                             return ColorFiltered(
                               colorFilter: const ColorFilter.matrix(<double>[
-                                0.2126, 0.7152, 0.0722, 0, 0,
-                                0.2126, 0.7152, 0.0722, 0, 0,
-                                0.2126, 0.7152, 0.0722, 0, 0,
-                                0, 0, 0, 1, 0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
                               ]),
                               child: img,
                             );
@@ -347,7 +416,11 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                   const SizedBox(height: 1),
                   Text(
                     localization.getString(nameKey),
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -361,18 +434,26 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                           children: [
                             Text(
                               '${localization.getUI('level')}: $currentLevel',
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 1),
                             Builder(
                               builder: (_) {
-                                final double delta = !isMax ? (nextBonus - currentBonus) : 0.0;
+                                final double delta = !isMax
+                                    ? (nextBonus - currentBonus)
+                                    : 0.0;
                                 final bonusText = !isMax
                                     ? '+${_fmt(currentBonus)}/s(+${_fmt(delta)})'
                                     : '+${_fmt(currentBonus)}/s';
                                 return Text(
                                   bonusText,
-                                  style: const TextStyle(color: Colors.lightGreenAccent, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Colors.lightGreenAccent,
+                                    fontSize: 12,
+                                  ),
                                 );
                               },
                             ),
@@ -380,7 +461,9 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                             Text(
                               '${localization.getUI('cost')}: ${nextCost ?? '-'}',
                               style: TextStyle(
-                                color: (!isMax && canUpgrade) ? Colors.yellow : Colors.white54,
+                                color: (!isMax && canUpgrade)
+                                    ? Colors.yellow
+                                    : Colors.white54,
                                 fontSize: 12,
                               ),
                             ),
@@ -393,10 +476,16 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                         width: 44,
                         height: 44,
                         child: ElevatedButton(
-                          onPressed: (!isMax && canUpgrade) ? () => widget.onUpgradeIdle(id) : null,
+                          onPressed: (!isMax && canUpgrade)
+                              ? () => widget.onUpgradeIdle(id)
+                              : null,
                           style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            backgroundColor: (!isMax && canUpgrade) ? const Color(0xFF00FFD1) : Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: (!isMax && canUpgrade)
+                                ? const Color(0xFF00FFD1)
+                                : Colors.grey,
                             foregroundColor: Colors.black,
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
@@ -405,9 +494,13 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              !isMax ? localization.getUI('upgrade') : localization.getUI('maxLevel'),
+                              !isMax
+                                  ? localization.getUI('upgrade')
+                                  : localization.getUI('maxLevel'),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -437,16 +530,25 @@ class _EquipmentPageState extends State<EquipmentPage> with SingleTickerProvider
                             );
                           }
                           final unlock = e['unlock'] as Map<String, dynamic>?;
-                          if (unlock == null) return localization.getUI('locked');
+                          if (unlock == null)
+                            return localization.getUI('locked');
                           final reqId = unlock['id'] as String? ?? '';
-                          final reqLevel = (unlock['level'] as num?)?.toInt() ?? 0;
-                          final reqName = localization.getString('equip.$reqId.name', defaultValue: reqId);
-                          return localization.getString('equip.lock.need_level')
+                          final reqLevel =
+                              (unlock['level'] as num?)?.toInt() ?? 0;
+                          final reqName = localization.getString(
+                            'equip.$reqId.name',
+                            defaultValue: reqId,
+                          );
+                          return localization
+                              .getString('equip.lock.need_level')
                               .replaceAll('{name}', reqName)
                               .replaceAll('{level}', reqLevel.toString());
                         }(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

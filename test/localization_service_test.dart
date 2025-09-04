@@ -4,7 +4,7 @@ import 'package:idle_hippo/services/localization_service.dart';
 void main() {
   // 初始化測試環境
   TestWidgetsFlutterBinding.ensureInitialized();
-  
+
   late LocalizationService localizationService;
 
   setUp(() {
@@ -21,10 +21,10 @@ void main() {
     test('應可正確切換語言', () {
       localizationService.init(language: 'zh');
       expect(localizationService.currentLanguage, equals('zh'));
-      
+
       localizationService.init(language: 'jp');
       expect(localizationService.currentLanguage, equals('jp'));
-      
+
       localizationService.init(language: 'ko');
       expect(localizationService.currentLanguage, equals('ko'));
     });
@@ -38,15 +38,16 @@ void main() {
     test('遇到無效語言應優雅處理', () async {
       // 儲存當前語言
       final originalLanguage = localizationService.currentLanguage;
-      
+
       // 測試無效語言代碼
       await localizationService.init(language: 'invalid_lang');
-      
+
       // 驗證語言應該保持不變或回退到預設英文
       expect(
         ['en', originalLanguage].contains(localizationService.currentLanguage),
         isTrue,
-        reason: 'Should fallback to a valid language when invalid language code is provided'
+        reason:
+            'Should fallback to a valid language when invalid language code is provided',
       );
     });
   });

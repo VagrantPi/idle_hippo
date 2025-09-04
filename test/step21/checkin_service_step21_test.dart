@@ -45,13 +45,21 @@ void main() {
       for (int i = 0; i < maxTries; i++) {
         final state = gs.currentState;
         final ck = state.checkin;
-        final past = DateTime.now().toUtc().add(const Duration(hours: 8)).subtract(const Duration(days: 1));
-        final pastStr = '${past.year.toString().padLeft(4, '0')}-${past.month.toString().padLeft(2, '0')}-${past.day.toString().padLeft(2, '0')}';
+        final past = DateTime.now()
+            .toUtc()
+            .add(const Duration(hours: 8))
+            .subtract(const Duration(days: 1));
+        final pastStr =
+            '${past.year.toString().padLeft(4, '0')}-${past.month.toString().padLeft(2, '0')}-${past.day.toString().padLeft(2, '0')}';
         if (ck == null) {
           await checkin.checkDayChange();
         } else {
           final patched = ck.copyWith(
-            today: ck.today.copyWith(date: pastStr, status: 'pending', task: ck.today.task.copyWith(progress: 0)),
+            today: ck.today.copyWith(
+              date: pastStr,
+              status: 'pending',
+              task: ck.today.task.copyWith(progress: 0),
+            ),
           );
           await gs.updateGameState(state.copyWith(checkin: patched));
           await checkin.checkDayChange();
@@ -75,9 +83,15 @@ void main() {
       final target = ck.today.task.target;
       final tapRange = ck.config.tapRange;
       expect(ck.today.task.type, 'tap', reason: '應為 tap 任務');
-      expect(target >= tapRange.first && target <= tapRange.last, isTrue, reason: '目標需落於設定範圍');
+      expect(
+        target >= tapRange.first && target <= tapRange.last,
+        isTrue,
+        reason: '目標需落於設定範圍',
+      );
       expect(checkin.shouldShowRedDot(), isTrue, reason: '未完成前應顯示紅點');
-      final bitIndex = DateTime.parse(today()).difference(DateTime.parse(ck.week.weekStart)).inDays;
+      final bitIndex = DateTime.parse(
+        today(),
+      ).difference(DateTime.parse(ck.week.weekStart)).inDays;
       final mask = ck.week.mask;
       expect((mask & (1 << bitIndex)) != 0, isFalse, reason: '未完成前週曆當天格不應亮');
     });
@@ -104,8 +118,14 @@ void main() {
       await checkin.completeToday();
       ck = checkin.getCurrentCheckinState()!;
       expect(ck.today.status, 'done');
-      final bitIndex = DateTime.parse(today()).difference(DateTime.parse(ck.week.weekStart)).inDays;
-      expect((ck.week.mask & (1 << bitIndex)) != 0, isTrue, reason: '完成後當天 bit 應設位');
+      final bitIndex = DateTime.parse(
+        today(),
+      ).difference(DateTime.parse(ck.week.weekStart)).inDays;
+      expect(
+        (ck.week.mask & (1 << bitIndex)) != 0,
+        isTrue,
+        reason: '完成後當天 bit 應設位',
+      );
       expect(checkin.shouldShowRedDot(), isFalse, reason: '簽到後紅點應消失');
     });
 
@@ -120,7 +140,9 @@ void main() {
       ck = checkin.getCurrentCheckinState()!;
       expect(ck.today.status, 'skipped');
       expect(ck.today.skipViaAdUsed, isTrue);
-      final bitIndex = DateTime.parse(today()).difference(DateTime.parse(ck.week.weekStart)).inDays;
+      final bitIndex = DateTime.parse(
+        today(),
+      ).difference(DateTime.parse(ck.week.weekStart)).inDays;
       expect((ck.week.mask & (1 << bitIndex)) != 0, isTrue);
       expect(checkin.shouldShowRedDot(), isFalse);
     });
@@ -130,12 +152,17 @@ void main() {
       var s = gs.currentState;
       final ck = s.checkin!;
       final weekStartDow = ck.config.weekStartDow;
-      final oldWeekStart = DateTime.parse(weekStartOf(today(), weekStartDow)).subtract(const Duration(days: 7));
+      final oldWeekStart = DateTime.parse(
+        weekStartOf(today(), weekStartDow),
+      ).subtract(const Duration(days: 7));
       final patchedWeek = ck.week.copyWith(
-        weekStart: '${oldWeekStart.year.toString().padLeft(4, '0')}-${oldWeekStart.month.toString().padLeft(2, '0')}-${oldWeekStart.day.toString().padLeft(2, '0')}',
+        weekStart:
+            '${oldWeekStart.year.toString().padLeft(4, '0')}-${oldWeekStart.month.toString().padLeft(2, '0')}-${oldWeekStart.day.toString().padLeft(2, '0')}',
         mask: 127,
       );
-      await gs.updateGameState(s.copyWith(checkin: ck.copyWith(week: patchedWeek)));
+      await gs.updateGameState(
+        s.copyWith(checkin: ck.copyWith(week: patchedWeek)),
+      );
       await forceNewDay();
       final after = checkin.getCurrentCheckinState()!;
       final expectedWeekStart = weekStartOf(today(), weekStartDow);
@@ -149,10 +176,21 @@ void main() {
       // 將 streak 設置為昨天已簽到，current=3
       var s = gs.currentState;
       var ck = s.checkin!;
-      final yesterday = DateTime.now().toUtc().add(const Duration(hours: 8)).subtract(const Duration(days: 1));
-      final yStr = '${yesterday.year.toString().padLeft(4, '0')}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
-      final patchedStreak = ck.streak.copyWith(current: 3, total: ck.streak.total, best: ck.streak.best, lastDate: yStr);
-      await gs.updateGameState(s.copyWith(checkin: ck.copyWith(streak: patchedStreak)));
+      final yesterday = DateTime.now()
+          .toUtc()
+          .add(const Duration(hours: 8))
+          .subtract(const Duration(days: 1));
+      final yStr =
+          '${yesterday.year.toString().padLeft(4, '0')}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+      final patchedStreak = ck.streak.copyWith(
+        current: 3,
+        total: ck.streak.total,
+        best: ck.streak.best,
+        lastDate: yStr,
+      );
+      await gs.updateGameState(
+        s.copyWith(checkin: ck.copyWith(streak: patchedStreak)),
+      );
 
       // 補足今日進度並完成
       await checkin.completeCheckin();
@@ -168,8 +206,15 @@ void main() {
       var s = gs.currentState;
       var ck = s.checkin!;
       // 設 streak.total=6，完成後應成為 7 並觸發半日獎勵
-      final patchedStreak = ck.streak.copyWith(current: ck.streak.current, best: ck.streak.best, total: 6, lastDate: ck.streak.lastDate);
-      await gs.updateGameState(s.copyWith(checkin: ck.copyWith(streak: patchedStreak)));
+      final patchedStreak = ck.streak.copyWith(
+        current: ck.streak.current,
+        best: ck.streak.best,
+        total: 6,
+        lastDate: ck.streak.lastDate,
+      );
+      await gs.updateGameState(
+        s.copyWith(checkin: ck.copyWith(streak: patchedStreak)),
+      );
 
       final beforePoints = gs.currentState.memePoints;
       final expectedReward = 2.0 * 12 * 3600; // 半日放置
