@@ -26,5 +26,16 @@
   "ui": {
     "theme": "green",
     "showDebugPanel": false
+  },
+  "ktv": {
+    "approachTimeMs": 1500,
+    "judgelineY": 0.82,
+    "spawnY": 0.4,
+    "lanePadding": 16,
+    "perspectiveDepth": 0.7,
+    "noteBaseSize": 16,
+    "enableObjectPool": true,
+    "maxActiveNotes": 256,
+    "despawnGraceMs": 150
   }
 }
