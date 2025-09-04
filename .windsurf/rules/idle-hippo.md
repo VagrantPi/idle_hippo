@@ -2,6 +2,9 @@
 trigger: always_on
 ---
 
+以 Flutter + Flame 交付一款放置＋節奏小遊戲的手遊。
+風格：zh-TW、工程導向、可直接複製到專案根目錄。
+
 ## 1. 檔案與目錄規範
 - **lib/core/**：共用邏輯（router、assets 常數、事件 bus）
 - **lib/game/**：遊戲主邏輯（HippoGame、components、systems）
@@ -63,7 +66,6 @@ trigger: always_on
 
 ## 9. 文件規範
 - **README.md**：安裝、啟動、資產規範、場景擴充方式  
-- **CHANGELOG.md**：每一階段完成後更新  
 - **docs/**：可額外存放 PM spec、遊戲設計圖
 - 每次實作需求前都需要查看 assets/config 內參數，是否新需求有可以共用的，那就不需要再新增而外變數
 - 每當有新增新增數於 assets/config 內，則需要更新 docs/config.md 文件
@@ -73,5 +75,3 @@ trigger: always_on
 
 ## 11. flutter 語法
 - withOpacity 都改用 withValues 方法
-
----

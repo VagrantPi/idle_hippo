@@ -60,6 +60,7 @@ class ConfigService {
     try {
       final keys = path.split('.');
       dynamic current = _configs;
+      // print("current: $current");
 
       for (final key in keys) {
         if (current is Map<String, dynamic> && current.containsKey(key)) {
