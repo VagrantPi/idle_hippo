@@ -32,7 +32,8 @@ class QuestPage extends StatefulWidget {
   State<QuestPage> createState() => _QuestPageState();
 }
 
-class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMixin {
+class _QuestPageState extends State<QuestPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final MainQuestService _mainQuest = MainQuestService();
   final PetTicketQuestService _petTicketQuest = PetTicketQuestService();
@@ -99,15 +100,23 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
             child: TabBar(
               controller: _tabController,
               tabs: [
-                Tab(text: localization.getString('mission.dailyMissions', defaultValue: '每日任務')),
-                Tab(text: localization.getString('quest.main_quest', defaultValue: '主線任務')),
+                Tab(
+                  text: localization.getString(
+                    'mission.dailyMissions',
+                    defaultValue: '每日任務',
+                  ),
+                ),
+                Tab(
+                  text: localization.getString(
+                    'quest.main_quest',
+                    defaultValue: '主線任務',
+                  ),
+                ),
               ],
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
               indicatorColor: const Color(0xFF00FFD1),
-              labelStyle: const TextStyle(
-                fontSize: 18,
-              ),
+              labelStyle: const TextStyle(fontSize: 18),
             ),
           ),
           const SizedBox(height: 16),
@@ -161,7 +170,11 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
         _buildPetTicketQuestCard(localization),
         const SizedBox(height: 12),
         Text(
-          localization.getString('mission.dailyMissions', defaultValue: '每日任務') + (' (${widget.missionsTodayCompleted}/10)'),
+          localization.getString(
+                'mission.dailyMissions',
+                defaultValue: '每日任務',
+              ) +
+              (' (${widget.missionsTodayCompleted}/10)'),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 24,
@@ -179,121 +192,154 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
               itemCount: 10,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-              final item = (index < widget.missionPlan.length)
-                  ? widget.missionPlan[index]
-                  : {
-                      'index': index + 1,
-                      'type': (index + 1) % 2 == 1 ? 'tapX' : 'accumulateX',
-                      'target': (index + 1) % 2 == 1
-                          ? (ConfigService().getValue('game.daily_mission.tap_target', defaultValue: 50) as num).toInt()
-                          : 0,
-                      'progress': 0,
-                      'status': 'locked',
-                    };
-              final status = item['status'] as String? ?? 'locked';
-              final locked = status == 'locked';
-              final current = status == 'current';
-              final done = status == 'done';
-              final idx = item['index'] ?? (index + 1);
-              final type = item['type'] as String? ?? 'tapX';
-              final target = (item['target'] as num?)?.toInt() ?? 0;
-              final progress = (item['progress'] as num?)?.toInt() ?? 0;
-              final reward = (item['reward'] as num?)?.toInt() ?? 0;
-              final displayPoints = item['displayPoints']?.toString() ?? target.toString();
-              final canClaim = current && progress >= target && !done;
+                final item = (index < widget.missionPlan.length)
+                    ? widget.missionPlan[index]
+                    : {
+                        'index': index + 1,
+                        'type': (index + 1) % 2 == 1 ? 'tapX' : 'accumulateX',
+                        'target': (index + 1) % 2 == 1
+                            ? (ConfigService().getValue(
+                                        'game.daily_mission.tap_target',
+                                        defaultValue: 50,
+                                      )
+                                      as num)
+                                  .toInt()
+                            : 0,
+                        'progress': 0,
+                        'status': 'locked',
+                      };
+                final status = item['status'] as String? ?? 'locked';
+                final locked = status == 'locked';
+                final current = status == 'current';
+                final done = status == 'done';
+                final idx = item['index'] ?? (index + 1);
+                final type = item['type'] as String? ?? 'tapX';
+                final target = (item['target'] as num?)?.toInt() ?? 0;
+                final progress = (item['progress'] as num?)?.toInt() ?? 0;
+                final reward = (item['reward'] as num?)?.toInt() ?? 0;
+                final displayPoints =
+                    item['displayPoints']?.toString() ?? target.toString();
+                final canClaim = current && progress >= target && !done;
 
-              final baseTile = Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: done
-                        ? const Color(0xFF00FFD1)
-                        : (current ? const Color(0xFFE89A00) : Colors.white24),
-                    width: 1.5,
+                final baseTile = Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: current
-                          ? const Color(0xFFE89A00)
-                          : (done ? const Color(0xFF00FFD1) : Colors.white24),
-                      child: Text(
-                        '$idx',
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                      ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: done
+                          ? const Color(0xFF00FFD1)
+                          : (current
+                                ? const Color(0xFFE89A00)
+                                : Colors.white24),
+                      width: 1.5,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            titleForItem(type, displayPoints),
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: current
+                            ? const Color(0xFFE89A00)
+                            : (done ? const Color(0xFF00FFD1) : Colors.white24),
+                        child: Text(
+                          '$idx',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                (type == 'accumulateX' && status == 'locked')
-                                    ? '—'
-                                    : '$progress / $target',
-                                style: TextStyle(
-                                  color: done ? const Color(0xFF00FFD1) : Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.white12,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '+$reward',
-                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (done)
-                      const Icon(Icons.check_circle, color: Color(0xFF00FFD1))
-                    else if (current)
-                      SizedBox(
-                        height: 36,
-                        child: ElevatedButton(
-                          onPressed: canClaim ? widget.onClaimCurrentMission : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: canClaim ? const Color(0xFFE89A00) : Colors.grey,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          child: Text(LocalizationService().getString('ui.claim', defaultValue: '領取')),
                         ),
-                      )
-                      
-                    else
-                      const Icon(Icons.lock, color: Colors.white38),
-                  ],
-                ),
-              );
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              titleForItem(type, displayPoints),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  (type == 'accumulateX' && status == 'locked')
+                                      ? '—'
+                                      : '$progress / $target',
+                                  style: TextStyle(
+                                    color: done
+                                        ? const Color(0xFF00FFD1)
+                                        : Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white12,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '+$reward',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (done)
+                        const Icon(Icons.check_circle, color: Color(0xFF00FFD1))
+                      else if (current)
+                        SizedBox(
+                          height: 36,
+                          child: ElevatedButton(
+                            onPressed: canClaim
+                                ? widget.onClaimCurrentMission
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: canClaim
+                                  ? const Color(0xFFE89A00)
+                                  : Colors.grey,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                            ),
+                            child: Text(
+                              LocalizationService().getString(
+                                'ui.claim',
+                                defaultValue: '領取',
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        const Icon(Icons.lock, color: Colors.white38),
+                    ],
+                  ),
+                );
 
                 return AbsorbPointer(
                   absorbing: locked,
                   child: Stack(
                     children: [
-                      Opacity(
-                        opacity: locked ? 0.6 : 1.0,
-                        child: baseTile,
-                      ),
+                      Opacity(opacity: locked ? 0.6 : 1.0, child: baseTile),
                       if (locked)
                         Positioned.fill(
                           child: Container(
@@ -343,17 +389,29 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                 width: 20,
                 height: 20,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.confirmation_num, color: Colors.cyanAccent, size: 20);
+                  return const Icon(
+                    Icons.confirmation_num,
+                    color: Colors.cyanAccent,
+                    size: 20,
+                  );
                 },
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  localization.getString('pets.quest.ticket.title', defaultValue: '寵物抽獎券任務'),
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  localization.getString(
+                    'pets.quest.ticket.title',
+                    defaultValue: '寵物抽獎券任務',
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              if (done) const Icon(Icons.check_circle, color: Color(0xFF00FFD1))
+              if (done)
+                const Icon(Icons.check_circle, color: Color(0xFF00FFD1)),
             ],
           ),
           const SizedBox(height: 8),
@@ -377,7 +435,8 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                               _state = _petTicketQuest.claimReward(
                                 _state,
                                 withAd: false,
-                                currentIdlePerSec: _idleIncome.currentIdlePerSec,
+                                currentIdlePerSec:
+                                    _idleIncome.currentIdlePerSec,
                               );
                               _idleIncome.updateGameState(_state);
                             });
@@ -385,11 +444,15 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: done ? const Color(0xFFE89A00) : Colors.grey,
+                    backgroundColor: done
+                        ? const Color(0xFFE89A00)
+                        : Colors.grey,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  child: Text('${localization.getString('ui.claim', defaultValue: '領取')} +1'),
+                  child: Text(
+                    '${localization.getString('ui.claim', defaultValue: '領取')} +1',
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -403,30 +466,47 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
 
                           await _rewardedAdService.showAd(
                             context: context,
-                            dialogTitle: localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!'),
+                            dialogTitle: localization.getString(
+                              'offline.doubled_success',
+                              defaultValue: 'Reward Doubled!',
+                            ),
                             rewardContent: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.35),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.confirmation_num, color: Colors.yellow, size: 20),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '+2',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: Colors.yellow,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                  const Icon(
+                                    Icons.confirmation_num,
+                                    color: Colors.yellow,
+                                    size: 20,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    localization.getString('pets.ticket', defaultValue: '抽獎券'),
-                                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                                    '+2',
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
+                                          color: Colors.yellow,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    localization.getString(
+                                      'pets.ticket',
+                                      defaultValue: '抽獎券',
+                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(color: Colors.yellowAccent),
                                   ),
                                 ],
                               ),
@@ -439,7 +519,8 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                                   _state = _petTicketQuest.claimReward(
                                     _state,
                                     withAd: true,
-                                    currentIdlePerSec: _idleIncome.currentIdlePerSec,
+                                    currentIdlePerSec:
+                                        _idleIncome.currentIdlePerSec,
                                   );
                                   _idleIncome.updateGameState(_state);
                                 });
@@ -447,17 +528,20 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                             },
                           );
                         }
-                  : null,
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: done ? const Color(0xFF00FFD1) : Colors.grey,
+                    backgroundColor: done
+                        ? const Color(0xFF00FFD1)
+                        : Colors.grey,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  child: 
-                  Row(
+                  child: Row(
                     children: [
                       Icon(Icons.slow_motion_video, size: 20),
-                      Text('${localization.getString('ui.claim', defaultValue: '領取')} x2'),
+                      Text(
+                        '${localization.getString('ui.claim', defaultValue: '領取')} x2',
+                      ),
                     ],
                   ),
                 ),
@@ -505,8 +589,16 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                localization.getString('quest.current_stage', replacements: {'n': '$currentStage'}, defaultValue: '目前階段 $currentStage'),
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                localization.getString(
+                  'quest.current_stage',
+                  replacements: {'n': '$currentStage'},
+                  defaultValue: '目前階段 $currentStage',
+                ),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               if (requirementType == 'tap_count')
@@ -514,12 +606,22 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      localization.getString('quest.requirement.title.tap', defaultValue: '累積點擊次數'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      localization.getString(
+                        'quest.requirement.title.tap',
+                        defaultValue: '累積點擊次數',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                     Text(
                       '$progressText / $targetText',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 )
@@ -528,12 +630,22 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      localization.getString('quest.requirement.title.meme', defaultValue: '累積迷因點數'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      localization.getString(
+                        'quest.requirement.title.meme',
+                        defaultValue: '累積迷因點數',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                     Text(
                       '$progressText / $targetText',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -558,20 +670,27 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                 final isCurrent = status == 'current';
                 final progressVal = (quest['progress'] as double?) ?? 0.0;
                 final canClaimCurrent = isCurrent && progressVal >= 1.0;
-                final reqType = quest['requirementType'] as String? ?? 'tap_count';
-                final itemProgressText = quest['progressText']?.toString() ?? '0';
+                final reqType =
+                    quest['requirementType'] as String? ?? 'tap_count';
+                final itemProgressText =
+                    quest['progressText']?.toString() ?? '0';
                 final itemTargetText = quest['targetText']?.toString() ?? '0';
                 final reward = (quest['reward'] as Map<String, dynamic>?);
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isCompleted
                           ? const Color(0xFF00FFD1)
-                          : (isCurrent ? const Color(0xFFE89A00) : Colors.white24),
+                          : (isCurrent
+                                ? const Color(0xFFE89A00)
+                                : Colors.white24),
                       width: 1.5,
                     ),
                   ),
@@ -584,42 +703,68 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                             radius: 16,
                             backgroundColor: isCurrent
                                 ? const Color(0xFFE89A00)
-                                : (isCompleted ? const Color(0xFF00FFD1) : Colors.white24),
+                                : (isCompleted
+                                      ? const Color(0xFF00FFD1)
+                                      : Colors.white24),
                             child: Text(
                               '$stage',
-                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              localization.getString('quest.stage$stage.title', defaultValue: 'Stage $stage'),
-                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                              localization.getString(
+                                'quest.stage$stage.title',
+                                defaultValue: 'Stage $stage',
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           if (isCompleted)
-                            const Icon(Icons.check_circle, color: Color(0xFF00FFD1))
+                            const Icon(
+                              Icons.check_circle,
+                              color: Color(0xFF00FFD1),
+                            )
                           else if (isCurrent)
                             SizedBox(
                               height: 32,
                               child: ElevatedButton(
                                 onPressed: canClaimCurrent
-                                  ? () {
-                                      if (widget.onClaimCurrentStage != null) {
-                                        widget.onClaimCurrentStage!();
-                                      } else {
-                                        setState(() {
-                                          _state = _mainQuest.claimCurrentQuest(_state);
-                                        });
+                                    ? () {
+                                        if (widget.onClaimCurrentStage !=
+                                            null) {
+                                          widget.onClaimCurrentStage!();
+                                        } else {
+                                          setState(() {
+                                            _state = _mainQuest
+                                                .claimCurrentQuest(_state);
+                                          });
+                                        }
                                       }
-                                    }
-                                  : null,
+                                    : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: canClaimCurrent ? const Color(0xFFE89A00) : Colors.grey,
+                                  backgroundColor: canClaimCurrent
+                                      ? const Color(0xFFE89A00)
+                                      : Colors.grey,
                                   foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                 ),
-                                child: Text(localization.getString('quest.completed.confirm', defaultValue: '確認')),
+                                child: Text(
+                                  localization.getString(
+                                    'quest.completed.confirm',
+                                    defaultValue: '確認',
+                                  ),
+                                ),
                               ),
                             )
                           else
@@ -636,7 +781,8 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                                   'progress': itemProgressText,
                                   'target': itemTargetText,
                                 },
-                                defaultValue: '需求：點擊 $itemProgressText / $itemTargetText 次',
+                                defaultValue:
+                                    '需求：點擊 $itemProgressText / $itemTargetText 次',
                               )
                             : localization.getString(
                                 'quest.requirement.text.meme',
@@ -644,18 +790,31 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
                                   'progress': itemProgressText,
                                   'target': itemTargetText,
                                 },
-                                defaultValue: '需求：累積 $itemProgressText / $itemTargetText 迷因點數',
+                                defaultValue:
+                                    '需求：累積 $itemProgressText / $itemTargetText 迷因點數',
                               ),
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       // 獎勵顯示
                       Text(
-                        (localization.getString('quest.reward.label', defaultValue: '獎勵：')) +
+                        (localization.getString(
+                              'quest.reward.label',
+                              defaultValue: '獎勵：',
+                            )) +
                             (reward == null
-                                ? localization.getString('quest.reward.none', defaultValue: '—')
+                                ? localization.getString(
+                                    'quest.reward.none',
+                                    defaultValue: '—',
+                                  )
                                 : _getRewardDisplayText(localization, reward)),
-                        style: const TextStyle(color: Color(0xFFE89A00), fontSize: 14),
+                        style: const TextStyle(
+                          color: Color(0xFFE89A00),
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -668,30 +827,54 @@ class _QuestPageState extends State<QuestPage> with SingleTickerProviderStateMix
     );
   }
 
-  String _getRewardDisplayText(LocalizationService localization, Map<String, dynamic> reward) {
+  String _getRewardDisplayText(
+    LocalizationService localization,
+    Map<String, dynamic> reward,
+  ) {
     final type = reward['type'] as String;
     final id = reward['id'] as String;
-    
+
     switch (type) {
       case 'idle':
-        return localization.getString('quest.reward.idle', 
-            replacements: {'rewardId': id}, defaultValue: '解鎖放置裝備：$id');
+        return localization.getString(
+          'quest.reward.idle',
+          replacements: {'rewardId': id},
+          defaultValue: '解鎖放置裝備：$id',
+        );
       case 'equipment':
-        return localization.getString('quest.reward.equipment', 
-            replacements: {'rewardId': id}, defaultValue: '解鎖 $id 裝備');
+        return localization.getString(
+          'quest.reward.equipment',
+          replacements: {'rewardId': id},
+          defaultValue: '解鎖 $id 裝備',
+        );
       case 'system':
         if (id == 'title') {
-          return localization.getString('quest.reward.title_system', defaultValue: '解鎖稱號系統');
+          return localization.getString(
+            'quest.reward.title_system',
+            defaultValue: '解鎖稱號系統',
+          );
         } else if (id == 'pet') {
-          return localization.getString('quest.reward.pet_system', defaultValue: '解鎖寵物系統');
+          return localization.getString(
+            'quest.reward.pet_system',
+            defaultValue: '解鎖寵物系統',
+          );
         }
-        return localization.getString('quest.reward.system', 
-            replacements: {'rewardId': id}, defaultValue: '解鎖 $id 系統');
+        return localization.getString(
+          'quest.reward.system',
+          replacements: {'rewardId': id},
+          defaultValue: '解鎖 $id 系統',
+        );
       case 'skin':
-        return localization.getString('quest.reward.skin', 
-            replacements: {'rewardId': id}, defaultValue: '解鎖新造型：$id');
+        return localization.getString(
+          'quest.reward.skin',
+          replacements: {'rewardId': id},
+          defaultValue: '解鎖新造型：$id',
+        );
       default:
-        return localization.getString('quest.reward.unknown', defaultValue: '神秘獎勵');
+        return localization.getString(
+          'quest.reward.unknown',
+          defaultValue: '神秘獎勵',
+        );
     }
   }
 }

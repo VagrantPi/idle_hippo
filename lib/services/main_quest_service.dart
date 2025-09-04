@@ -10,7 +10,8 @@ class MainQuestService {
   final ConfigService _configService = ConfigService();
 
   // 完成任務回調
-  void Function(String questId, String rewardType, String rewardId)? _onQuestCompleted;
+  void Function(String questId, String rewardType, String rewardId)?
+  _onQuestCompleted;
 
   /// 設定任務完成回調
   void setQuestCompletedCallback(
@@ -44,7 +45,8 @@ class MainQuestService {
 
     // 檢查當前階段是否需要 tap_count
     final currentQuest = _getCurrentQuestConfig(quest.currentStage);
-    if (currentQuest == null || currentQuest['requirement']['type'] != 'tap_count') {
+    if (currentQuest == null ||
+        currentQuest['requirement']['type'] != 'tap_count') {
       return s0;
     }
 
@@ -86,7 +88,7 @@ class MainQuestService {
   /// 檢查並完成任務
   GameState _checkAndCompleteQuest(GameState state) {
     final quest = state.mainQuest!;
-    
+
     // 如果已完成所有任務，不處理
     if (quest.currentStage > 6) {
       return state;
@@ -143,7 +145,8 @@ class MainQuestService {
     var rewardId = parts.length > 1 ? parts[1] : '';
 
     // 添加到已解鎖獎勵列表
-    final newUnlockedRewards = List<String>.from(quest.unlockedRewards)..add(unlockType);
+    final newUnlockedRewards = List<String>.from(quest.unlockedRewards)
+      ..add(unlockType);
 
     // 切換到下一階段，但保留累積進度（跨階段累積）
     final nextStage = quest.currentStage + 1;
@@ -168,7 +171,8 @@ class MainQuestService {
   }
 
   List<Map<String, dynamic>> _getMainlineQuests() {
-    final fromConfig = _configService.getValue('quests.mainline', defaultValue: []) as List;
+    final fromConfig =
+        _configService.getValue('quests.mainline', defaultValue: []) as List;
     if (fromConfig.isNotEmpty) {
       return List<Map<String, dynamic>>.from(fromConfig);
     }
@@ -353,10 +357,7 @@ class MainQuestService {
         'progressText': progressText,
         'targetText': requirementValue.toInt().toString(),
         'requirementType': requirementType,
-        'reward': {
-          'type': mappedType,
-          'id': rewardId,
-        },
+        'reward': {'type': mappedType, 'id': rewardId},
       });
     }
 

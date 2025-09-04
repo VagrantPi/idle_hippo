@@ -24,20 +24,29 @@ class DailyTapService {
   }
 
   int get adMultiplier {
-    final v = _config.getValue('game.tap.daily_cap_ad_multiplier', defaultValue: 2);
+    final v = _config.getValue(
+      'game.tap.daily_cap_ad_multiplier',
+      defaultValue: 2,
+    );
     if (v is num) return v.toInt();
     return 2;
   }
 
   GameState ensureDailyBlock(GameState state) {
     final today = _todayAsiaTaipei();
-    final block = state.dailyTap ?? DailyTapState(date: today, todayGained: 0, adDoubledToday: false);
+    final block =
+        state.dailyTap ??
+        DailyTapState(date: today, todayGained: 0, adDoubledToday: false);
     // 修正異常值
     final gained = block.todayGained < 0 ? 0 : block.todayGained;
 
     if (block.date != today) {
       return state.copyWith(
-        dailyTap: DailyTapState(date: today, todayGained: 0, adDoubledToday: false),
+        dailyTap: DailyTapState(
+          date: today,
+          todayGained: 0,
+          adDoubledToday: false,
+        ),
       );
     }
     return state.copyWith(dailyTap: block.copyWith(todayGained: gained));
@@ -51,17 +60,28 @@ class DailyTapService {
   }
 
   // Returns (updatedState, allowedGain)
-  ({GameState state, double allowedGain}) applyTap(GameState state, double requestedGain) {
+  ({GameState state, double allowedGain}) applyTap(
+    GameState state,
+    double requestedGain,
+  ) {
     final s0 = ensureDailyBlock(state);
     final block = s0.dailyTap!;
     final cap = effectiveCap(s0);
     if (block.todayGained >= cap) {
       return (state: s0, allowedGain: 0);
     }
-    final remaining = DecimalUtils.subtract(cap.toDouble(), block.todayGained.toDouble()).toInt();
+    final remaining = DecimalUtils.subtract(
+      cap.toDouble(),
+      block.todayGained.toDouble(),
+    ).toInt();
     final allow = requestedGain.clamp(0.0, remaining.toDouble());
     final s1 = s0.copyWith(
-      dailyTap: block.copyWith(todayGained: DecimalUtils.add(block.todayGained.toDouble(), allow.floor()).toInt()),
+      dailyTap: block.copyWith(
+        todayGained: DecimalUtils.add(
+          block.todayGained.toDouble(),
+          allow.floor(),
+        ).toInt(),
+      ),
     );
     return (state: s1, allowedGain: allow);
   }

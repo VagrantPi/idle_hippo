@@ -23,7 +23,7 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
   late Animation<double> _moveAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   late double _targetY;
   late double _duration;
 
@@ -39,12 +39,13 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
   @override
   void initState() {
     super.initState();
-    
+
     // 隨機化動畫參數
     final random = math.Random();
-    _targetY = widget.startPosition.dy - (40 + random.nextDouble() * 40); // -40 到 -80
+    _targetY =
+        widget.startPosition.dy - (40 + random.nextDouble() * 40); // -40 到 -80
     _duration = 1 + random.nextDouble() * 1.5; // 0.6 到 0.8 秒
-    
+
     _controller = AnimationController(
       duration: Duration(milliseconds: (_duration * 1000).round()),
       vsync: this,
@@ -54,28 +55,19 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
     _moveAnimation = Tween<double>(
       begin: widget.startPosition.dy,
       end: _targetY,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     // 淡出動畫
     _fadeAnimation = Tween<double>(
       begin: 1.0,
       end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     // 縮放動畫
     _scaleAnimation = Tween<double>(
       begin: 0.9,
       end: 1.5,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward().then((_) {
       widget.onComplete();
@@ -96,7 +88,8 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
         return Positioned(
           left: widget.startPosition.dx - 24, // 圖片寬度的一半
           top: _moveAnimation.value - 24, // 圖片高度的一半
-          child: IgnorePointer( // 粒子不阻擋點擊
+          child: IgnorePointer(
+            // 粒子不阻擋點擊
             child: Opacity(
               opacity: _fadeAnimation.value,
               child: Transform.scale(
@@ -134,7 +127,11 @@ class _PlusMemeParticleState extends State<PlusMemeParticle>
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         shadows: [
-                          Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
+                          Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 2,
+                            color: Colors.black54,
+                          ),
                         ],
                       ),
                     ),

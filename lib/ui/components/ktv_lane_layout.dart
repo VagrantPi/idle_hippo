@@ -9,9 +9,9 @@ class LaneLayout {
   final double perspectiveDepth;
   final double judgelineY;
   final double spawnY;
-  
+
   late final List<LaneShape> _lanes;
-  
+
   LaneLayout({
     required this.keyCount,
     required this.screenWidth,
@@ -23,7 +23,7 @@ class LaneLayout {
   }) {
     _calculateLanes();
   }
-  
+
   void _calculateLanes() {
     _lanes = [];
 
@@ -55,40 +55,58 @@ class LaneLayout {
       final tLeft = screenCenter + (bLeft - screenCenter) * r;
       final tRight = screenCenter + (bRight - screenCenter) * r;
 
-      _lanes.add(LaneShape(
-        index: i,
-        topY: spawnYPx,
-        bottomY: judgeYPx,
-        topLeftX: tLeft,
-        topRightX: tRight,
-        bottomLeftX: bLeft,
-        bottomRightX: bRight,
-      ));
+      _lanes.add(
+        LaneShape(
+          index: i,
+          topY: spawnYPx,
+          bottomY: judgeYPx,
+          topLeftX: tLeft,
+          topRightX: tRight,
+          bottomLeftX: bLeft,
+          bottomRightX: bRight,
+        ),
+      );
 
       currentLeft = bRight + lanePadding; // 下一條從右邊界 + 間距開始
     }
   }
-  
+
   /// 獲取指定軌道的形狀
   LaneShape getLane(int index) {
     if (index < 0 || index >= _lanes.length) {
-      throw ArgumentError('Lane index $index out of range [0, ${_lanes.length - 1}]');
+      throw ArgumentError(
+        'Lane index $index out of range [0, ${_lanes.length - 1}]',
+      );
     }
     return _lanes[index];
   }
-  
+
   /// 獲取所有軌道
   List<LaneShape> get lanes => List.unmodifiable(_lanes);
-  
+
   /// 獲取軌道中心 X 座標
   double getLaneCenterX(int laneIndex) {
     final lane = getLane(laneIndex);
     return (lane.bottomLeftX + lane.bottomRightX) / 2;
   }
-  
+
   /// 檢查位置是否在有效軌道範圍內
   bool isValidLaneIndex(int laneIndex) {
     return laneIndex >= 0 && laneIndex < keyCount;
+  }
+
+  /// 根據點擊的 X（以畫面座標）回傳對應的軌道索引（0-based）。
+  /// 使用判定線 y=bottomY 的底部邊界來做區分。
+  /// 若不在任何軌道範圍，回傳 null。
+  int? laneIndexOf(double x) {
+    for (final lane in _lanes) {
+      final left = lane.bottomLeftX;
+      final right = lane.bottomRightX;
+      if (x >= left && x <= right) {
+        return lane.index;
+      }
+    }
+    return null;
   }
 }
 

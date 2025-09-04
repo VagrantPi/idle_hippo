@@ -10,7 +10,7 @@ class PetService {
   PetService._internal();
 
   final ConfigService _configService = ConfigService();
-  
+
   StreamController<PetState>? _petStateController;
   Stream<PetState> get petStateStream {
     _ensureController();
@@ -79,20 +79,36 @@ class PetService {
     final equippedPet = _currentState.equippedPet;
     if (equippedPet == null) return 0.0;
 
-    final upgradeConfig = _configService.getValue('pets.upgrade', defaultValue: {});
-    final levelUpUpgradeBase = (upgradeConfig['levelUpUpgradeBase'] ?? 0.5).toDouble();
-    final decayLevels = (upgradeConfig['levelUpUpgradeDecayLevels'] ?? 10) as int;
-    final decayRate = (upgradeConfig['levelUpUpgradeDecayRate'] ?? 0.5).toDouble();
+    final upgradeConfig = _configService.getValue(
+      'pets.upgrade',
+      defaultValue: {},
+    );
+    final levelUpUpgradeBase = (upgradeConfig['levelUpUpgradeBase'] ?? 0.5)
+        .toDouble();
+    final decayLevels =
+        (upgradeConfig['levelUpUpgradeDecayLevels'] ?? 10) as int;
+    final decayRate = (upgradeConfig['levelUpUpgradeDecayRate'] ?? 0.5)
+        .toDouble();
 
-    return equippedPet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate);
+    return equippedPet.getCurrentIdlePerSec(
+      levelUpUpgradeBase,
+      decayLevels,
+      decayRate,
+    );
   }
 
   /// 取得特定寵物的當前 idlePerSec
   double getPetIdlePerSec(Pet pet) {
-    final upgradeConfig = _configService.getValue('pets.upgrade', defaultValue: {});
-    final levelUpUpgradeBase = (upgradeConfig['levelUpUpgradeBase'] ?? 0.5).toDouble();
-    final decayLevels = (upgradeConfig['levelUpUpgradeDecayLevels'] ?? 10) as int;
-    final decayRate = (upgradeConfig['levelUpUpgradeDecayRate'] ?? 0.5).toDouble();
+    final upgradeConfig = _configService.getValue(
+      'pets.upgrade',
+      defaultValue: {},
+    );
+    final levelUpUpgradeBase = (upgradeConfig['levelUpUpgradeBase'] ?? 0.5)
+        .toDouble();
+    final decayLevels =
+        (upgradeConfig['levelUpUpgradeDecayLevels'] ?? 10) as int;
+    final decayRate = (upgradeConfig['levelUpUpgradeDecayRate'] ?? 0.5)
+        .toDouble();
 
     return pet.getCurrentIdlePerSec(levelUpUpgradeBase, decayLevels, decayRate);
   }
@@ -101,10 +117,10 @@ class PetService {
   int getFibonacciUpgradeRequirement(int targetLevel) {
     if (targetLevel <= 1) return 1;
     if (targetLevel == 2) return 2;
-    
+
     int prev = 1;
     int curr = 2;
-    
+
     for (int i = 3; i <= targetLevel; i++) {
       int next = prev + curr;
       prev = curr;
@@ -113,31 +129,37 @@ class PetService {
         return curr;
       }
     }
-    
+
     return curr;
   }
 
   /// 計算等級加成倍率
   double calculateLevelUpgradeMultiplier(int level) {
     if (level <= 1) return 1.0;
-    
-    final upgradeConfig = _configService.getValue('pets.upgrade', defaultValue: {});
-    final levelUpUpgradeBase = (upgradeConfig['levelUpUpgradeBase'] ?? 0.5).toDouble();
-    final decayLevels = (upgradeConfig['levelUpUpgradeDecayLevels'] ?? 10) as int;
-    final decayRate = (upgradeConfig['levelUpUpgradeDecayRate'] ?? 0.5).toDouble();
-    
+
+    final upgradeConfig = _configService.getValue(
+      'pets.upgrade',
+      defaultValue: {},
+    );
+    final levelUpUpgradeBase = (upgradeConfig['levelUpUpgradeBase'] ?? 0.5)
+        .toDouble();
+    final decayLevels =
+        (upgradeConfig['levelUpUpgradeDecayLevels'] ?? 10) as int;
+    final decayRate = (upgradeConfig['levelUpUpgradeDecayRate'] ?? 0.5)
+        .toDouble();
+
     double totalUpgrade = 0.0;
     double currentUpgrade = levelUpUpgradeBase;
-    
+
     for (int i = 2; i <= level; i++) {
       totalUpgrade += currentUpgrade;
-      
+
       // 每過 decayLevels 等級，升級加成減半
       if (i % decayLevels == 0) {
         currentUpgrade *= decayRate;
       }
     }
-    
+
     return 1.0 + totalUpgrade;
   }
 
@@ -188,7 +210,9 @@ class PetService {
 
   /// 為所有寵物增加升級點數
   Future<void> addUpgradePointsToAll(int points) async {
-    final updatedPets = _currentState.pets.map((pet) => pet.addUpgradePoints(points)).toList();
+    final updatedPets = _currentState.pets
+        .map((pet) => pet.addUpgradePoints(points))
+        .toList();
     _currentState = _currentState.copyWith(pets: updatedPets);
     _emitState();
     await _saveState();
@@ -203,23 +227,30 @@ class PetService {
 
   /// Debug: 取得寵物詳細資訊
   Map<String, dynamic> getDebugInfo() {
-    final upgradeConfig = _configService.getValue('pets.upgrade', defaultValue: {});
-    
+    final upgradeConfig = _configService.getValue(
+      'pets.upgrade',
+      defaultValue: {},
+    );
+
     return {
       'totalPets': _currentState.pets.length,
       'equippedPetId': _currentState.equippedPetId,
       'equippedPetIdlePerSec': getCurrentPetIdlePerSec(),
       'upgradeConfig': upgradeConfig,
-      'pets': _currentState.pets.map((pet) => {
-        'petKey': pet.petKey,
-        'rarity': pet.rarity.value,
-        'level': pet.level,
-        'upgradePoints': pet.upgradePoints,
-        'nextLevelRequirement': pet.nextLevelRequirement,
-        'canUpgrade': pet.canUpgrade,
-        'currentIdlePerSec': getPetIdlePerSec(pet),
-        'isEquipped': pet.isEquipped,
-      }).toList(),
+      'pets': _currentState.pets
+          .map(
+            (pet) => {
+              'petKey': pet.petKey,
+              'rarity': pet.rarity.value,
+              'level': pet.level,
+              'upgradePoints': pet.upgradePoints,
+              'nextLevelRequirement': pet.nextLevelRequirement,
+              'canUpgrade': pet.canUpgrade,
+              'currentIdlePerSec': getPetIdlePerSec(pet),
+              'isEquipped': pet.isEquipped,
+            },
+          )
+          .toList(),
     };
   }
 

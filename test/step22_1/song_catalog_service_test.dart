@@ -6,7 +6,8 @@ void main() {
   group('歌曲清單解析 - SongCatalogService', () {
     test('正常解析一首歌（標題/時長/難度星數）', () async {
       final svc = SongCatalogService();
-      svc.assetLoader = (_) async => '{"songs":[{"id":"EchoesOfTheVoid","title":"Echoes Of The Void","image":"assets/images/musicGame/EchoesOfTheVoid.jpg","music":"https://example.com/EchoesOfTheVoid.mp3","length_seconds":120,"difficulties":[{"level":"easy","key_count":3},{"level":"hard","key_count":5}]}]}';
+      svc.assetLoader = (_) async =>
+          '{"songs":[{"id":"EchoesOfTheVoid","title":"Echoes Of The Void","image":"assets/images/musicGame/EchoesOfTheVoid.jpg","music":"https://example.com/EchoesOfTheVoid.mp3","length_seconds":120,"difficulties":[{"level":"easy","key_count":3},{"level":"hard","key_count":5}]}]}';
 
       final list = await svc.loadSongs();
       expect(list.length, 1);
@@ -40,7 +41,8 @@ void main() {
     });
 
     test('KtvCollectionParser 解析多筆 songs', () {
-      const jsonStr = '{"songs":[{"id":"A","title":"A","image":"i","music":"u","length_seconds":60,"difficulties":[]},{"id":"B","title":"B","image":"i","music":"u","length_seconds":90,"difficulties":[{"level":"easy","key_count":2}]}]}';
+      const jsonStr =
+          '{"songs":[{"id":"A","title":"A","image":"i","music":"u","length_seconds":60,"difficulties":[]},{"id":"B","title":"B","image":"i","music":"u","length_seconds":90,"difficulties":[{"level":"easy","key_count":2}]}]}';
       final parsed = KtvCollectionParser.parse(jsonStr);
       expect(parsed.length, 2);
       expect(parsed[0].id, 'A');

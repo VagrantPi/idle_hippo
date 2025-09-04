@@ -13,7 +13,9 @@ class GameStateService {
 
   final SecureSaveService _saveService = SecureSaveService();
 
-  late ValueNotifier<GameState> gameState = ValueNotifier(GameState.initial(1)); // 使用預設版本號 1
+  late ValueNotifier<GameState> gameState = ValueNotifier(
+    GameState.initial(1),
+  ); // 使用預設版本號 1
   bool _initialized = false;
   bool _testMode = false;
 
@@ -82,16 +84,22 @@ class GameStateService {
     }
   }
 
-  bool _isEquipmentLevelReached(Map<String, int> equipments, String equipId, int requiredLevel) {
+  bool _isEquipmentLevelReached(
+    Map<String, int> equipments,
+    String equipId,
+    int requiredLevel,
+  ) {
     final norm = _normalizeEquipId(equipId);
     final altLower = norm.toLowerCase();
-    final current = equipments[norm] ?? equipments[altLower] ?? equipments[equipId] ?? 0;
+    final current =
+        equipments[norm] ?? equipments[altLower] ?? equipments[equipId] ?? 0;
     return current >= requiredLevel;
   }
 
   GameState _evaluateTitlesEquipConditions(GameState state) {
     final cfg = ConfigService();
-    final titlesList = (cfg.getValue('titles.titles', defaultValue: []) as List?)
+    final titlesList =
+        (cfg.getValue('titles.titles', defaultValue: []) as List?)
             ?.whereType<Map<String, dynamic>>()
             .toList() ??
         const <Map<String, dynamic>>[];
@@ -120,14 +128,19 @@ class GameStateService {
       if (kind == 'equip_level_reach') {
         final equipId = cond['equip_id'] as String?;
         final level = (cond['level'] as num?)?.toInt() ?? 0;
-        met = equipId != null && _isEquipmentLevelReached(equipments, equipId, level);
+        met =
+            equipId != null &&
+            _isEquipmentLevelReached(equipments, equipId, level);
       } else if (kind == 'equip_pair_levels') {
         final pairs = cond['pairs'] as List?;
         if (pairs != null) {
           met = pairs.every((pair) {
             final equipId = pair is Map ? pair['equip_id'] as String? : null;
-            final level = pair is Map ? (pair['level'] as num?)?.toInt() ?? 0 : 0;
-            return equipId != null && _isEquipmentLevelReached(equipments, equipId, level);
+            final level = pair is Map
+                ? (pair['level'] as num?)?.toInt() ?? 0
+                : 0;
+            return equipId != null &&
+                _isEquipmentLevelReached(equipments, equipId, level);
           });
         }
       }
@@ -141,7 +154,8 @@ class GameStateService {
     }
 
     // 若沒有改變就直接回傳
-    final changed = hasNewClaimable != (titlesState?.hasClaimable ?? false) ||
+    final changed =
+        hasNewClaimable != (titlesState?.hasClaimable ?? false) ||
         !_mapEquals(newStates, titlesState?.states ?? const {});
     if (!changed) return state;
 

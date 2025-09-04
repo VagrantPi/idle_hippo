@@ -10,14 +10,19 @@ import 'package:idle_hippo/ui/game/note_component.dart';
 import 'package:idle_hippo/ui/game/lane_background_component.dart';
 import 'package:idle_hippo/ui/components/ktv_beatmap_note.dart';
 
-class KtvGame extends FlameGame {
+import 'package:idle_hippo/game/ktv_game_logic.dart';
+
+class KtvGame extends FlameGame with TapCallbacks {
   final AudioPlayer audioPlayer;
   final KtvDifficulty difficulty;
   final LaneLayout laneLayout;
   final double approachTimeMs;
   final double despawnGraceMs;
-  
-  final List<NoteComponent> activeNotes = [];
+
+  late final KtvGameLogic _gameLogic;
+  StreamSubscription<JudgementResult>? _judgementSub;
+
+  final Map<String, NoteComponent> _activeNotesById = {};
   final List<BeatmapNote> _beatmap = [];
   int _nextNoteIndex = 0;
   bool _isPlaying = false;
@@ -26,35 +31,41 @@ class KtvGame extends FlameGame {
   // Smooth accumulator advanced each frame between audio ticks
   double _sinceAudioUpdateSec = 0.0;
   StreamSubscription<Duration>? _positionSub;
-  
+
   KtvGame({
     required this.audioPlayer,
     required this.difficulty,
     required this.laneLayout,
     this.approachTimeMs = 1500,
     this.despawnGraceMs = 150,
-  });
-  
+  }) {
+    _gameLogic = KtvGameLogic(numLanes: difficulty.keyCount);
+  }
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
     _loadBeatmap();
-    
+
     // 固定解析度視口（遵循專案規範）
     camera.viewport = FixedResolutionViewport(resolution: Vector2(1080, 1920));
-    
+
+    _judgementSub = _gameLogic.judgementStream.listen(_onJudgement);
+
     // 背景軌道與判定線
-    add(LaneBackgroundComponent(
-      laneLayout: laneLayout,
-      judgelineY: laneLayout.judgelineY,
-      screenHeight: laneLayout.screenHeight,
-    ));
+    add(
+      LaneBackgroundComponent(
+        laneLayout: laneLayout,
+        judgelineY: laneLayout.judgelineY,
+        screenHeight: laneLayout.screenHeight,
+      ),
+    );
   }
-  
+
   void _loadBeatmap() {
     _beatmap.clear();
     _nextNoteIndex = 0;
-    
+
     if (difficulty.beatmap != null) {
       for (final noteData in difficulty.beatmap!) {
         try {
@@ -66,8 +77,9 @@ class KtvGame extends FlameGame {
       }
       _beatmap.sort((a, b) => a.time.compareTo(b.time));
     }
+    _gameLogic.loadBeatmap(_beatmap);
   }
-  
+
   void start() {
     if (_isPlaying) return;
     _isPlaying = true;
@@ -93,22 +105,24 @@ class KtvGame extends FlameGame {
     _positionSub?.cancel();
     _positionSub = audioPlayer.positionStream.listen(_onPositionUpdate);
   }
-  
+
   void _onPositionUpdate(Duration position) {
     if (!_isPlaying) return;
     // Update base time from audio and reset the frame accumulator
     _lastAudioTimeSec = position.inMilliseconds / 1000.0;
     _sinceAudioUpdateSec = 0.0;
   }
-  
+
   void _generateNotes(double audioTimeSec, double approachTimeSec) {
     const epsilon = 0.016; // ~1 frame at 60fps
-    
+
     while (_nextNoteIndex < _beatmap.length) {
       final note = _beatmap[_nextNoteIndex];
-      final spawnTime = note.time - approachTimeSec;
-      
-      if (audioTimeSec + epsilon >= spawnTime) {
+      // 以秒為單位計算生成時間，避免型別與精度問題
+      final noteTimeSec = note.time.inMilliseconds / 1000.0;
+      final spawnTimeSec = noteTimeSec - approachTimeSec;
+
+      if (audioTimeSec + epsilon >= spawnTimeSec) {
         final laneIndex = note.position - 1;
         if (laneLayout.isValidLaneIndex(laneIndex)) {
           final noteComponent = NoteComponent(
@@ -118,9 +132,9 @@ class KtvGame extends FlameGame {
             approachTimeMs: approachTimeMs,
             onDespawn: _onNoteDespawn,
           );
-          
+
           add(noteComponent);
-          activeNotes.add(noteComponent);
+          _activeNotesById[note.id] = noteComponent;
         }
         _nextNoteIndex++;
       } else {
@@ -128,26 +142,31 @@ class KtvGame extends FlameGame {
       }
     }
   }
-  
+
   void _onNoteDespawn(NoteComponent note) {
-    activeNotes.remove(note);
+    _activeNotesById.remove(note.note.id);
     note.removeFromParent();
   }
-  
+
   void _despawnNotes(double audioTimeSec) {
     final notesToRemove = <NoteComponent>[];
-    
-    for (final note in activeNotes) {
+    final currentNotes = List<NoteComponent>.from(_activeNotesById.values);
+
+    for (final note in currentNotes) {
       if (note.shouldDespawn(audioTimeSec, despawnGraceMs)) {
         notesToRemove.add(note);
       }
     }
-    
+
     for (final note in notesToRemove) {
-      _onNoteDespawn(note);
+      // 判定為 Miss 的音符已經被 _onJudgement 處理掉了
+      // 這裡只處理那些滑過螢幕但未被判定的情況 (如果有的話)
+      if (_activeNotesById.containsKey(note.note.id)) {
+        _onNoteDespawn(note);
+      }
     }
   }
-  
+
   @override
   void update(double dt) {
     super.update(dt);
@@ -162,17 +181,43 @@ class KtvGame extends FlameGame {
     _generateNotes(visualTimeSec, approachTimeSec);
     _despawnNotes(visualTimeSec);
 
+    // 判定邏輯更新 (使用更精確的音訊時間)
+    _gameLogic.update(audioPlayer.position.inMilliseconds);
+
     // Update positions smoothly every frame
     // 使用快照避免在迭代時被回收導致 ConcurrentModificationError
-    final notesSnapshot = List<NoteComponent>.from(activeNotes);
+    final notesSnapshot = List<NoteComponent>.from(_activeNotesById.values);
     for (final note in notesSnapshot) {
       note.updatePosition(visualTimeSec);
     }
   }
-  
+
+  void _onJudgement(JudgementResult result) {
+    print(
+      '[${result.note.position}] Δ=${result.deltaMs}ms ${result.judgement.toString().split('.').last.toUpperCase()}',
+    );
+
+    final noteComponent = _activeNotesById[result.note.id];
+    if (noteComponent != null) {
+      // TODO: 根據判定結果播放動畫或效果
+      _onNoteDespawn(noteComponent);
+    }
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    super.onTapDown(event);
+    final laneIndex = laneLayout.laneIndexOf(event.localPosition.x);
+    if (laneIndex != null) {
+      _gameLogic.onLaneTap(laneIndex, audioPlayer.position.inMilliseconds);
+    }
+  }
+
   @override
   void onRemove() {
     _positionSub?.cancel();
+    _judgementSub?.cancel();
+    _gameLogic.dispose();
     super.onRemove();
   }
 }

@@ -14,27 +14,33 @@ void main() {
     // Note: 'flutter/assets' is a BasicMessageChannel with StringCodec, not a MethodChannel.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', (ByteData? message) async {
-      final String? key = const StringCodec().decodeMessage(message);
-      if (key == null) return null;
-      if (key.endsWith('game.json')) {
-        return const StringCodec().encodeMessage(json.encode({'baseMemePerSecond': 1.0}));
-      }
-      if (key.endsWith('equipments.json')) {
-        return const StringCodec().encodeMessage(
-          json.encode({'tap_equipments': [], 'idle_equipments': []}),
-        );
-      }
-      if (key.endsWith('pets.json')) {
-        return const StringCodec().encodeMessage(json.encode({'pets': []}));
-      }
-      if (key.endsWith('titles.json')) {
-        return const StringCodec().encodeMessage(json.encode({'titles': []}));
-      }
-      if (key.endsWith('quests.json')) {
-        return const StringCodec().encodeMessage(json.encode({'quests': []}));
-      }
-      return null;
-    });
+          final String? key = const StringCodec().decodeMessage(message);
+          if (key == null) return null;
+          if (key.endsWith('game.json')) {
+            return const StringCodec().encodeMessage(
+              json.encode({'baseMemePerSecond': 1.0}),
+            );
+          }
+          if (key.endsWith('equipments.json')) {
+            return const StringCodec().encodeMessage(
+              json.encode({'tap_equipments': [], 'idle_equipments': []}),
+            );
+          }
+          if (key.endsWith('pets.json')) {
+            return const StringCodec().encodeMessage(json.encode({'pets': []}));
+          }
+          if (key.endsWith('titles.json')) {
+            return const StringCodec().encodeMessage(
+              json.encode({'titles': []}),
+            );
+          }
+          if (key.endsWith('quests.json')) {
+            return const StringCodec().encodeMessage(
+              json.encode({'quests': []}),
+            );
+          }
+          return null;
+        });
     // Manually init ConfigService for testing
     await ConfigService().loadConfig();
   });
@@ -112,7 +118,11 @@ void main() {
       nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
       state = GameState.initial(1).copyWith(
         memePoints: 1000,
-        offline: OfflineState(lastExitUtcMs: nowMs, idleRateSnapshot: 10.0, capHours: 1),
+        offline: OfflineState(
+          lastExitUtcMs: nowMs,
+          idleRateSnapshot: 10.0,
+          capHours: 1,
+        ),
       );
       service.init(
         getGameState: () => state,

@@ -27,7 +27,6 @@ class _DailyMissionBarState extends State<DailyMissionBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  
 
   @override
   void initState() {
@@ -37,13 +36,9 @@ class _DailyMissionBarState extends State<DailyMissionBar>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
   }
 
   @override
@@ -55,9 +50,10 @@ class _DailyMissionBarState extends State<DailyMissionBar>
   @override
   void didUpdateWidget(DailyMissionBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // 當進度完成時播放動畫
-    if (widget.progress >= widget.target && oldWidget.progress < oldWidget.target) {
+    if (widget.progress >= widget.target &&
+        oldWidget.progress < oldWidget.target) {
       _playCompletionAnimation();
     }
   }
@@ -74,16 +70,20 @@ class _DailyMissionBarState extends State<DailyMissionBar>
 
   String _getTitle() {
     final localization = LocalizationService();
-    
+
     switch (widget.type) {
       case 'tapX':
-        return localization.getString('mission.bar.title.tap', replacements: {
-          'target': widget.target.toString(),
-        });
+        return localization.getString(
+          'mission.bar.title.tap',
+          replacements: {'target': widget.target.toString()},
+        );
       case 'accumulateX':
-        return localization.getString('mission.bar.title.acc', replacements: {
-          'points': widget.points?.toString() ?? widget.target.toString(),
-        });
+        return localization.getString(
+          'mission.bar.title.acc',
+          replacements: {
+            'points': widget.points?.toString() ?? widget.target.toString(),
+          },
+        );
       case 'completed':
         return localization.getString('mission.bar.done_today');
       default:
@@ -95,11 +95,11 @@ class _DailyMissionBarState extends State<DailyMissionBar>
     if (widget.type == 'completed') {
       return Colors.green.shade600;
     }
-    
+
     if (widget.progress >= widget.target) {
       return Colors.green.shade600;
     }
-    
+
     return Colors.blue.shade600;
   }
 
@@ -134,10 +134,7 @@ class _DailyMissionBarState extends State<DailyMissionBar>
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _getProgressColor(),
-                  width: 2,
-                ),
+                border: Border.all(color: _getProgressColor(), width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: _getProgressColor().withValues(alpha: 0.3),
@@ -157,15 +154,11 @@ class _DailyMissionBarState extends State<DailyMissionBar>
                       color: _getProgressColor(),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      _getIcon(),
-                      size: 14,
-                      color: Colors.white,
-                    ),
+                    child: Icon(_getIcon(), size: 14, color: Colors.white),
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // 任務文案
                   Flexible(
                     child: Row(
@@ -185,29 +178,26 @@ class _DailyMissionBarState extends State<DailyMissionBar>
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // 進度顯示
                   if (widget.type != 'completed') ...[
                     Text(
                       '${widget.progress}/${widget.target}',
                       style: TextStyle(
-                        color: isCompleted ? Colors.green.shade300 : Colors.white70,
+                        color: isCompleted
+                            ? Colors.green.shade300
+                            : Colors.white70,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    
+
                     const SizedBox(width: 8),
-                    
                   ] else ...[
                     // 完成狀態顯示勾勾
-                    Icon(
-                      Icons.check,
-                      size: 16,
-                      color: Colors.green.shade300,
-                    ),
+                    Icon(Icons.check, size: 16, color: Colors.green.shade300),
                   ],
                 ],
               ),

@@ -64,9 +64,11 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
       final altLower = normalized.toLowerCase();
       final gameState = GameStateService().gameState.value;
       // 嘗試多種鍵名（避免大小寫不一致）：
-      final currentLevel = gameState.equipments[normalized] ??
+      final currentLevel =
+          gameState.equipments[normalized] ??
           gameState.equipments[altLower] ??
-          gameState.equipments[equipId] ?? 0;
+          gameState.equipments[equipId] ??
+          0;
       return currentLevel >= requiredLevel;
     } catch (_) {
       return false;
@@ -74,16 +76,18 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
   }
 
   void _loadTitles() {
-    final list = (ConfigService().getValue('titles.titles', defaultValue: []) as List)
-        .cast<Map<String, dynamic>?>()
-        .whereType<Map<String, dynamic>>()
-        .toList();
+    final list =
+        (ConfigService().getValue('titles.titles', defaultValue: []) as List)
+            .cast<Map<String, dynamic>?>()
+            .whereType<Map<String, dynamic>>()
+            .toList();
     final loc = LocalizationService();
-    
+
     // 獲取當前遊戲狀態
     int currentMainStage = 0;
     try {
-      currentMainStage = GameStateService().gameState.value.mainQuest?.currentStage ?? 0;
+      currentMainStage =
+          GameStateService().gameState.value.mainQuest?.currentStage ?? 0;
     } catch (_) {
       currentMainStage = 0;
     }
@@ -101,16 +105,17 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
       bool isConditionMet = false;
       if (condition != null) {
         final kind = condition['kind']?.toString();
-        
+
         if (kind == 'main_stage_done') {
           final stage = (condition['stage'] as num?)?.toInt() ?? 0;
           isConditionMet = currentMainStage >= stage;
-        } 
+        }
         // 單一裝備等級達標
         else if (kind == 'equip_level_reach') {
           final equipId = condition['equip_id'] as String?;
           final level = (condition['level'] as num?)?.toInt() ?? 0;
-          isConditionMet = equipId != null && _isEquipmentLevelReached(equipId, level);
+          isConditionMet =
+              equipId != null && _isEquipmentLevelReached(equipId, level);
         }
         // 裝備配對等級條件（所有 pair 皆需達成）
         else if (kind == 'equip_pair_levels') {
@@ -118,8 +123,11 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
           if (pairs != null) {
             isConditionMet = pairs.every((pair) {
               final equipId = pair is Map ? pair['equip_id'] as String? : null;
-              final level = pair is Map ? (pair['level'] as num?)?.toInt() ?? 0 : 0;
-              return equipId != null && _isEquipmentLevelReached(equipId, level);
+              final level = pair is Map
+                  ? (pair['level'] as num?)?.toInt() ?? 0
+                  : 0;
+              return equipId != null &&
+                  _isEquipmentLevelReached(equipId, level);
             });
           }
         }
@@ -129,7 +137,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
           final count = (condition['count'] as num?)?.toInt() ?? 1;
           try {
             final records = GameStateService().gameState.value.gachaHistory;
-            final got = records.where((r) => r.rarity.toUpperCase() == rarity).length;
+            final got = records
+                .where((r) => r.rarity.toUpperCase() == rarity)
+                .length;
             isConditionMet = got >= count;
           } catch (_) {
             isConditionMet = false;
@@ -138,10 +148,17 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         // 可以添加其他類型的條件檢查
       }
 
-      final name = nameKey != null ? loc.getString(nameKey, defaultValue: id) : id;
-      final desc = descKey != null ? loc.getString(descKey, defaultValue: '') : '';
+      final name = nameKey != null
+          ? loc.getString(nameKey, defaultValue: id)
+          : id;
+      final desc = descKey != null
+          ? loc.getString(descKey, defaultValue: '')
+          : '';
       final hiddenDesc = hiddenDescKey != null
-          ? loc.getString(hiddenDescKey, defaultValue: loc.getString('title.hidden', defaultValue: '????'))
+          ? loc.getString(
+              hiddenDescKey,
+              defaultValue: loc.getString('title.hidden', defaultValue: '????'),
+            )
           : loc.getString('title.hidden', defaultValue: '????');
 
       return _TitleItem(
@@ -154,7 +171,7 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         conditionMet: isConditionMet,
       );
     }).toList();
-    
+
     // 從持久化狀態覆蓋 status
     TitlesState? titlesState;
     try {
@@ -171,7 +188,7 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
     for (final it in items) {
       final persisted = titlesState?.states[it.id];
       _TitleStatus status;
-      
+
       if (persisted == 'claimed') {
         status = _TitleStatus.claimed;
       } else if (it.conditionMet) {
@@ -182,7 +199,7 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
       } else {
         status = _TitleStatus.locked;
       }
-      
+
       final withStatus = it.copyWith(status: status);
       if (status == _TitleStatus.claimed) {
         claimed.add(withStatus);
@@ -196,14 +213,22 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
     if (titlesState != null) {
       final claimedIds = <String>{...claimed.map((e) => e.id)};
       final allIds = <String>{...items.map((e) => e.id)};
-      final collectItems = items.where((e) =>
-          ((list.firstWhere((m) => m['id']?.toString() == e.id, orElse: () => const {}) as Map)
-                  ['condition']
-              as Map<String, dynamic>? )?['kind'] == 'collect_all_titles_except');
+      final collectItems = items.where(
+        (e) =>
+            ((list.firstWhere(
+                      (m) => m['id']?.toString() == e.id,
+                      orElse: () => const {},
+                    )
+                    as Map)['condition']
+                as Map<String, dynamic>?)?['kind'] ==
+            'collect_all_titles_except',
+      );
 
       for (final it in collectItems) {
-        final cond = (list.firstWhere((m) => m['id']?.toString() == it.id) as Map)['condition']
-            as Map<String, dynamic>;
+        final cond =
+            (list.firstWhere((m) => m['id']?.toString() == it.id)
+                    as Map)['condition']
+                as Map<String, dynamic>;
         final exclude = (cond['exclude'] as List?)?.cast<String>() ?? const [];
         final targetSet = allIds.difference({it.id, ...exclude});
         final allClaimed = targetSet.every((id) => claimedIds.contains(id));
@@ -211,7 +236,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
           // 更新在 unclaimed（本地工作清單）中的狀態
           final idx = unclaimed.indexWhere((x) => x.id == it.id);
           if (idx >= 0) {
-            final updated = unclaimed[idx].copyWith(status: _TitleStatus.claimable);
+            final updated = unclaimed[idx].copyWith(
+              status: _TitleStatus.claimable,
+            );
             unclaimed[idx] = updated;
             newStates[it.id] = 'claimable';
             hasNewClaimable = true;
@@ -219,19 +246,22 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         }
       }
     }
-    
+
     // 如果有新的可領取稱號，更新遊戲狀態（延後到 frame 結束後再寫入，避免 build 中觸發）
     if (hasNewClaimable && titlesState != null) {
       final baseTitles = titlesState;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
           final gs = GameStateService().gameState.value;
-          final updatedStates = Map<String, String>.from(baseTitles.states)..addAll(newStates);
+          final updatedStates = Map<String, String>.from(baseTitles.states)
+            ..addAll(newStates);
           final newTitles = baseTitles.copyWith(
             states: updatedStates,
             hasClaimable: true,
           );
-          await GameStateService().updateGameState(gs.copyWith(titles: newTitles));
+          await GameStateService().updateGameState(
+            gs.copyWith(titles: newTitles),
+          );
         } catch (_) {
           // 忽略錯誤
         }
@@ -249,7 +279,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         try {
           final gs = GameStateService().gameState.value;
           final newTitles = baseTitles.copyWith(hasClaimable: hasClaimable);
-          await GameStateService().updateGameState(gs.copyWith(titles: newTitles));
+          await GameStateService().updateGameState(
+            gs.copyWith(titles: newTitles),
+          );
         } catch (_) {
           // 忽略錯誤
         }
@@ -257,14 +289,17 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
     }
   }
 
-  bool get _hasClaimable => _unclaimed.any((e) => e.status == _TitleStatus.claimable);
+  bool get _hasClaimable =>
+      _unclaimed.any((e) => e.status == _TitleStatus.claimable);
 
   void _claim(_TitleItem item) {
     setState(() {
       // 標記為已取得並移動到已取得清單
       final idx = _unclaimed.indexWhere((t) => t.id == item.id);
       if (idx >= 0) {
-        final claimedItem = _unclaimed[idx].copyWith(status: _TitleStatus.claimed);
+        final claimedItem = _unclaimed[idx].copyWith(
+          status: _TitleStatus.claimed,
+        );
         _unclaimed.removeAt(idx);
         _claimed.insert(0, claimedItem); // 置頂（新到舊）
       }
@@ -279,7 +314,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
       newStates[item.id] = 'claimed';
       final newClaimedAt = Map<String, int>.from(titles.claimedAt);
       newClaimedAt[item.id] = DateTime.now().toUtc().millisecondsSinceEpoch;
-      final hasClaimable = _unclaimed.any((e) => e.status == _TitleStatus.claimable);
+      final hasClaimable = _unclaimed.any(
+        (e) => e.status == _TitleStatus.claimable,
+      );
       final newTitles = titles.copyWith(
         states: newStates,
         claimedAt: newClaimedAt,
@@ -295,19 +332,26 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
 
   void _recheckCollectAllTitlesExcept() {
     try {
-      final list = (ConfigService().getValue('titles.titles', defaultValue: []) as List)
-          .cast<Map<String, dynamic>?>()
-          .whereType<Map<String, dynamic>>()
-          .toList();
+      final list =
+          (ConfigService().getValue('titles.titles', defaultValue: []) as List)
+              .cast<Map<String, dynamic>?>()
+              .whereType<Map<String, dynamic>>()
+              .toList();
 
       final claimedIds = <String>{..._claimed.map((e) => e.id)};
-      final allIds = <String>{...list.map((e) => e['id']?.toString() ?? '').where((id) => id.isNotEmpty)};
+      final allIds = <String>{
+        ...list
+            .map((e) => e['id']?.toString() ?? '')
+            .where((id) => id.isNotEmpty),
+      };
 
       bool updated = false;
       for (final m in list) {
         final id = m['id']?.toString() ?? '';
         final cond = m['condition'] as Map<String, dynamic>?;
-        if (id.isEmpty || (cond?['kind']?.toString() != 'collect_all_titles_except')) continue;
+        if (id.isEmpty ||
+            (cond?['kind']?.toString() != 'collect_all_titles_except'))
+          continue;
 
         final exclude = (cond?['exclude'] as List?)?.cast<String>() ?? const [];
         final targetSet = allIds.difference({id, ...exclude});
@@ -315,7 +359,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         if (allClaimed) {
           final idx = _unclaimed.indexWhere((x) => x.id == id);
           if (idx >= 0 && _unclaimed[idx].status != _TitleStatus.claimable) {
-            _unclaimed[idx] = _unclaimed[idx].copyWith(status: _TitleStatus.claimable);
+            _unclaimed[idx] = _unclaimed[idx].copyWith(
+              status: _TitleStatus.claimable,
+            );
             updated = true;
           }
         }
@@ -327,13 +373,20 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         final current = svc.gameState.value;
         final titles = current.titles ?? const TitlesState();
         final newStates = Map<String, String>.from(titles.states);
-        for (final it in _unclaimed.where((e) => e.status == _TitleStatus.claimable)) {
+        for (final it in _unclaimed.where(
+          (e) => e.status == _TitleStatus.claimable,
+        )) {
           if (newStates[it.id] != 'claimed') {
             newStates[it.id] = 'claimable';
           }
         }
-        final hasClaimable = _unclaimed.any((e) => e.status == _TitleStatus.claimable);
-        final newTitles = titles.copyWith(states: newStates, hasClaimable: hasClaimable);
+        final hasClaimable = _unclaimed.any(
+          (e) => e.status == _TitleStatus.claimable,
+        );
+        final newTitles = titles.copyWith(
+          states: newStates,
+          hasClaimable: hasClaimable,
+        );
         svc.updateGameState(current.copyWith(titles: newTitles));
         setState(() {});
       }
@@ -365,7 +418,8 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
     int currentStage = 0;
     bool isLocked = true;
     try {
-      currentStage = GameStateService().gameState.value.mainQuest?.currentStage ?? 0;
+      currentStage =
+          GameStateService().gameState.value.mainQuest?.currentStage ?? 0;
       // 解鎖條件：完成第二章後可使用（<= 2 鎖定）
       isLocked = currentStage <= 2;
     } catch (_) {
@@ -379,10 +433,26 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         ColorFiltered(
           colorFilter: isLocked
               ? const ColorFilter.matrix(<double>[
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ])
               : const ColorFilter.mode(Colors.transparent, BlendMode.srcOver),
           child: Padding(
@@ -416,7 +486,10 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
                             Align(
                               alignment: Alignment.center,
                               child: Text(
-                                localization.getString('title.tab.locked', defaultValue: '未取得'),
+                                localization.getString(
+                                  'title.tab.locked',
+                                  defaultValue: '未取得',
+                                ),
                               ),
                             ),
                             if (_hasClaimable)
@@ -438,7 +511,12 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
                           ],
                         ),
                       ),
-                      Tab(text: localization.getString('title.tab.unlocked', defaultValue: '已取得')),
+                      Tab(
+                        text: localization.getString(
+                          'title.tab.unlocked',
+                          defaultValue: '已取得',
+                        ),
+                      ),
                     ],
                     labelColor: Colors.white,
                     unselectedLabelColor: Colors.white54,
@@ -468,11 +546,16 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
               color: Colors.black.withValues(alpha: 0.6),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     localization.getString(
@@ -496,8 +579,12 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
 
   Widget _buildLockedTab(LocalizationService localization) {
     // 排序：claimable 先，其後 locked（維持原順序）
-    final claimables = _unclaimed.where((e) => e.status == _TitleStatus.claimable).toList();
-    final lockeds = _unclaimed.where((e) => e.status == _TitleStatus.locked).toList();
+    final claimables = _unclaimed
+        .where((e) => e.status == _TitleStatus.claimable)
+        .toList();
+    final lockeds = _unclaimed
+        .where((e) => e.status == _TitleStatus.locked)
+        .toList();
     final list = [...claimables, ...lockeds];
 
     if (list.isEmpty) {
@@ -505,7 +592,10 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         padding: const EdgeInsets.only(top: 0),
         child: Center(
           child: Text(
-            localization.getString('title.all_obtained', defaultValue: '全部稱號已取得！'),
+            localization.getString(
+              'title.all_obtained',
+              defaultValue: '全部稱號已取得！',
+            ),
             style: TextStyle(
               fontSize: MediaQuery.of(context).size.width / 10 - 10,
               color: Colors.white70,
@@ -530,7 +620,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         final item = list[index];
         return _TitleCard(
           item: item,
-          onClaim: item.status == _TitleStatus.claimable ? () => _claim(item) : null,
+          onClaim: item.status == _TitleStatus.claimable
+              ? () => _claim(item)
+              : null,
           localization: localization,
         );
       },
@@ -555,10 +647,7 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
       itemCount: _claimed.length,
       itemBuilder: (context, index) {
         final item = _claimed[index];
-        return _TitleCard(
-          item: item,
-          localization: localization,
-        );
+        return _TitleCard(item: item, localization: localization);
       },
     );
   }
@@ -621,7 +710,10 @@ class _TitleCard extends StatelessWidget {
                 displayName,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -635,11 +727,18 @@ class _TitleCard extends StatelessWidget {
                 ElevatedButton(
                   onPressed: claimable ? onClaim : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: claimable ? const Color(0xFFE89A00) : Colors.grey.shade900,
+                    backgroundColor: claimable
+                        ? const Color(0xFFE89A00)
+                        : Colors.grey.shade900,
                     foregroundColor: claimable ? Colors.black : Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                  child: Text(localization.getString('title.btn.claim', defaultValue: '領取')),
+                  child: Text(
+                    localization.getString(
+                      'title.btn.claim',
+                      defaultValue: '領取',
+                    ),
+                  ),
                 )
               else
                 const SizedBox(height: 4),

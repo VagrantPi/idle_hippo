@@ -15,11 +15,7 @@ void main() {
     });
 
     testWidgets('PowerSaverPage 應該正確顯示基本元素', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: const PowerSaverPage(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: const PowerSaverPage()));
 
       // 等待初始化完成
       await tester.pump();
@@ -75,11 +71,7 @@ void main() {
     });
 
     testWidgets('旋轉按鈕應該切換直橫佈局', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: const PowerSaverPage(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: const PowerSaverPage()));
 
       await tester.pump();
 
@@ -93,11 +85,7 @@ void main() {
     });
 
     testWidgets('時鐘應該每秒更新', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: const PowerSaverPage(),
-        ),
-      );
+      await tester.pumpWidget(MaterialApp(home: const PowerSaverPage()));
 
       await tester.pump();
 
@@ -115,26 +103,26 @@ void main() {
     testWidgets('省電模式應該隱藏系統 UI', (WidgetTester tester) async {
       // 記錄原始的 SystemChrome 調用
       final List<MethodCall> systemChromeCalls = <MethodCall>[];
-      
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, (MethodCall methodCall) async {
-        systemChromeCalls.add(methodCall);
-        return null;
-      });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: const PowerSaverPage(),
-        ),
-      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (
+            MethodCall methodCall,
+          ) async {
+            systemChromeCalls.add(methodCall);
+            return null;
+          });
+
+      await tester.pumpWidget(MaterialApp(home: const PowerSaverPage()));
 
       await tester.pump();
 
       // 驗證是否調用了隱藏系統 UI 的方法
       expect(
-        systemChromeCalls.any((call) => 
-          call.method == 'SystemChrome.setEnabledSystemUIMode' ||
-          call.method.contains('SystemUIMode')),
+        systemChromeCalls.any(
+          (call) =>
+              call.method == 'SystemChrome.setEnabledSystemUIMode' ||
+              call.method.contains('SystemUIMode'),
+        ),
         isTrue,
       );
 
@@ -146,24 +134,16 @@ void main() {
     testWidgets('多國語系應該正確顯示', (WidgetTester tester) async {
       // 測試中文
       await localizationService.changeLanguage('zh');
-      
-      await tester.pumpWidget(
-        MaterialApp(
-          home: const PowerSaverPage(),
-        ),
-      );
+
+      await tester.pumpWidget(MaterialApp(home: const PowerSaverPage()));
 
       await tester.pump();
       expect(find.text('觸控退出'), findsOneWidget);
 
       // 測試英文
       await localizationService.changeLanguage('en');
-      
-      await tester.pumpWidget(
-        MaterialApp(
-          home: const PowerSaverPage(),
-        ),
-      );
+
+      await tester.pumpWidget(MaterialApp(home: const PowerSaverPage()));
 
       await tester.pump();
       expect(find.text('Tap anywhere to exit'), findsOneWidget);

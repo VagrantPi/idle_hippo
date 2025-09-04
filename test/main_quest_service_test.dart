@@ -14,7 +14,7 @@ void main() {
 
     test('應該正確初始化主線任務狀態', () {
       final state = service.ensureMainQuestState(initialState);
-      
+
       expect(state.mainQuest, isNotNull);
       expect(state.mainQuest!.currentStage, equals(1));
       expect(state.mainQuest!.tapCountProgress, equals(0));
@@ -25,21 +25,21 @@ void main() {
 
     test('應該正確更新點擊進度', () {
       var state = service.ensureMainQuestState(initialState);
-      
+
       // 模擬 10 次點擊
       for (int i = 0; i < 10; i++) {
         state = service.onTap(state);
       }
-      
+
       expect(state.mainQuest!.tapCountProgress, equals(10));
     });
 
     test('應該正確更新迷因點數進度', () {
       var state = service.ensureMainQuestState(initialState);
-      
+
       // 模擬獲得 100 點迷因點數
       state = service.onEarnPoints(state, 100.0);
-      
+
       expect(state.mainQuest!.memePointsEarned, equals(100.0));
     });
 
@@ -49,7 +49,7 @@ void main() {
       String? completedQuestId;
       String? rewardType;
       String? rewardId;
-      
+
       // 設定完成回調
       service.setQuestCompletedCallback((questId, rType, rId) {
         questCompleted = true;
@@ -57,13 +57,13 @@ void main() {
         rewardType = rType;
         rewardId = rId;
       });
-      
+
       // 滿足第一階段條件：10 次點擊 + 50 迷因點數
       for (int i = 0; i < 10; i++) {
         state = service.onTap(state);
       }
       state = service.onEarnPoints(state, 50.0);
-      
+
       // 先不會自動完成，應為可領取狀態
       expect(questCompleted, isFalse);
       expect(state.mainQuest!.claimable, isTrue);
@@ -84,25 +84,26 @@ void main() {
       bool questCompleted = false;
       String? rewardType;
       String? rewardId;
-      
+
       service.setQuestCompletedCallback((questId, rType, rId) {
         questCompleted = true;
         rewardType = rType;
         rewardId = rId;
       });
-      
+
       // 先完成第一階段並確認
       for (int i = 0; i < 10; i++) {
         state = service.onTap(state);
       }
       state = service.onEarnPoints(state, 50.0);
       state = service.claimCurrentQuest(state);
-      
+
       // 重置回調狀態
       questCompleted = false;
-      
+
       // 完成第二階段：累計 50 次點擊 + 500 迷因點數
-      for (int i = 0; i < 40; i++) { // 已有 10 次，再加 40 次
+      for (int i = 0; i < 40; i++) {
+        // 已有 10 次，再加 40 次
         state = service.onTap(state);
       }
       // 新規則：進入新階段時 memePoints 從 0 開始，需補滿 500
@@ -124,11 +125,11 @@ void main() {
     test('應該正確處理第三階段：達成→可領取→確認後前進', () {
       var state = service.ensureMainQuestState(initialState);
       bool questCompleted = false;
-      
+
       service.setQuestCompletedCallback((questId, rType, rId) {
         questCompleted = true;
       });
-      
+
       // 直接設置到第三階段的進度
       state = state.copyWith(
         mainQuest: state.mainQuest!.copyWith(
@@ -138,12 +139,13 @@ void main() {
           unlockedRewards: ['equip.youtube', 'system.title'],
         ),
       );
-      
+
       // 重置回調狀態
       questCompleted = false;
-      
+
       // 完成第三階段：累計 300 次點擊 + 5000 迷因點數
-      for (int i = 0; i < 100; i++) { // 已有 200 次，再加 100 次
+      for (int i = 0; i < 100; i++) {
+        // 已有 200 次，再加 100 次
         state = service.onTap(state);
       }
       state = service.onEarnPoints(state, 3000.0); // 已有 2000，再加 3000
@@ -161,15 +163,15 @@ void main() {
 
     test('應該正確返回任務統計資訊（使用 progress/claimable）', () {
       var state = service.ensureMainQuestState(initialState);
-      
+
       // 設置一些進度
       for (int i = 0; i < 25; i++) {
         state = service.onTap(state);
       }
       state = service.onEarnPoints(state, 250.0);
-      
+
       final stats = service.getStats(state);
-      
+
       expect(stats['currentStage'], equals(1));
       // 第 1 階段需求為 10 次點擊，25 次點擊應視為已滿（progress=1.0）
       expect(stats['progress'], equals(1.0));
@@ -179,9 +181,9 @@ void main() {
 
     test('應該正確返回任務列表（含 status 與 progress）', () {
       var state = service.ensureMainQuestState(initialState);
-      
+
       final questList = service.getQuestList(state);
-      
+
       expect(questList, hasLength(6));
       expect(questList[0]['stage'], equals(1));
       expect(questList[0]['status'], equals('current'));
@@ -192,9 +194,9 @@ void main() {
 
     test('應該正確檢查獎勵解鎖狀態（需確認後才解鎖）', () {
       var state = service.ensureMainQuestState(initialState);
-      
+
       expect(service.isRewardUnlocked(state, 'equip.youtube'), isFalse);
-      
+
       // 達成第一階段
       for (int i = 0; i < 10; i++) {
         state = service.onTap(state);
@@ -212,9 +214,9 @@ void main() {
 
     test('應該正確返回已解鎖獎勵列表（需確認後生效）', () {
       var state = service.ensureMainQuestState(initialState);
-      
+
       expect(service.getUnlockedRewards(state), isEmpty);
-      
+
       // 達成第一階段
       for (int i = 0; i < 10; i++) {
         state = service.onTap(state);
@@ -231,11 +233,11 @@ void main() {
     test('不應該重複完成同一階段任務（確認觸發一次）', () {
       var state = service.ensureMainQuestState(initialState);
       int completionCount = 0;
-      
+
       service.setQuestCompletedCallback((questId, rType, rId) {
         completionCount++;
       });
-      
+
       // 滿足第一階段條件多次
       for (int i = 0; i < 20; i++) {
         state = service.onTap(state);
@@ -252,26 +254,33 @@ void main() {
     test('應該正確處理最後階段完成（第六階段確認後 currentStage 將前進到 7）', () {
       var state = service.ensureMainQuestState(initialState);
       bool questCompleted = false;
-      
+
       service.setQuestCompletedCallback((questId, rType, rId) {
         questCompleted = true;
       });
-      
+
       // 直接設置到第六階段的進度
       state = state.copyWith(
         mainQuest: state.mainQuest!.copyWith(
           currentStage: 6,
           tapCountProgress: 4900,
           memePointsEarned: 99000.0,
-          unlockedRewards: ['equip.youtube', 'system.title', 'system.pet', 'hippo.skin1', 'hippo.skin2'],
+          unlockedRewards: [
+            'equip.youtube',
+            'system.title',
+            'system.pet',
+            'hippo.skin1',
+            'hippo.skin2',
+          ],
         ),
       );
-      
+
       // 重置回調狀態
       questCompleted = false;
-      
+
       // 完成第六階段：累計 5000 次點擊 + 100000 迷因點數
-      for (int i = 0; i < 100; i++) { // 已有 4900 次，再加 100 次
+      for (int i = 0; i < 100; i++) {
+        // 已有 4900 次，再加 100 次
         state = service.onTap(state);
       }
       state = service.onEarnPoints(state, 1000.0); // 已有 99000，再加 1000

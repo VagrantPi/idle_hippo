@@ -44,11 +44,8 @@ class _CheckinWidgetState extends State<CheckinWidget> {
       return [
         Container(
           padding: const EdgeInsets.all(16),
-          child: Text(
-            '打卡系統初始化中...',
-            style: TextStyle(color: Colors.white70),
-          ),
-        )
+          child: Text('打卡系統初始化中...', style: TextStyle(color: Colors.white70)),
+        ),
       ];
     }
 
@@ -68,7 +65,7 @@ class _CheckinWidgetState extends State<CheckinWidget> {
             _buildStreakInfo(checkinState.streak),
           ],
         ),
-      )
+      ),
     ];
   }
 
@@ -76,13 +73,19 @@ class _CheckinWidgetState extends State<CheckinWidget> {
     final task = today.task;
     final progress = task.progress;
     final target = task.target;
-    final progressPercent = target > 0 ? (progress / target).clamp(0.0, 1.0) : 0.0;
-    
+    final progressPercent = target > 0
+        ? (progress / target).clamp(0.0, 1.0)
+        : 0.0;
+
     String taskDescription;
     if (task.type == 'tap') {
-      taskDescription = _localization.getString('checkin.task.tap').replaceAll('{n}', target.toString());
+      taskDescription = _localization
+          .getString('checkin.task.tap')
+          .replaceAll('{n}', target.toString());
     } else {
-      taskDescription = _localization.getString('checkin.task.collect').replaceAll('{m}', target.toString());
+      taskDescription = _localization
+          .getString('checkin.task.collect')
+          .replaceAll('{m}', target.toString());
     }
 
     return Container(
@@ -131,7 +134,9 @@ class _CheckinWidgetState extends State<CheckinWidget> {
               widthFactor: progressPercent,
               child: Container(
                 decoration: BoxDecoration(
-                  color: today.status == 'pending' ? Colors.orange : Colors.green,
+                  color: today.status == 'pending'
+                      ? Colors.orange
+                      : Colors.green,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -142,16 +147,15 @@ class _CheckinWidgetState extends State<CheckinWidget> {
             children: [
               Text(
                 '$progress / $target',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
               const Spacer(),
               Text(
                 _localization.getString('checkin.status.${today.status}'),
                 style: TextStyle(
-                  color: today.status == 'pending' ? Colors.orange : Colors.green,
+                  color: today.status == 'pending'
+                      ? Colors.orange
+                      : Colors.green,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -162,14 +166,15 @@ class _CheckinWidgetState extends State<CheckinWidget> {
           if (today.status == 'pending') ...[
             const SizedBox(height: 12),
             // 看廣告跳過按鈕
-            if (_checkinService.canSkipViaAd())
-              _buildAdSkipButton(),
-            
+            if (_checkinService.canSkipViaAd()) _buildAdSkipButton(),
+
             // 完成簽到按鈕
             const SizedBox(height: 8),
             _buildCompleteButton(
               isEnabled: _checkinService.canCompleteToday(),
-              onPressed: _checkinService.canCompleteToday() ? _handleComplete : null,
+              onPressed: _checkinService.canCompleteToday()
+                  ? _handleComplete
+                  : null,
             ),
           ],
         ],
@@ -247,7 +252,7 @@ class _CheckinWidgetState extends State<CheckinWidget> {
   Widget _buildWeeklyCalendar() {
     final calendar = _checkinService.getWeeklyCalendar();
     final dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -264,23 +269,24 @@ class _CheckinWidgetState extends State<CheckinWidget> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(7, (index) {
             final isCompleted = calendar[index];
-            final dayName = _localization.getString('checkin.calendar.${dayNames[index]}');
-            
+            final dayName = _localization.getString(
+              'checkin.calendar.${dayNames[index]}',
+            );
+
             return Column(
               children: [
                 Text(
                   dayName,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: isCompleted ? Colors.green : Colors.grey.withValues(alpha: 0.3),
+                    color: isCompleted
+                        ? Colors.green
+                        : Colors.grey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isCompleted ? Colors.green : Colors.grey,
@@ -289,11 +295,7 @@ class _CheckinWidgetState extends State<CheckinWidget> {
                   ),
                   child: Center(
                     child: isCompleted
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 16,
-                          )
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
                         : Text(
                             '${index + 1}',
                             style: const TextStyle(
@@ -322,17 +324,23 @@ class _CheckinWidgetState extends State<CheckinWidget> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStreakItem(
-            _localization.getString('checkin.streak.current').replaceAll('{n}', streak.current.toString()),
+            _localization
+                .getString('checkin.streak.current')
+                .replaceAll('{n}', streak.current.toString()),
             streak.current.toString(),
             Colors.orange,
           ),
           _buildStreakItem(
-            _localization.getString('checkin.streak.best').replaceAll('{n}', streak.best.toString()),
+            _localization
+                .getString('checkin.streak.best')
+                .replaceAll('{n}', streak.best.toString()),
             streak.best.toString(),
             Colors.yellow,
           ),
           _buildStreakItem(
-            _localization.getString('checkin.streak.total').replaceAll('{n}', streak.total.toString()),
+            _localization
+                .getString('checkin.streak.total')
+                .replaceAll('{n}', streak.total.toString()),
             streak.total.toString(),
             Colors.green,
           ),
@@ -355,10 +363,7 @@ class _CheckinWidgetState extends State<CheckinWidget> {
         const SizedBox(height: 4),
         Text(
           label.split('：')[0], // 取標籤部分
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
       ],
     );
@@ -424,14 +429,14 @@ class _CheckinWidgetState extends State<CheckinWidget> {
     if (!_checkinService.canCompleteToday()) {
       return; // 防止重複點擊
     }
-    
+
     try {
       // 僅在達標後由使用者主動完成簽到
       await _checkinService.completeToday();
       if (!mounted) return;
       // 立即刷新 UI 狀態（顯示已完成/週曆等）
       setState(() {});
-      
+
       // 顯示簽到完成動畫
       if (mounted) {
         _showCheckinCompleteAnimation();
@@ -467,7 +472,10 @@ class _CheckinWidgetState extends State<CheckinWidget> {
         return const SizedBox.shrink();
       },
       transitionBuilder: (context, anim, secAnim, child) {
-        final scale = CurvedAnimation(parent: anim, curve: Curves.easeOutBack).value;
+        final scale = CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeOutBack,
+        ).value;
         final fade = CurvedAnimation(parent: anim, curve: Curves.easeOut).value;
 
         // 生成少量紙花星星

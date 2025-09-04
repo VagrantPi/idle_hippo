@@ -32,7 +32,10 @@ class EquipmentService {
 
   List<Map<String, dynamic>> _tapEquipments() {
     if (_tapEquipmentsOverride != null) return _tapEquipmentsOverride!;
-    final list = _config.getValue('equipments.tap_equipments', defaultValue: []);
+    final list = _config.getValue(
+      'equipments.tap_equipments',
+      defaultValue: [],
+    );
     if (list is List) {
       return list.cast<Map<String, dynamic>>();
     }
@@ -41,7 +44,10 @@ class EquipmentService {
 
   List<Map<String, dynamic>> _idleEquipments() {
     if (_idleEquipmentsOverride != null) return _idleEquipmentsOverride!;
-    final list = _config.getValue('equipments.idle_equipments', defaultValue: []);
+    final list = _config.getValue(
+      'equipments.idle_equipments',
+      defaultValue: [],
+    );
     if (list is List) {
       return list.cast<Map<String, dynamic>>();
     }
@@ -88,7 +94,9 @@ class EquipmentService {
   }
 
   /// 讀取放置裝備解鎖條件（unlock），格式：{"type": "equip_level", "id": "youtube", "level": 3}
-  (String type, String id, int level)? _unlockConditionOf(Map<String, dynamic> equip) {
+  (String type, String id, int level)? _unlockConditionOf(
+    Map<String, dynamic> equip,
+  ) {
     final unlock = equip['unlock'];
     if (unlock is Map<String, dynamic>) {
       final type = unlock['type'];
@@ -114,10 +122,16 @@ class EquipmentService {
 
     final type = equip['type'] as String?;
     if (type == 'tap') {
-      final list = _config.getValue('equipments.default_tap_levels', defaultValue: []);
+      final list = _config.getValue(
+        'equipments.default_tap_levels',
+        defaultValue: [],
+      );
       if (list is List) return list.cast<Map<String, dynamic>>();
     } else if (type == 'idle') {
-      final list = _config.getValue('equipments.default_idle_levels', defaultValue: []);
+      final list = _config.getValue(
+        'equipments.default_idle_levels',
+        defaultValue: [],
+      );
       if (list is List) return list.cast<Map<String, dynamic>>();
     }
     return const [];
@@ -139,20 +153,20 @@ class EquipmentService {
     if (equip == null) return false;
     final condition = _unlockConditionOf(equip);
     if (condition == null) return true; // 無條件直接解鎖
-    
+
     final (type, reqId, reqLevel) = condition;
     if (type == 'equip_level') {
       final current = equipments[reqId] ?? 0;
       return current >= reqLevel;
     }
-    
+
     return false; // 未知類型條件
   }
 
   // 統一：以 double 計算累積加成（支援小數）
   double _cumulativeBonus(Map<String, dynamic> equip, int level) {
     final levels = _levelsOf(equip);
-    
+
     final bonuses = <num>[];
     for (final m in levels) {
       final lv = (m['level'] as num).toInt();
@@ -168,7 +182,7 @@ class EquipmentService {
   double _cumulativeIdleBonus(Map<String, dynamic> equip, int level) {
     if (level <= 0) return 0.0;
     final levels = _levelsOf(equip);
-    
+
     final bonuses = <num>[];
     for (final m in levels) {
       final lv = (m['level'] as num).toInt();
@@ -279,7 +293,8 @@ class EquipmentService {
     // 僅針對 youtube 需要主線解鎖，其餘依自身 unlock 條件
     if (id == 'youtube') {
       // 與 UI 與 quests.json 對齊：使用 equipment.youtube 作為解鎖鍵
-      final questUnlocked = state.mainQuest?.unlockedRewards.contains('equipment.$id') ?? false;
+      final questUnlocked =
+          state.mainQuest?.unlockedRewards.contains('equipment.$id') ?? false;
       if (!questUnlocked) return false;
     }
     final currentLevel = state.equipments[id] ?? 0;
@@ -313,7 +328,8 @@ class EquipmentService {
     // 僅針對 youtube 需要主線解鎖
     if (id == 'youtube') {
       // 與 UI 與 quests.json 對齊：使用 equipment.youtube 作為解鎖鍵
-      final questUnlocked = state.mainQuest?.unlockedRewards.contains('equipment.$id') ?? false;
+      final questUnlocked =
+          state.mainQuest?.unlockedRewards.contains('equipment.$id') ?? false;
       if (!questUnlocked) return state;
     }
     final currentLevel = state.equipments[id] ?? 0;

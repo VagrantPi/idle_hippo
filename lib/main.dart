@@ -134,7 +134,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       });
       await _saveGameState();
     }
-    
+
     // 測試模式下不啟動時間系統，避免測試 pumpAndSettle 永不穩定
     if (!widget.testMode) {
       // 確保 IdleIncome 初始化完成後再啟動時間系統
@@ -185,7 +185,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     try {
       await _configService.loadConfig();
       // 初始值可由設定檔控制是否顯示 DebugPanel
-      final initialShow = _configService.getValue('game.ui.showDebugPanel', defaultValue: false);
+      final initialShow = _configService.getValue(
+        'game.ui.showDebugPanel',
+        defaultValue: false,
+      );
       if (mounted && initialShow is bool) {
         setState(() {
           _showDebugPanel = initialShow;
@@ -233,34 +236,45 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       }
     }
     _isLoaded = true;
-    
-    // 統一在這裡初始化放置收益系統
-    _idleIncome.init(onIncomeGenerated: (double points) {
-      if (!mounted) return;
-      final pointsToAdd = points;
-      if (pointsToAdd > 0) {
-        _accumulatedIdleIncome = DecimalUtils.add(_accumulatedIdleIncome, pointsToAdd);
-        
-        // 處理每日任務進度（資源獲得）
-        GameState updatedState = _dailyMission.onEarnPoints(_gameState, pointsToAdd);
-        
-        // 處理主線任務進度（點數獲得）
-        updatedState = _mainQuest.onEarnPoints(updatedState, pointsToAdd);
 
-        // 處理寵物抽獎券任務進度
-        updatedState = _petTicketQuest.addProgress(updatedState, pointsToAdd);
-        
-        // 累積任務：同步更新 collect 任務進度
-        CheckinService().updateCollectProgress(pointsToAdd);
-        
-        setState(() {
-          _gameState = updatedState.copyWith(
-            memePoints: DecimalUtils.add(updatedState.memePoints, pointsToAdd),
+    // 統一在這裡初始化放置收益系統
+    _idleIncome.init(
+      onIncomeGenerated: (double points) {
+        if (!mounted) return;
+        final pointsToAdd = points;
+        if (pointsToAdd > 0) {
+          _accumulatedIdleIncome = DecimalUtils.add(
+            _accumulatedIdleIncome,
+            pointsToAdd,
           );
-        });
-      }
-    });
-    
+
+          // 處理每日任務進度（資源獲得）
+          GameState updatedState = _dailyMission.onEarnPoints(
+            _gameState,
+            pointsToAdd,
+          );
+
+          // 處理主線任務進度（點數獲得）
+          updatedState = _mainQuest.onEarnPoints(updatedState, pointsToAdd);
+
+          // 處理寵物抽獎券任務進度
+          updatedState = _petTicketQuest.addProgress(updatedState, pointsToAdd);
+
+          // 累積任務：同步更新 collect 任務進度
+          CheckinService().updateCollectProgress(pointsToAdd);
+
+          setState(() {
+            _gameState = updatedState.copyWith(
+              memePoints: DecimalUtils.add(
+                updatedState.memePoints,
+                pointsToAdd,
+              ),
+            );
+          });
+        }
+      },
+    );
+
     // 設定 GameState 參考以計算放置裝備加成
     _idleIncome.updateGameState(_gameState);
   }
@@ -285,7 +299,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             // 累積任務：同步更新 collect 任務進度（離線收益）
             CheckinService().updateCollectProgress(reward);
             setState(() {
-              GameState updatedState = _dailyMission.onEarnPoints(_gameState, reward);
+              GameState updatedState = _dailyMission.onEarnPoints(
+                _gameState,
+                reward,
+              );
               updatedState = _mainQuest.onEarnPoints(updatedState, reward);
               // 同步推進寵物抽獎券任務進度（離線收益）
               updatedState = _petTicketQuest.addProgress(updatedState, reward);
@@ -359,7 +376,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     try {
       // 初始化打卡服務
       await _checkinService.initialize();
-      
+
       // 確保遊戲狀態有打卡資料結構
       if (_gameState.checkin == null) {
         setState(() {
@@ -368,11 +385,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
               today: CheckinToday(
                 date: '',
                 status: 'pending',
-                task: CheckinTask(
-                  type: 'tap',
-                  target: 10,
-                  progress: 0,
-                ),
+                task: CheckinTask(type: 'tap', target: 10, progress: 0),
               ),
             ),
           );
@@ -390,41 +403,72 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     }
   }
 
-  void _showQuestCompletedDialog(String questId, String rewardType, String rewardId) {
-    final title = _localization.getString('quest.completed.title', defaultValue: '任務完成！');
-    final confirm = _localization.getString('quest.completed.confirm', defaultValue: '確認');
-    
+  void _showQuestCompletedDialog(
+    String questId,
+    String rewardType,
+    String rewardId,
+  ) {
+    final title = _localization.getString(
+      'quest.completed.title',
+      defaultValue: '任務完成！',
+    );
+    final confirm = _localization.getString(
+      'quest.completed.confirm',
+      defaultValue: '確認',
+    );
+
     // 根據 questId 獲取任務標題
-    final questTitle = _localization.getString('quest.$questId.title', defaultValue: questId);
-    
+    final questTitle = _localization.getString(
+      'quest.$questId.title',
+      defaultValue: questId,
+    );
+
     // 根據獎勵類型生成獎勵描述
     String rewardDescription;
     switch (rewardType) {
       case 'equipment':
-        final equipmentName =_localization.getString('equip.$rewardId.name', defaultValue: '特殊');
-        rewardDescription = _localization.getString('quest.reward.equipment', 
-            defaultValue: '解鎖特殊裝備！');
-        rewardDescription = rewardDescription.replaceFirst('{rewardId}', equipmentName);
+        final equipmentName = _localization.getString(
+          'equip.$rewardId.name',
+          defaultValue: '特殊',
+        );
+        rewardDescription = _localization.getString(
+          'quest.reward.equipment',
+          defaultValue: '解鎖特殊裝備！',
+        );
+        rewardDescription = rewardDescription.replaceFirst(
+          '{rewardId}',
+          equipmentName,
+        );
         break;
       case 'system':
         if (rewardId == 'title') {
-          rewardDescription = _localization.getString('quest.reward.title_system', 
-              defaultValue: '解鎖稱號系統！');
+          rewardDescription = _localization.getString(
+            'quest.reward.title_system',
+            defaultValue: '解鎖稱號系統！',
+          );
         } else if (rewardId == 'pet') {
-          rewardDescription = _localization.getString('quest.reward.pet_system', 
-              defaultValue: '解鎖寵物系統！');
+          rewardDescription = _localization.getString(
+            'quest.reward.pet_system',
+            defaultValue: '解鎖寵物系統！',
+          );
         } else {
-          rewardDescription = _localization.getString('quest.reward.system', 
-              defaultValue: '解鎖 $rewardId 系統！');
+          rewardDescription = _localization.getString(
+            'quest.reward.system',
+            defaultValue: '解鎖 $rewardId 系統！',
+          );
         }
         break;
       case 'hippo':
-        rewardDescription = _localization.getString('quest.reward.skin', 
-            defaultValue: '解鎖新造型：$rewardId！');
+        rewardDescription = _localization.getString(
+          'quest.reward.skin',
+          defaultValue: '解鎖新造型：$rewardId！',
+        );
         break;
       default:
-        rewardDescription = _localization.getString('quest.reward.unknown', 
-            defaultValue: '獲得神秘獎勵！');
+        rewardDescription = _localization.getString(
+          'quest.reward.unknown',
+          defaultValue: '獲得神秘獎勵！',
+        );
     }
 
     showTopSlideDialog(
@@ -442,12 +486,12 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xCC220011),
-                    Color(0xCCE89A00),
-                  ],
+                  colors: [Color(0xCC220011), Color(0xCCE89A00)],
                 ),
-                border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+                border: Border.all(
+                  color: const Color(0xFF00FFD1).withValues(alpha: 0.8),
+                  width: 2,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -467,11 +511,19 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFF00FFD1,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                          border: Border.all(
+                            color: const Color(0xFF00FFD1),
+                            width: 1,
+                          ),
                         ),
-                        child: const Icon(Icons.emoji_events, color: Color(0xFF00FFD1)),
+                        child: const Icon(
+                          Icons.emoji_events,
+                          color: Color(0xFF00FFD1),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -487,11 +539,16 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,7 +585,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                              side: const BorderSide(
+                                color: Color(0xFF00FFD1),
+                                width: 2,
+                              ),
                             ),
                           ),
                           onPressed: () => Navigator.of(ctx).pop(),
@@ -553,8 +613,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   }
 
   void _showWeeklyBonusDialog({required double reward, required int total}) {
-    final title = _localization.getString('checkin.weekly_bonus.title', defaultValue: '週獎勵');
-    final descTpl = _localization.getString('checkin.weekly_bonus.message', defaultValue: '恭喜！你累計簽到 {total} 天，獲得週獎勵');
+    final title = _localization.getString(
+      'checkin.weekly_bonus.title',
+      defaultValue: '週獎勵',
+    );
+    final descTpl = _localization.getString(
+      'checkin.weekly_bonus.message',
+      defaultValue: '恭喜！你累計簽到 {total} 天，獲得週獎勵',
+    );
     final confirm = _localization.getString('common.ok', defaultValue: '確認');
 
     final desc = descTpl.replaceFirst('{total}', total.toString());
@@ -575,12 +641,12 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xCC002211),
-                    Color(0xCC0AA56B),
-                  ],
+                  colors: [Color(0xCC002211), Color(0xCC0AA56B)],
                 ),
-                border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+                border: Border.all(
+                  color: const Color(0xFF00FFD1).withValues(alpha: 0.8),
+                  width: 2,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -600,11 +666,19 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFF00FFD1,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                          border: Border.all(
+                            color: const Color(0xFF00FFD1),
+                            width: 1,
+                          ),
                         ),
-                        child: const Icon(Icons.calendar_month, color: Color(0xFF00FFD1)),
+                        child: const Icon(
+                          Icons.calendar_month,
+                          color: Color(0xFF00FFD1),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -620,11 +694,16 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,7 +718,11 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                            const Icon(
+                              Icons.local_fire_department,
+                              color: Colors.yellow,
+                              size: 20,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               '+$pointsStr',
@@ -651,7 +734,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             const SizedBox(width: 6),
                             Text(
                               _localization.getCommon('memePoints'),
-                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.yellowAccent,
+                              ),
                             ),
                           ],
                         ),
@@ -672,7 +757,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                              side: const BorderSide(
+                                color: Color(0xFF00FFD1),
+                                width: 2,
+                              ),
                             ),
                           ),
                           onPressed: () => Navigator.of(ctx).pop(),
@@ -703,8 +791,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   }) {
     // 若已顯示或 reward 無效，略過
     if (reward <= 0) return;
-    final title = _localization.getString('offline.title', defaultValue: 'Offline Reward');
-    final confirm = _localization.getString('offline.confirm', defaultValue: 'Claim');
+    final title = _localization.getString(
+      'offline.title',
+      defaultValue: 'Offline Reward',
+    );
+    final confirm = _localization.getString(
+      'offline.confirm',
+      defaultValue: 'Claim',
+    );
 
     String formatDuration(Duration d) {
       final h = d.inHours;
@@ -715,7 +809,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
     final timeStr = formatDuration(effective);
     final pointsStr = reward.toStringAsFixed(0);
-    final messageTemplate = _localization.getString('offline.message', defaultValue: 'You were away {time}, earned ≈ {points}');
+    final messageTemplate = _localization.getString(
+      'offline.message',
+      defaultValue: 'You were away {time}, earned ≈ {points}',
+    );
     final message = messageTemplate
         .replaceAll('{time}', timeStr)
         .replaceAll('{points}', pointsStr);
@@ -733,12 +830,12 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xCC110022),
-                  Color(0xCC2B0A56),
-                ],
+                colors: [Color(0xCC110022), Color(0xCC2B0A56)],
               ),
-              border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+              border: Border.all(
+                color: const Color(0xFF00FFD1).withValues(alpha: 0.8),
+                width: 2,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.5),
@@ -760,7 +857,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                        border: Border.all(
+                          color: const Color(0xFF00FFD1),
+                          width: 1,
+                        ),
                       ),
                       child: const Icon(Icons.timer, color: Color(0xFF00FFD1)),
                     ),
@@ -778,18 +878,27 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                          const Icon(
+                            Icons.local_fire_department,
+                            color: Colors.yellow,
+                            size: 20,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             pointsStr,
@@ -801,7 +910,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                           const SizedBox(width: 6),
                           Text(
                             _localization.getCommon('memePoints'),
-                            style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.yellowAccent,
+                            ),
                           ),
                         ],
                       ),
@@ -825,14 +936,23 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                         height: 44,
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.slow_motion_video, size: 20),
-                          label: Text(_localization.getString('offline.double_reward', defaultValue: 'Double x2')),
+                          label: Text(
+                            _localization.getString(
+                              'offline.double_reward',
+                              defaultValue: 'Double x2',
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFE89A00),
                             foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onPressed: () async {
-                            Navigator.of(ctx).pop(); // Close the current dialog first
+                            Navigator.of(
+                              ctx,
+                            ).pop(); // Close the current dialog first
 
                             final theme = Theme.of(context);
                             final amount = _gameState.offline.lastReward;
@@ -840,41 +960,68 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
                             await _rewardedAdService.showAd(
                               context: context,
-                              dialogTitle: _localization.getString('offline.doubled_success', defaultValue: 'Reward Doubled!'),
+                              dialogTitle: _localization.getString(
+                                'offline.doubled_success',
+                                defaultValue: 'Reward Doubled!',
+                              ),
                               rewardContent: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.red.withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                                    const Icon(
+                                      Icons.local_fire_department,
+                                      color: Colors.yellow,
+                                      size: 20,
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       '+$points',
-                                      style: theme.textTheme.headlineSmall?.copyWith(
-                                        color: Colors.yellow,
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
+                                            color: Colors.yellow,
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       _localization.getCommon('memePoints'),
-                                      style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            color: Colors.yellowAccent,
+                                          ),
                                     ),
                                   ],
                                 ),
                               ),
                               onAdWatched: () async {
-                                final doubledAmount = await _offline.claimOfflineAdDouble();
+                                final doubledAmount = await _offline
+                                    .claimOfflineAdDouble();
                                 if (doubledAmount > 0 && mounted) {
                                   setState(() {
-                                    GameState updatedState = _dailyMission.onEarnPoints(_gameState, doubledAmount);
-                                    updatedState = _mainQuest.onEarnPoints(updatedState, doubledAmount);
-                                    updatedState = _petTicketQuest.addProgress(updatedState, doubledAmount);
+                                    GameState updatedState = _dailyMission
+                                        .onEarnPoints(
+                                          _gameState,
+                                          doubledAmount,
+                                        );
+                                    updatedState = _mainQuest.onEarnPoints(
+                                      updatedState,
+                                      doubledAmount,
+                                    );
+                                    updatedState = _petTicketQuest.addProgress(
+                                      updatedState,
+                                      doubledAmount,
+                                    );
                                     _gameState = updatedState;
                                   });
                                 }
@@ -894,7 +1041,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Color(0xFF00FFD1), width: 2),
+                            side: const BorderSide(
+                              color: Color(0xFF00FFD1),
+                              width: 2,
+                            ),
                           ),
                         ),
                         onPressed: () {
@@ -928,7 +1078,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _saveGameState();
     });
-    
+
     // 每秒更新 UI 顯示，讓使用者看到即時變化
     _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -969,10 +1119,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     });
 
     // 清除下載的音源快取
-  final audioDownloadService = AudioDownloadService();
-  await audioDownloadService.clearAllCache();
-  
-  // 重置後更新 IdleIncomeService 的 GameState 參考，確保加成立即生效為 0
+    final audioDownloadService = AudioDownloadService();
+    await audioDownloadService.clearAllCache();
+
+    // 重置後更新 IdleIncomeService 的 GameState 參考，確保加成立即生效為 0
     _idleIncome.updateGameState(_gameState);
 
     // 重置每日任務
@@ -1009,19 +1159,22 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 通過冷卻，以裝備加成覆寫實際得分
     final effectiveGain = _equipment.computeTapGain(_gameState);
     final result = _dailyTap.applyTap(_gameState, effectiveGain);
-    
+
     // 處理每日任務進度（有效點擊）
     GameState updatedState = result.state;
     updatedState = _dailyMission.onValidTap(updatedState);
-    
+
     // 處理主線任務進度（點擊計數）
     updatedState = _mainQuest.onTap(updatedState);
-    
+
     if (result.allowedGain > 0) {
       // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
       setState(() {
         _gameState = updatedState.copyWith(
-          memePoints: DecimalUtils.add(updatedState.memePoints, result.allowedGain),
+          memePoints: DecimalUtils.add(
+            updatedState.memePoints,
+            result.allowedGain,
+          ),
         );
       });
     } else {
@@ -1051,7 +1204,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 先處理每日任務：有效點擊計數
     GameState updatedState = result.state;
     updatedState = _dailyMission.onValidTap(updatedState);
-    
+
     // 處理主線任務進度（點擊計數）
     updatedState = _mainQuest.onTap(updatedState);
 
@@ -1059,7 +1212,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
       setState(() {
         _gameState = updatedState.copyWith(
-          memePoints: DecimalUtils.add(updatedState.memePoints, result.allowedGain),
+          memePoints: DecimalUtils.add(
+            updatedState.memePoints,
+            result.allowedGain,
+          ),
         );
       });
       return result.allowedGain.floor();
@@ -1084,15 +1240,13 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   Widget build(BuildContext context) {
     // 測試模式：避免渲染含 Ticker 的 MainScreen，以免 pumpAndSettle 超時
     if (widget.testMode) {
-      return const Scaffold(
-        body: SizedBox.shrink(),
-      );
+      return const Scaffold(body: SizedBox.shrink());
     }
 
     // 計算今日上限資訊（僅非測試模式顯示完整 UI）
     final stateWithDaily = _dailyTap.ensureDailyBlock(_gameState);
     final stats = _dailyTap.getStats(stateWithDaily);
-    
+
     // 獲取每日任務資訊
     final missionParams = _dailyMission.getDisplayParams(_gameState);
     final missionPlan = _dailyMission.getTodayPlan(_gameState);
@@ -1113,7 +1267,8 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             onAdDouble: _fakeAdDoubleToday,
             onEquipmentUpgrade: _onEquipmentUpgrade,
             onIdleEquipmentUpgrade: _onIdleEquipmentUpgrade,
-            onToggleDebug: () => setState(() => _showDebugPanel = !_showDebugPanel),
+            onToggleDebug: () =>
+                setState(() => _showDebugPanel = !_showDebugPanel),
             lastTapDisplayValue: _lastTapDisplayValue,
             displayMemePoints: _gameState.memePoints,
             // 每日任務參數
@@ -1132,14 +1287,19 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
             onClaimCurrentMission: () {
               // 計算即將領取的獎勵（以當前任務 index 為準）
               final currentIndex = _gameState.dailyMission?.index ?? 1;
-              final reward = _dailyMission.getRewardForIndex(currentIndex).toInt();
+              final reward = _dailyMission
+                  .getRewardForIndex(currentIndex)
+                  .toInt();
               // 領取並推進任務
               setState(() {
                 _gameState = _dailyMission.claimIfReady(_gameState);
               });
               // 顯示領取彈窗
               final pointsStr = reward.toString();
-              final title = _localization.getString('mission.dailyMissions', defaultValue: '每日任務');
+              final title = _localization.getString(
+                'mission.dailyMissions',
+                defaultValue: '每日任務',
+              );
               showTopSlideDialog(
                 context,
                 barrierDismissible: true,
@@ -1155,12 +1315,14 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xCC112200),
-                              Color(0xCCE89A00),
-                            ],
+                            colors: [Color(0xCC112200), Color(0xCCE89A00)],
                           ),
-                          border: Border.all(color: const Color(0xFF00FFD1).withValues(alpha: 0.8), width: 2),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF00FFD1,
+                            ).withValues(alpha: 0.8),
+                            width: 2,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.5),
@@ -1180,11 +1342,19 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF00FFD1).withValues(alpha: 0.15),
+                                    color: const Color(
+                                      0xFF00FFD1,
+                                    ).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFF00FFD1), width: 1),
+                                    border: Border.all(
+                                      color: const Color(0xFF00FFD1),
+                                      width: 1,
+                                    ),
                                   ),
-                                  child: const Icon(Icons.card_giftcard, color: Color(0xFF00FFD1)),
+                                  child: const Icon(
+                                    Icons.card_giftcard,
+                                    color: Color(0xFF00FFD1),
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -1200,28 +1370,39 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
                             ),
                             const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.35),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.local_fire_department, color: Colors.yellow, size: 20),
+                                  const Icon(
+                                    Icons.local_fire_department,
+                                    color: Colors.yellow,
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     '+$pointsStr',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: Colors.yellow,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
+                                          color: Colors.yellow,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     _localization.getCommon('memePoints'),
-                                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.yellowAccent),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(color: Colors.yellowAccent),
                                   ),
                                 ],
                               ),

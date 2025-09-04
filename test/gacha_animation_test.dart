@@ -59,7 +59,7 @@ void main() {
 
       // 驗證對話框存在
       expect(find.byType(GachaAnimationDialog), findsOneWidget);
-      
+
       // 驗證進度指示器
       expect(find.text('1 / 2'), findsOneWidget);
 
@@ -105,7 +105,7 @@ void main() {
 
       // 單個結果不應該顯示進度指示器
       expect(find.text('1 / 1'), findsNothing);
-      
+
       // 驗證對話框存在
       expect(find.byType(GachaAnimationDialog), findsOneWidget);
 
@@ -154,7 +154,7 @@ void main() {
 
       // 等待動畫完成
       await tester.pump(const Duration(seconds: 2));
-      
+
       // 驗證 SSR 文字存在
       expect(find.text('SSR'), findsOneWidget);
     });

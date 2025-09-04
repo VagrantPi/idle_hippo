@@ -15,7 +15,8 @@ class PowerSaverPage extends StatefulWidget {
   State<PowerSaverPage> createState() => _PowerSaverPageState();
 }
 
-class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStateMixin {
+class _PowerSaverPageState extends State<PowerSaverPage>
+    with TickerProviderStateMixin {
   late Timer _clockTimer;
   String _currentTime = '';
   bool _isPortraitLayout = true;
@@ -30,13 +31,13 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _rotationAnimation = Tween<double>(
-      begin: 0,
-      end: math.pi / 2, // 90 degrees in radians
-    ).animate(CurvedAnimation(
-      parent: _rotationController,
-      curve: Curves.easeInOut,
-    ));
+    _rotationAnimation =
+        Tween<double>(
+          begin: 0,
+          end: math.pi / 2, // 90 degrees in radians
+        ).animate(
+          CurvedAnimation(parent: _rotationController, curve: Curves.easeInOut),
+        );
     _updateTime();
     _startClockTimer();
     _enterPowerSaveMode();
@@ -67,7 +68,7 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
   void _enterPowerSaveMode() {
     // 隱藏系統 UI
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    
+
     // 大幅降低亮度到 1%
     _trySetBrightness(0.01);
   }
@@ -75,7 +76,7 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
   void _exitPowerSaveMode() {
     // 恢復系統 UI
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    
+
     // 恢復原始亮度
     if (_originalBrightness != null) {
       _trySetBrightness(_originalBrightness!);
@@ -86,7 +87,7 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
     try {
       // 獲取原始亮度
       _originalBrightness ??= await ScreenBrightness().current;
-      
+
       // 設定新亮度
       await ScreenBrightness().setScreenBrightness(brightness);
       debugPrint('成功設定亮度: $brightness');
@@ -101,7 +102,7 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
     setState(() {
       _isPortraitLayout = !_isPortraitLayout;
     });
-    
+
     if (_isPortraitLayout) {
       _rotationController.reverse();
     } else {
@@ -119,9 +120,7 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
         body: Stack(
           children: [
             // 基礎黑遮罩
-            Container(
-              color: Colors.black.withValues(alpha: 0.7),
-            ),
+            Container(color: Colors.black.withValues(alpha: 0.7)),
             // 主要內容
             _buildMainContent(),
             // 右上角旋轉按鈕（在最上層）
@@ -142,7 +141,9 @@ class _PowerSaverPageState extends State<PowerSaverPage> with TickerProviderStat
       builder: (context, child) {
         return Transform.rotate(
           angle: _rotationAnimation.value,
-          child: _isPortraitLayout ? _buildPortraitLayout() : _buildLandscapeLayout(),
+          child: _isPortraitLayout
+              ? _buildPortraitLayout()
+              : _buildLandscapeLayout(),
         );
       },
     );

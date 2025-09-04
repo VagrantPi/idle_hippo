@@ -43,7 +43,11 @@ class PetTicketQuestService {
   /// 領取獎勵並生成下一個任務
   /// [withAd] - 是否觀看廣告以獲得翻倍獎勵
   /// [currentIdlePerSec] - 用於計算下一個任務目標的當前每秒被動收益
-  GameState claimReward(GameState gameState, {bool withAd = false, required double currentIdlePerSec}) {
+  GameState claimReward(
+    GameState gameState, {
+    bool withAd = false,
+    required double currentIdlePerSec,
+  }) {
     var quest = gameState.petTicketQuest;
     if (quest == null || !quest.available || quest.progress < quest.target) {
       // 任務未完成，無法領取
@@ -52,7 +56,8 @@ class PetTicketQuestService {
 
     final rewardAmount = withAd ? 2 : 1;
     final newK = quest.k + kIncrement;
-    final newTarget = (currentIdlePerSec * secondsIn48Hours * (1 + newK)) + baseBonus;
+    final newTarget =
+        (currentIdlePerSec * secondsIn48Hours * (1 + newK)) + baseBonus;
 
     final newQuest = quest.copyWith(
       k: newK,
@@ -68,14 +73,18 @@ class PetTicketQuestService {
   }
 
   /// 產生第一個抽獎券任務
-  GameState generateFirstQuest(GameState gameState, {required double currentIdlePerSec}) {
+  GameState generateFirstQuest(
+    GameState gameState, {
+    required double currentIdlePerSec,
+  }) {
     var quest = gameState.petTicketQuest;
     if (quest == null || !quest.available || quest.target > 0) {
       return gameState; // 未解鎖或已有任務，不生成
     }
 
     const initialK = 0.0;
-    final newTarget = (currentIdlePerSec * secondsIn48Hours * (1 + initialK)) + baseBonus;
+    final newTarget =
+        (currentIdlePerSec * secondsIn48Hours * (1 + initialK)) + baseBonus;
 
     final newQuest = quest.copyWith(
       k: initialK,

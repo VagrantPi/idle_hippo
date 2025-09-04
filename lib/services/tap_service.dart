@@ -15,13 +15,10 @@ class TapService {
   int acceptedTapEvents = 0; // taps that passed cooldown
   DateTime? _lastAcceptedTapAt;
 
-  TapService({
-    NowProvider? now,
-    int? basePoints,
-    double? cooldownSeconds,
-  })  : _now = now ?? DateTime.now,
-        _basePointsOverride = basePoints,
-        _cooldownSecondsOverride = cooldownSeconds;
+  TapService({NowProvider? now, int? basePoints, double? cooldownSeconds})
+    : _now = now ?? DateTime.now,
+      _basePointsOverride = basePoints,
+      _cooldownSecondsOverride = cooldownSeconds;
 
   int get basePoints {
     if (_basePointsOverride != null) return _basePointsOverride;

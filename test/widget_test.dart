@@ -116,10 +116,10 @@ void main() {
 
       // Verify that the title "Idle Hippo" is displayed
       expect(find.text('Idle Hippo'), findsOneWidget);
-      
+
       // Verify that the initial value "0" is displayed
       expect(find.text('0'), findsOneWidget);
-      
+
       // Verify that the app uses the correct background color
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
       expect(scaffold.backgroundColor, Colors.lightGreen[50]);

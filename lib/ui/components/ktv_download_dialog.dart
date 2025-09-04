@@ -58,17 +58,21 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
 
     _sub = _downloader
         .download(widget.songId, widget.url, cancelToken: _cancelToken)
-        .listen((p) {
-      setState(() {
-        _percent = p.percent;
-      });
-    }, onError: (e) {
-      setState(() {
-        _error = e;
-      });
-    }, onDone: () {
-      widget.onDownloaded();
-    });
+        .listen(
+          (p) {
+            setState(() {
+              _percent = p.percent;
+            });
+          },
+          onError: (e) {
+            setState(() {
+              _error = e;
+            });
+          },
+          onDone: () {
+            widget.onDownloaded();
+          },
+        );
   }
 
   @override
@@ -88,19 +92,30 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _loc.getString('ktv.downloading', defaultValue: 'Downloading...'),
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    _loc.getString(
+                      'ktv.downloading',
+                      defaultValue: 'Downloading...',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   if (_error == null) ...[
                     LinearProgressIndicator(
-                      value: (_percent != null) ? (_percent! / 100.0).clamp(0.0, 1.0) : null,
+                      value: (_percent != null)
+                          ? (_percent! / 100.0).clamp(0.0, 1.0)
+                          : null,
                       backgroundColor: Colors.white12,
                       color: Colors.lightBlueAccent,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _percent != null ? '${_percent!.toStringAsFixed(0)}%' : '—',
+                      _percent != null
+                          ? '${_percent!.toStringAsFixed(0)}%'
+                          : '—',
                       style: const TextStyle(color: Colors.white70),
                     ),
                     const SizedBox(height: 16),
@@ -112,12 +127,20 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
                             _cancelToken.cancel('user_cancel');
                             widget.onClose();
                           },
-                          child: Text(_loc.getString('ktv.cancel', defaultValue: 'Cancel')),
+                          child: Text(
+                            _loc.getString(
+                              'ktv.cancel',
+                              defaultValue: 'Cancel',
+                            ),
+                          ),
                         ),
                       ],
-                    )
+                    ),
                   ] else ...[
-                    Icon(Icons.error_outline, color: Colors.red.withValues(alpha: 0.9)),
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.withValues(alpha: 0.9),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       _loc.getString('ktv.error', defaultValue: 'Error'),
@@ -126,7 +149,10 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
                     const SizedBox(height: 4),
                     Text(
                       _error.toString(),
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -135,16 +161,20 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
                       children: [
                         TextButton(
                           onPressed: widget.onClose,
-                          child: Text(_loc.getString('ktv.back', defaultValue: 'Back')),
+                          child: Text(
+                            _loc.getString('ktv.back', defaultValue: 'Back'),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: _start,
-                          child: Text(_loc.getString('ktv.retry', defaultValue: 'Retry')),
-                        )
+                          child: Text(
+                            _loc.getString('ktv.retry', defaultValue: 'Retry'),
+                          ),
+                        ),
                       ],
-                    )
-                  ]
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -7,7 +7,7 @@ class NoAdsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localization = LocalizationService();
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -29,10 +29,7 @@ class NoAdsPage extends StatelessWidget {
             ),
             child: const Text(
               'Ad-free experience coming soon...',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
           ),
         ],

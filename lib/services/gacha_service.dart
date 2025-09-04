@@ -36,8 +36,6 @@ class GachaResult {
     };
   }
 
-  
-
   factory GachaResult.fromMap(Map<String, dynamic> map) {
     return GachaResult(
       petKey: map['petKey'] as String,
@@ -50,7 +48,6 @@ class GachaResult {
   }
 }
 
-
 /// 抽卡服務
 class GachaService {
   static final GachaService _instance = GachaService._internal();
@@ -61,13 +58,14 @@ class GachaService {
   final Random _random = Random();
   final RewardedAdService _rewardedAdService = RewardedAdService();
   final GameStateService _gameStateService = GameStateService();
-  
+
   GameState? _currentState;
   bool _initialized = false;
   bool get isInitialized => _initialized;
 
   // ---- Tickets Stream (broadcast) ----
-  final StreamController<int> _petTicketsController = StreamController<int>.broadcast();
+  final StreamController<int> _petTicketsController =
+      StreamController<int>.broadcast();
   Stream<int> get petTicketsStream => _petTicketsController.stream;
   void _emitPetTickets() {
     final count = _currentState?.petTickets ?? 0;
@@ -80,7 +78,8 @@ class GachaService {
   // ---- Gacha History Stream (broadcast) ----
   final StreamController<List<GachaHistoryRecord>> _gachaHistoryController =
       StreamController<List<GachaHistoryRecord>>.broadcast();
-  Stream<List<GachaHistoryRecord>> get gachaHistoryStream => _gachaHistoryController.stream;
+  Stream<List<GachaHistoryRecord>> get gachaHistoryStream =>
+      _gachaHistoryController.stream;
   void _emitGachaHistory() {
     final history = _currentState?.gachaHistory ?? const <GachaHistoryRecord>[];
     try {
@@ -90,11 +89,11 @@ class GachaService {
 
   // 抽卡機率設定 (累積機率)
   static const Map<PetRarity, double> _rarityProbabilities = {
-    PetRarity.ssr: 0.02,  // 2%
-    PetRarity.sr: 0.10,   // 8% (累積 10%)
-    PetRarity.s: 0.20,    // 10% (累積 20%)
-    PetRarity.r: 0.40,    // 20% (累積 40%)
-    PetRarity.rr: 1.00,   // 60% (累積 100%)
+    PetRarity.ssr: 0.02, // 2%
+    PetRarity.sr: 0.10, // 8% (累積 10%)
+    PetRarity.s: 0.20, // 10% (累積 20%)
+    PetRarity.r: 0.40, // 20% (累積 40%)
+    PetRarity.rr: 1.00, // 60% (累積 100%)
   };
 
   // 可抽取的寵物列表（預設僅 MooDeng，實際會從配置載入）
@@ -141,7 +140,9 @@ class GachaService {
     _emitPetTickets();
     _emitGachaHistory();
     await _gameStateService.updateGameState(state);
-    await PetService().initialize(state.petState); // TODO: PetService 應拆出自己的狀態管理
+    await PetService().initialize(
+      state.petState,
+    ); // TODO: PetService 應拆出自己的狀態管理
   }
 
   /// 執行單次抽卡
@@ -149,24 +150,26 @@ class GachaService {
     if (_currentState == null) {
       await initialize();
     }
-    
+
     final currentState = _currentState!;
-    
+
     // 檢查抽獎券數量
     if (currentState.petTickets < 1) {
       throw Exception('抽獎券不足');
     }
 
     // 扣除抽獎券
-    final updatedState = currentState.copyWith(petTickets: currentState.petTickets - 1);
+    final updatedState = currentState.copyWith(
+      petTickets: currentState.petTickets - 1,
+    );
     await _saveState(updatedState);
 
     // 執行抽卡
     final result = _performGacha();
-    
+
     // 處理抽卡結果
     await _processGachaResult(result);
-    
+
     // 記錄抽卡歷史
     await _addGachaHistory(result);
 
@@ -178,16 +181,18 @@ class GachaService {
     if (_currentState == null) {
       await initialize();
     }
-    
+
     final currentState = _currentState!;
-    
+
     // 檢查抽獎券數量
     if (currentState.petTickets < 10) {
       throw Exception('抽獎券不足，需要 10 張');
     }
 
     // 扣除抽獎券
-    final updatedState = currentState.copyWith(petTickets: currentState.petTickets - 10);
+    final updatedState = currentState.copyWith(
+      petTickets: currentState.petTickets - 10,
+    );
     await _saveState(updatedState);
 
     // 執行 11 次抽卡
@@ -206,17 +211,20 @@ class GachaService {
   GachaResult _performGacha() {
     // 抽取稀有度
     final rarity = _drawRarity();
-    
+
     // 隨機選擇寵物（優先從配置載入）
     final petKey = _rollPet();
-    
+
     // 獲取寵物配置
     final petConfig = _configService.getPetConfig(petKey);
     if (petConfig == null) {
       throw Exception('寵物配置不存在: $petKey');
     }
 
-    final rarityConfig = _configService.getPetRarityConfig(petKey, rarity.value);
+    final rarityConfig = _configService.getPetRarityConfig(
+      petKey,
+      rarity.value,
+    );
     if (rarityConfig == null) {
       throw Exception('稀有度配置不存在: ${rarity.value}');
     }
@@ -224,8 +232,11 @@ class GachaService {
     // 檢查是否為新寵物
     final currentState = _currentState!;
     final petId = '${petKey}_${rarity.value}';
-    final isNew = currentState.petState?.pets.any((pet) => 
-      '${pet.petKey}_${pet.rarity.value}' == petId) != true;
+    final isNew =
+        currentState.petState?.pets.any(
+          (pet) => '${pet.petKey}_${pet.rarity.value}' == petId,
+        ) !=
+        true;
 
     return GachaResult(
       petKey: petKey,
@@ -240,13 +251,13 @@ class GachaService {
   /// 抽取稀有度
   PetRarity _drawRarity() {
     final roll = _random.nextDouble();
-    
+
     for (final entry in _rarityProbabilities.entries) {
       if (roll <= entry.value) {
         return entry.key;
       }
     }
-    
+
     return PetRarity.rr; // 預設返回最低稀有度
   }
 
@@ -254,12 +265,13 @@ class GachaService {
   Future<void> _processGachaResult(GachaResult result) async {
     final currentState = _currentState!;
     final petState = currentState.petState ?? const PetState();
-    
+
     final petId = '${result.petKey}_${result.rarity.value}';
-    
+
     // 查找是否已存在相同寵物
-    final existingPetIndex = petState.pets.indexWhere((pet) => 
-      '${pet.petKey}_${pet.rarity.value}' == petId);
+    final existingPetIndex = petState.pets.indexWhere(
+      (pet) => '${pet.petKey}_${pet.rarity.value}' == petId,
+    );
 
     List<Pet> updatedPets = List<Pet>.from(petState.pets);
 
@@ -273,11 +285,14 @@ class GachaService {
       if (petConfig == null) {
         throw Exception('寵物配置不存在: ${result.petKey}');
       }
-      final rarityConfig = _configService.getPetRarityConfig(result.petKey, result.rarity.value);
+      final rarityConfig = _configService.getPetRarityConfig(
+        result.petKey,
+        result.rarity.value,
+      );
       if (rarityConfig == null) {
         throw Exception('稀有度配置不存在: ${result.rarity.value}');
       }
-      
+
       final newPet = Pet(
         petKey: result.petKey,
         name: result.name,
@@ -288,7 +303,7 @@ class GachaService {
         upgradePoints: 0,
         isEquipped: false,
       );
-      
+
       updatedPets.add(newPet);
     }
 
@@ -302,21 +317,26 @@ class GachaService {
   Future<void> _addGachaHistory(GachaResult result) async {
     final currentState = _currentState!;
     final currentHistory = currentState.gachaHistory;
-    
+
     final newRecord = GachaHistoryRecord(
       rarity: result.rarity.value,
       name: result.name,
       timestamp: result.timestamp,
       petKey: result.petKey,
     );
-    
+
     // 添加新記錄到開頭
     final updatedHistory = <GachaHistoryRecord>[newRecord, ...currentHistory];
-    
+
     // 保持最多 N 條記錄（由設定決定，預設 50）
-    final maxRecords = _configService.getValue('game.gacha.history.maxRecords', defaultValue: 50) as int;
+    final maxRecords =
+        _configService.getValue(
+              'game.gacha.history.maxRecords',
+              defaultValue: 50,
+            )
+            as int;
     final limitedHistory = updatedHistory.take(maxRecords).toList();
-    
+
     // 更新到 GameState
     final updatedState = currentState.copyWith(gachaHistory: limitedHistory);
     await _saveState(updatedState);
@@ -341,16 +361,16 @@ class GachaService {
   /// 模擬抽卡 1000 次 (Debug 用)
   Map<PetRarity, int> simulateGacha1000Times() {
     final results = <PetRarity, int>{};
-    
+
     for (final rarity in PetRarity.values) {
       results[rarity] = 0;
     }
-    
+
     for (int i = 0; i < 1000; i++) {
       final rarity = _drawRarity();
       results[rarity] = (results[rarity] ?? 0) + 1;
     }
-    
+
     return results;
   }
 
@@ -389,7 +409,7 @@ class GachaService {
       await initialize();
     }
     final updatedState = _currentState!.copyWith(
-      petTickets: _currentState!.petTickets + amount
+      petTickets: _currentState!.petTickets + amount,
     );
     await _saveState(updatedState);
   }
@@ -411,15 +431,17 @@ class GachaService {
     }
 
     // 扣除抽獎券
-    final updatedState = currentState.copyWith(petTickets: currentState.petTickets - 1);
+    final updatedState = currentState.copyWith(
+      petTickets: currentState.petTickets - 1,
+    );
     await _saveState(updatedState);
 
     // 執行抽卡
     final result = _performSingleGacha();
-    
+
     // 處理抽卡結果
     await _processGachaResult(result);
-    
+
     // 記錄抽卡歷史
     await _recordGachaHistory(result);
 
@@ -489,19 +511,22 @@ class GachaService {
       results.add(_performSingleGacha());
     }
 
-    final batchId = 'g_${DateTime.now().millisecondsSinceEpoch}_${_random.nextInt(1 << 20)}';
+    final batchId =
+        'g_${DateTime.now().millisecondsSinceEpoch}_${_random.nextInt(1 << 20)}';
     final createdAt = DateTime.now().millisecondsSinceEpoch;
     final pending = PendingGachaBatch(
       batchId: batchId,
       createdAt: createdAt,
       results: results
-          .map((r) => PendingGachaBatchItem(
-                petKey: r.petKey,
-                name: r.name,
-                rarity: r.rarity.value,
-                imagePath: r.imagePath,
-                timestamp: r.timestamp,
-              ))
+          .map(
+            (r) => PendingGachaBatchItem(
+              petKey: r.petKey,
+              name: r.name,
+              rarity: r.rarity.value,
+              imagePath: r.imagePath,
+              timestamp: r.timestamp,
+            ),
+          )
           .toList(),
     );
 
@@ -524,14 +549,16 @@ class GachaService {
 
     // 將 pending 轉回 GachaResult 以重用既有批次邏輯
     List<GachaResult> results = pending.results
-        .map((e) => GachaResult(
-              petKey: e.petKey,
-              name: e.name,
-              rarity: PetRarity.fromString(e.rarity),
-              imagePath: e.imagePath,
-              isNew: !_isPetOwned(e.petKey, PetRarity.fromString(e.rarity)),
-              timestamp: e.timestamp,
-            ))
+        .map(
+          (e) => GachaResult(
+            petKey: e.petKey,
+            name: e.name,
+            rarity: PetRarity.fromString(e.rarity),
+            imagePath: e.imagePath,
+            isNew: !_isPetOwned(e.petKey, PetRarity.fromString(e.rarity)),
+            timestamp: e.timestamp,
+          ),
+        )
         .toList();
 
     // 冪等檢查：歷史是否已有這批 timestamps（至少大多數匹配視為已寫入）
@@ -546,7 +573,10 @@ class GachaService {
       nextState = s.copyWith(clearPendingGachaBatch: true);
     } else {
       // 批次套用
-      nextState = _applyBatchChanges(s, results).copyWith(clearPendingGachaBatch: true);
+      nextState = _applyBatchChanges(
+        s,
+        results,
+      ).copyWith(clearPendingGachaBatch: true);
     }
 
     await _saveState(nextState);
@@ -578,14 +608,14 @@ class GachaService {
   PetRarity _rollRarity() {
     final roll = _random.nextDouble();
     double cumulative = 0.0;
-    
+
     for (final entry in _rarityProbabilities.entries) {
       cumulative += entry.value;
       if (roll <= cumulative) {
         return entry.key;
       }
     }
-    
+
     return PetRarity.rr; // 預設返回最低稀有度
   }
 
@@ -614,12 +644,17 @@ class GachaService {
 
     for (final result in results) {
       final petId = '${result.petKey}_${result.rarity.value}';
-      final idx = updatedPets.indexWhere((p) => '${p.petKey}_${p.rarity.value}' == petId);
+      final idx = updatedPets.indexWhere(
+        (p) => '${p.petKey}_${p.rarity.value}' == petId,
+      );
       if (idx != -1) {
         final existing = updatedPets[idx];
         updatedPets[idx] = existing.addUpgradePoints(1);
       } else {
-        final rarityCfg = _configService.getPetRarityConfig(result.petKey, result.rarity.value);
+        final rarityCfg = _configService.getPetRarityConfig(
+          result.petKey,
+          result.rarity.value,
+        );
         if (rarityCfg == null) {
           // 若配置缺失，跳過該筆以避免整批失敗
           continue;
@@ -642,44 +677,56 @@ class GachaService {
 
     // 2) 批次更新抽卡歷史（插入到開頭，並裁切至上限）
     final newRecords = results
-        .map((r) => GachaHistoryRecord(
-              rarity: r.rarity.value,
-              name: r.name,
-              timestamp: r.timestamp,
-              petKey: r.petKey,
-            ))
+        .map(
+          (r) => GachaHistoryRecord(
+            rarity: r.rarity.value,
+            name: r.name,
+            timestamp: r.timestamp,
+            petKey: r.petKey,
+          ),
+        )
         .toList();
-    final maxRecords = _configService.getValue('game.gacha.history.maxRecords', defaultValue: 50) as int;
-    final mergedHistory = <GachaHistoryRecord>[...newRecords, ...state.gachaHistory];
+    final maxRecords =
+        _configService.getValue(
+              'game.gacha.history.maxRecords',
+              defaultValue: 50,
+            )
+            as int;
+    final mergedHistory = <GachaHistoryRecord>[
+      ...newRecords,
+      ...state.gachaHistory,
+    ];
     final limited = mergedHistory.take(maxRecords).toList();
 
-    return state.copyWith(
-      petState: nextPetState,
-      gachaHistory: limited,
-    );
+    return state.copyWith(petState: nextPetState, gachaHistory: limited);
   }
 
   /// 記錄抽卡歷史
   Future<void> _recordGachaHistory(GachaResult result) async {
     if (_currentState == null) return;
-    
+
     final currentState = _currentState!;
     final currentHistory = currentState.gachaHistory;
-    
+
     final newRecord = GachaHistoryRecord(
       rarity: result.rarity.value,
       name: result.name,
       timestamp: result.timestamp,
       petKey: result.petKey,
     );
-    
+
     // 添加新記錄到開頭
     final updatedHistory = <GachaHistoryRecord>[newRecord, ...currentHistory];
-    
+
     // 保持最多 N 條記錄（由設定決定，預設 50）
-    final maxRecords = _configService.getValue('game.gacha.history.maxRecords', defaultValue: 50) as int;
+    final maxRecords =
+        _configService.getValue(
+              'game.gacha.history.maxRecords',
+              defaultValue: 50,
+            )
+            as int;
     final limitedHistory = updatedHistory.take(maxRecords).toList();
-    
+
     // 更新到 GameState
     final updatedState = currentState.copyWith(gachaHistory: limitedHistory);
     await _saveState(updatedState);
@@ -690,8 +737,10 @@ class GachaService {
   bool _isPetOwned(String petKey, PetRarity rarity) {
     final petState = _currentState?.petState;
     if (petState == null) return false;
-    
+
     final petId = '${petKey}_${rarity.value}';
-    return petState.pets.any((pet) => '${pet.petKey}_${pet.rarity.value}' == petId);
+    return petState.pets.any(
+      (pet) => '${pet.petKey}_${pet.rarity.value}' == petId,
+    );
   }
 }

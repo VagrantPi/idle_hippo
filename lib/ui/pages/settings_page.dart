@@ -75,8 +75,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   Column(
-                    mainAxisAlignment: MainAxisAlignment.start,  // 從頂部開始對齊
-                    crossAxisAlignment: CrossAxisAlignment.center,  // 保持水平居中
+                    mainAxisAlignment: MainAxisAlignment.start, // 從頂部開始對齊
+                    crossAxisAlignment: CrossAxisAlignment.center, // 保持水平居中
                     children: [
                       Text(
                         _localization.getPageName('settings'),
@@ -108,40 +108,57 @@ class _SettingsPageState extends State<SettingsPage> {
                             Wrap(
                               spacing: 12,
                               runSpacing: 12,
-                              children: LocalizationService.supportedLanguages.map((lang) {
-                                final isSelected = _localization.currentLanguage == lang;
-                                return GestureDetector(
-                                  onTap: () async {
-                                    await _localization.changeLanguage(lang);
-                                    widget.onLanguageChanged();
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? Colors.blue.withValues(alpha: 0.8)
-                                          : Colors.grey.withValues(alpha: 0.3),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: isSelected ? Colors.blue : Colors.grey,
-                                        width: 2,
+                              children: LocalizationService.supportedLanguages
+                                  .map((lang) {
+                                    final isSelected =
+                                        _localization.currentLanguage == lang;
+                                    return GestureDetector(
+                                      onTap: () async {
+                                        await _localization.changeLanguage(
+                                          lang,
+                                        );
+                                        widget.onLanguageChanged();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? Colors.blue.withValues(
+                                                  alpha: 0.8,
+                                                )
+                                              : Colors.grey.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? Colors.blue
+                                                : Colors.grey,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          LocalizationService
+                                                  .languageNames[lang] ??
+                                              lang,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : Colors.white70,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      LocalizationService.languageNames[lang] ?? lang,
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : Colors.white70,
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  })
+                                  .toList(),
                             ),
                           ],
                         ),
@@ -155,18 +172,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.blueAccent, width: 2),
+                            border: Border.all(
+                              color: Colors.blueAccent,
+                              width: 2,
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.calendar_month, color: Colors.white),
+                                  const Icon(
+                                    Icons.calendar_month,
+                                    color: Colors.white,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     _localization.getPageName('checkin'),
@@ -178,7 +204,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                 ],
                               ),
-                              const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 18),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white70,
+                                size: 18,
+                              ),
                             ],
                           ),
                         ),

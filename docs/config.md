@@ -90,10 +90,10 @@ assets/config/
 | `character.animation.move.range.y` | number | Y軸移動範圍 | 80 |
 | `ktv.approachTimeMs` | number | 音符從生成到抵達判定線所需時間（毫秒） | 1500 |
 | `ktv.judgelineY` | number | 判定線相對螢幕高度 (0~1) | 0.82 |
-| `ktv.spawnY` | number | 生成起點相對螢幕高度（0=頂端，1=底端） | 0.02 |
+| `ktv.spawnY` | number | 生成起點相對螢幕高度（0=頂端，1=底端） | 0.4 |
 | `ktv.lanePadding` | number | 軌道間水平留白（px） | 16 |
-| `ktv.perspectiveDepth` | number | 透視收斂比例（0~1，越大越陡） | 0.60 |
-| `ktv.noteBaseSize` | number | 音符基準像素（judgeline 處） | 56 |
+| `ktv.perspectiveDepth` | number | 透視收斂比例（0~1，越大越陡） | 0.70 |
+| `ktv.noteBaseSize` | number | 音符基準像素（judgeline 處） | 16 |
 | `ktv.enableObjectPool` | boolean | 啟用物件池 | true |
 | `ktv.maxActiveNotes` | number | 安全上限 | 256 |
 | `ktv.despawnGraceMs` | number | 音符到達判定線後的寬限時間（毫秒） | 150 |

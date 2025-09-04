@@ -7,7 +7,7 @@ class ShopPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localization = LocalizationService();
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -29,10 +29,7 @@ class ShopPage extends StatelessWidget {
             ),
             child: const Text(
               'Shop system coming soon...',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
           ),
         ],

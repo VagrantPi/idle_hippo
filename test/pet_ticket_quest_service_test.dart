@@ -23,7 +23,10 @@ void main() {
       );
 
       // When
-      final newState = service.generateFirstQuest(gameState, currentIdlePerSec: idlePerSec);
+      final newState = service.generateFirstQuest(
+        gameState,
+        currentIdlePerSec: idlePerSec,
+      );
 
       // Then
       final quest = newState.petTicketQuest!;
@@ -33,7 +36,6 @@ void main() {
       expect(quest.k, 0);
       expect(quest.idleSnapshot, 5.0);
     });
-
 
     test('案例 2: 完成並累加 k', () {
       // Given
@@ -50,7 +52,11 @@ void main() {
       );
 
       // When
-      final newState = service.claimReward(gameState, withAd: false, currentIdlePerSec: idlePerSec);
+      final newState = service.claimReward(
+        gameState,
+        withAd: false,
+        currentIdlePerSec: idlePerSec,
+      );
 
       // Then
       final quest = newState.petTicketQuest!;
@@ -75,7 +81,11 @@ void main() {
       );
 
       // When
-      final newState = service.claimReward(gameState, withAd: true, currentIdlePerSec: idlePerSec);
+      final newState = service.claimReward(
+        gameState,
+        withAd: true,
+        currentIdlePerSec: idlePerSec,
+      );
 
       // Then
       expect(newState.petTickets, 2);
@@ -128,7 +138,11 @@ void main() {
       );
 
       // When
-      final newState = service.claimReward(gameState, withAd: false, currentIdlePerSec: idlePerSec);
+      final newState = service.claimReward(
+        gameState,
+        withAd: false,
+        currentIdlePerSec: idlePerSec,
+      );
 
       // Then
       expect(newState.petTickets, 4);
@@ -137,7 +151,12 @@ void main() {
     test('進度增加', () {
       // Given
       var gameState = initialGameState.copyWith(
-        petTicketQuest: const PetTicketQuest(available: true, k: 0, target: 100, progress: 10),
+        petTicketQuest: const PetTicketQuest(
+          available: true,
+          k: 0,
+          target: 100,
+          progress: 10,
+        ),
       );
 
       // When
@@ -150,7 +169,12 @@ void main() {
     test('進度在完成後不應再增加', () {
       // Given
       var gameState = initialGameState.copyWith(
-        petTicketQuest: const PetTicketQuest(available: true, k: 0, target: 100, progress: 100),
+        petTicketQuest: const PetTicketQuest(
+          available: true,
+          k: 0,
+          target: 100,
+          progress: 100,
+        ),
       );
 
       // When

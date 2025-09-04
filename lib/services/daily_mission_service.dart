@@ -17,12 +17,15 @@ class DailyMissionService {
   void Function(double points)? _onRewardEarned;
 
   DailyMissionService({NowProvider? now, int? tapTargetOverride})
-      : _now = now ?? DateTime.now,
-        _tapTargetOverride = tapTargetOverride;
+    : _now = now ?? DateTime.now,
+      _tapTargetOverride = tapTargetOverride;
 
   double _tapTarget() {
     if (_tapTargetOverride != null) return _tapTargetOverride.toDouble();
-    final v = ConfigService().getValue('game.daily_mission.tap_target', defaultValue: 50);
+    final v = ConfigService().getValue(
+      'game.daily_mission.tap_target',
+      defaultValue: 50,
+    );
     if (v is num) return v.toDouble();
     return 50.0;
   }
@@ -77,8 +80,13 @@ class DailyMissionService {
       if (mission.target <= 0) {
         final currentIdlePerSec = _idleIncomeService.currentIdlePerSec;
         // 若 idlePerSec 為 0，使用 0.1 作為最低計算基準，避免目標為 0
-        final effectiveIdlePerSec = currentIdlePerSec > 0 ? currentIdlePerSec : 0.1;
-        final targetX = DecimalUtils.multiply(effectiveIdlePerSec, 600.0); // 10分鐘的放置收益
+        final effectiveIdlePerSec = currentIdlePerSec > 0
+            ? currentIdlePerSec
+            : 0.1;
+        final targetX = DecimalUtils.multiply(
+          effectiveIdlePerSec,
+          600.0,
+        ); // 10分鐘的放置收益
 
         final updated = mission.copyWith(
           target: targetX,
@@ -121,8 +129,13 @@ class DailyMissionService {
       // 偶數序：累積點數任務
       final currentIdlePerSec = _idleIncomeService.currentIdlePerSec;
       // 若 idlePerSec 為 0，使用 0.1 作為最低計算基準，避免目標為 0
-      final effectiveIdlePerSec = currentIdlePerSec > 0 ? currentIdlePerSec : 0.1;
-      final targetX = DecimalUtils.multiply(effectiveIdlePerSec, 600.0); // 10分鐘的放置收益
+      final effectiveIdlePerSec = currentIdlePerSec > 0
+          ? currentIdlePerSec
+          : 0.1;
+      final targetX = DecimalUtils.multiply(
+        effectiveIdlePerSec,
+        600.0,
+      ); // 10分鐘的放置收益
 
       return s0.copyWith(
         dailyMission: mission.copyWith(
@@ -208,14 +221,17 @@ class DailyMissionService {
     final newTodayCompleted = mission.todayCompleted + 1;
 
     // 保存完成任務快照（保留完成時的 target/progress 數字）
-    final double snapProgress = mission.progress > mission.target ? mission.target : mission.progress;
+    final double snapProgress = mission.progress > mission.target
+        ? mission.target
+        : mission.progress;
     final completedRecord = CompletedMissionRecord(
       index: mission.index,
       type: mission.type,
       progress: snapProgress,
       target: mission.target,
     );
-    final completedList = List<CompletedMissionRecord>.from(mission.completed)..add(completedRecord);
+    final completedList = List<CompletedMissionRecord>.from(mission.completed)
+      ..add(completedRecord);
 
     // 更新狀態
     GameState s1 = state.copyWith(
@@ -293,7 +309,9 @@ class DailyMissionService {
       'idlePerSecSnapshot': mission.idlePerSecSnapshot,
       'todayCompleted': mission.todayCompleted,
       'isCompleted': mission.todayCompleted >= 10,
-      'nextReward': mission.todayCompleted < 10 ? _rewardSequence[mission.todayCompleted] : 0,
+      'nextReward': mission.todayCompleted < 10
+          ? _rewardSequence[mission.todayCompleted]
+          : 0,
     };
   }
 
@@ -303,11 +321,7 @@ class DailyMissionService {
     final mission = s.dailyMission!;
 
     if (mission.todayCompleted >= 10) {
-      return {
-        'type': 'completed',
-        'progress': 10,
-        'target': 10,
-      };
+      return {'type': 'completed', 'progress': 10, 'target': 10};
     }
 
     return {
@@ -353,7 +367,12 @@ class DailyMissionService {
       if (status == 'done') {
         final rec = mission.completed.firstWhere(
           (r) => r.index == i,
-          orElse: () => CompletedMissionRecord(index: i, type: type, progress: defaultTarget, target: defaultTarget),
+          orElse: () => CompletedMissionRecord(
+            index: i,
+            type: type,
+            progress: defaultTarget,
+            target: defaultTarget,
+          ),
         );
         target = rec.target;
         progress = rec.progress;

@@ -14,15 +14,17 @@ class DownloadProgress {
 }
 
 typedef BaseDirProvider = Future<Directory> Function();
-typedef DownloadImpl = Future<Response<dynamic>> Function(
-  String url,
-  String savePath, {
-  ProgressCallback? onReceiveProgress,
-  CancelToken? cancelToken,
-});
+typedef DownloadImpl =
+    Future<Response<dynamic>> Function(
+      String url,
+      String savePath, {
+      ProgressCallback? onReceiveProgress,
+      CancelToken? cancelToken,
+    });
 
 class AudioDownloadService {
-  static final AudioDownloadService _instance = AudioDownloadService._internal();
+  static final AudioDownloadService _instance =
+      AudioDownloadService._internal();
   factory AudioDownloadService() => _instance;
   AudioDownloadService._internal();
 
@@ -73,7 +75,7 @@ class AudioDownloadService {
     try {
       final dir = await baseDirProvider();
       final audioDir = Directory(p.join(dir.path, 'audio'));
-      
+
       if (await audioDir.exists()) {
         // 刪除目錄中的所有檔案
         await for (var entity in audioDir.list(recursive: true)) {
@@ -91,7 +93,12 @@ class AudioDownloadService {
   /// 下載檔案。回傳進度 Stream（0..100%，若 total 不可得則 percent 為 null）。
   /// 成功完成時將 .part 重新命名為最終檔名。
   /// 任何失敗或取消都會刪除半成品。
-  Future<void> _doDownload(String songId, String url, StreamController<DownloadProgress> controller, CancelToken? cancelToken) async {
+  Future<void> _doDownload(
+    String songId,
+    String url,
+    StreamController<DownloadProgress> controller,
+    CancelToken? cancelToken,
+  ) async {
     final tempPath = await _getTempPath(songId);
     final finalPath = await _getSongPath(songId);
 
@@ -105,9 +112,17 @@ class AudioDownloadService {
       if (!controller.isClosed) {
         if (total > 0) {
           final percent = (received / total) * 100.0;
-          controller.add(DownloadProgress(received: received, total: total, percent: percent));
+          controller.add(
+            DownloadProgress(
+              received: received,
+              total: total,
+              percent: percent,
+            ),
+          );
         } else {
-          controller.add(DownloadProgress(received: received, total: null, percent: null));
+          controller.add(
+            DownloadProgress(received: received, total: null, percent: null),
+          );
         }
       }
     }
@@ -115,14 +130,22 @@ class AudioDownloadService {
     try {
       final impl = downloadImpl;
       if (impl != null) {
-        await impl(url, tempPath, onReceiveProgress: progress, cancelToken: cancelToken);
+        await impl(
+          url,
+          tempPath,
+          onReceiveProgress: progress,
+          cancelToken: cancelToken,
+        );
       } else {
         await dio.download(
           url,
           tempPath,
           onReceiveProgress: progress,
           cancelToken: cancelToken,
-          options: Options(responseType: ResponseType.bytes, followRedirects: true),
+          options: Options(
+            responseType: ResponseType.bytes,
+            followRedirects: true,
+          ),
         );
       }
 
@@ -149,7 +172,7 @@ class AudioDownloadService {
           await f.delete();
         }
       } catch (_) {}
-      
+
       if (!controller.isClosed) {
         controller.addError(e);
       }
@@ -158,7 +181,11 @@ class AudioDownloadService {
     }
   }
 
-  Stream<DownloadProgress> download(String songId, String url, {CancelToken? cancelToken}) {
+  Stream<DownloadProgress> download(
+    String songId,
+    String url, {
+    CancelToken? cancelToken,
+  }) {
     final controller = StreamController<DownloadProgress>();
     final impl = downloadImpl;
     if (impl != null) {

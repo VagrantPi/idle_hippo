@@ -5,7 +5,8 @@ import 'package:idle_hippo/models/game_state.dart';
 /// - 暫存 lastExitUtcMs 與 idleRateSnapshot 於 GameState.offline
 /// - 回前台時計算 pendingReward（一次性），上限 capHours
 class OfflineRewardService with WidgetsBindingObserver {
-  static final OfflineRewardService _instance = OfflineRewardService._internal();
+  static final OfflineRewardService _instance =
+      OfflineRewardService._internal();
   factory OfflineRewardService() => _instance;
   OfflineRewardService._internal();
 
@@ -13,7 +14,8 @@ class OfflineRewardService with WidgetsBindingObserver {
   late double Function() _getIdlePerSec; // 當前放置速率（每秒）
   late GameState Function() _getGameState; // 取得最新的 GameState（由宿主維護）
   late Future<void> Function(GameState) _persist; // 寫入存檔
-  void Function(double reward, Duration effective, {required bool canDouble})? _onOfflineReward;
+  void Function(double reward, Duration effective, {required bool canDouble})?
+  _onOfflineReward;
   int Function()? _nowUtcMsProvider; // 測試注入當前 UTC ms
 
   bool _initialized = false;
@@ -44,14 +46,17 @@ class OfflineRewardService with WidgetsBindingObserver {
     }
   }
 
-  int _nowMs() => _nowUtcMsProvider?.call() ?? DateTime.now().toUtc().millisecondsSinceEpoch;
+  int _nowMs() =>
+      _nowUtcMsProvider?.call() ??
+      DateTime.now().toUtc().millisecondsSinceEpoch;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (!_initialized) return;
 
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       _onBackground();
     } else if (state == AppLifecycleState.resumed) {
       _onResumed();

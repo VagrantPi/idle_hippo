@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:idle_hippo/ui/components/ktv_beatmap_note.dart';
 
 class KtvDifficulty {
   final String level; // "easy" | "hard"
@@ -18,9 +19,7 @@ class KtvDifficulty {
           ? (json['key_count'] as int)
           : int.tryParse('${json['key_count']}') ?? 0,
       beatmap: (json['beatmap'] is List)
-          ? (json['beatmap'] as List)
-              .whereType<Map<String, dynamic>>()
-              .toList()
+          ? (json['beatmap'] as List).whereType<Map<String, dynamic>>().toList()
           : null,
     );
   }
@@ -63,6 +62,27 @@ class KtvSong {
       difficulties: diffs,
     );
   }
+}
+
+/// 判定結果的枚舉
+enum Judgement { perfect, great, miss }
+
+/// 判定事件的詳細資訊
+class JudgementResult {
+  /// 判定的音符
+  final BeatmapNote note;
+
+  /// 判定結果
+  final Judgement judgement;
+
+  /// 時間差 (ms)，正數為慢，負數為快
+  final int deltaMs;
+
+  JudgementResult({
+    required this.note,
+    required this.judgement,
+    required this.deltaMs,
+  });
 }
 
 class KtvCollectionParser {

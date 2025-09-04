@@ -39,7 +39,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
   final RewardedAdService _rewardedAdService = RewardedAdService();
   bool _adInProgress = false;
   bool? _canTenPackAd; // null: 未查詢完成；true: 可用；false: 今日已無
-  
+
   int _currentIndex = 0;
   bool _showResult = false;
   bool _canSkip = false;
@@ -47,45 +47,33 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
   @override
   void initState() {
     super.initState();
-    
+
     _cardController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _glowController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _textController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
-    _cardAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _cardController,
-      curve: Curves.elasticOut,
-    ));
+    _cardAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _cardController, curve: Curves.elasticOut),
+    );
 
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _glowController,
-      curve: Curves.easeInOut,
-    ));
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
-    _textAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.bounceOut,
-    ));
+    _textAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.bounceOut),
+    );
 
     _startAnimation();
 
@@ -120,10 +108,10 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
 
     // 卡片翻轉動畫
     await _cardController.forward();
-    
+
     // 延遲顯示結果
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     setState(() {
       _showResult = true;
       _canSkip = true;
@@ -135,7 +123,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
 
     // 光效動畫
     _glowController.repeat(reverse: true);
-    
+
     // 文字彈出動畫
     await _textController.forward();
     // 移除自動前進，改為等待使用者按「下一個」
@@ -152,11 +140,11 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
         _showResult = false;
         _canSkip = false;
       });
-      
+
       _cardController.reset();
       _glowController.reset();
       _textController.reset();
-      
+
       _startAnimation();
     } else {
       _finish();
@@ -168,12 +156,12 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
       _cardController.stop();
       _glowController.stop();
       _textController.stop();
-      
+
       setState(() {
         _showResult = true;
         _currentIndex = widget.results.length - 1;
       });
-      
+
       Future.delayed(const Duration(milliseconds: 500), () {
         if (!mounted) return;
         _finish();
@@ -210,7 +198,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
   Widget build(BuildContext context) {
     final result = widget.results[_currentIndex];
     final rarityColor = _getRarityColor(result.rarity);
-    
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -231,7 +219,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
           children: [
             // 背景星空效果
             _buildStarField(),
-            
+
             // 主要內容
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -242,13 +230,10 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                     padding: const EdgeInsets.only(bottom: 20, top: 20),
                     child: Text(
                       '${_currentIndex + 1} / ${widget.results.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
-                
+
                 // 卡片動畫區域
                 Expanded(
                   child: Center(
@@ -268,7 +253,8 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                           angle = p * 2 * math.pi; // 0..360°
                           showFront = false;
                         } else {
-                          final double p = (t - spinPhase) / (1 - spinPhase); // 0..1
+                          final double p =
+                              (t - spinPhase) / (1 - spinPhase); // 0..1
                           angle = 2 * math.pi + p * math.pi; // 360° + 0..180°
                           showFront = p >= 0.5;
                         }
@@ -290,7 +276,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                     ),
                   ),
                 ),
-                
+
                 // 操作按鈕
                 Padding(
                   padding: const EdgeInsets.all(20),
@@ -304,22 +290,31 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                             backgroundColor: Colors.grey.withValues(alpha: 0.3),
                           ),
                           child: Text(
-                            _localization.getString('pets.gacha.skip', defaultValue: 'Skip'),
+                            _localization.getString(
+                              'pets.gacha.skip',
+                              defaultValue: 'Skip',
+                            ),
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       if (_showResult)
                         ElevatedButton(
-                          onPressed: _currentIndex < widget.results.length - 1 
-                              ? _nextCard 
+                          onPressed: _currentIndex < widget.results.length - 1
+                              ? _nextCard
                               : _finish,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: rarityColor.withValues(alpha: 0.7),
                           ),
                           child: Text(
                             _currentIndex < widget.results.length - 1
-                                ? _localization.getString('pets.gacha.next', defaultValue: 'Next')
-                                : _localization.getString('pets.gacha.confirm', defaultValue: 'OK'),
+                                ? _localization.getString(
+                                    'pets.gacha.next',
+                                    defaultValue: 'Next',
+                                  )
+                                : _localization.getString(
+                                    'pets.gacha.confirm',
+                                    defaultValue: 'OK',
+                                  ),
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
@@ -335,85 +330,104 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                       child: ElevatedButton.icon(
                         onPressed: (() {
                           final isTenPack = widget.results.length > 1;
-                          final disabledForQuota = isTenPack && (_canTenPackAd != true);
+                          final disabledForQuota =
+                              isTenPack && (_canTenPackAd != true);
                           if (_adInProgress || disabledForQuota) return null;
                           return () async {
-                                setState(() => _adInProgress = true);
-                                // 預先取得可跨 async gap 使用的 navigator/messenger
-                                final navigator = Navigator.of(context, rootNavigator: true);
-                                final messenger = ScaffoldMessenger.of(context);
-                                try {
-                                  // 再次檢查 10+1 配額，避免競態
-                                  if (widget.results.length > 1) {
-                                    final ok = await _rewardedAdService.canShowGachaTenPackAd();
-                                    if (!ok) {
-                                      // 在 await 後以 mounted 檢查並使用 messenger 顯示訊息
-                                      if (!mounted) return;
-                                      messenger.showSnackBar(
-                                        SnackBar(
-                                          content: Text(_localization.getString('pets.gacha.ad_draw_no_more', defaultValue: 'No more ads today')),
-                                          backgroundColor: Colors.orange,
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                  }
-
-                                  if (!context.mounted) return;
-                                  final adFuture = _rewardedAdService.showAd(
-                                    context: context,
-                                    onAdWatched: () async {},
-                                    dialogTitle: _localization.getString('ad_reward_title', defaultValue: 'Reward'),
-                                    rewardContent: const Text('+1 Ticket'),
-                                  );
-
-                                  // 關閉目前對話框，等待廣告完成
-                                  navigator.pop();
-                                  await adFuture;
-
-                                  // 在 async gap 之後再次確認 mounted 並重新取得 rootNavigator/context
+                            setState(() => _adInProgress = true);
+                            // 預先取得可跨 async gap 使用的 navigator/messenger
+                            final navigator = Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            );
+                            final messenger = ScaffoldMessenger.of(context);
+                            try {
+                              // 再次檢查 10+1 配額，避免競態
+                              if (widget.results.length > 1) {
+                                final ok = await _rewardedAdService
+                                    .canShowGachaTenPackAd();
+                                if (!ok) {
+                                  // 在 await 後以 mounted 檢查並使用 messenger 顯示訊息
                                   if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        _localization.getString(
+                                          'pets.gacha.ad_draw_no_more',
+                                          defaultValue: 'No more ads today',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                  return;
+                                }
+                              }
 
-                                  final gacha = GachaService();
-                                  List<GachaResult> newResults;
-                                  if (widget.results.length > 1) {
-                                    // 十一連：走服務的每日配額流程
-                                    newResults = await gacha.drawTenPlusOneWithAd();
-                                  } else {
-                                    // 單抽：補 1 張後再執行單抽（淨消耗 0）
-                                    await gacha.addPetTickets(1);
-                                    final r = await gacha.performSingleDraw();
-                                    newResults = [r];
-                                  }
+                              if (!context.mounted) return;
+                              final adFuture = _rewardedAdService.showAd(
+                                context: context,
+                                onAdWatched: () async {},
+                                dialogTitle: _localization.getString(
+                                  'ad_reward_title',
+                                  defaultValue: 'Reward',
+                                ),
+                                rewardContent: const Text('+1 Ticket'),
+                              );
 
-                                  // 重新打開動畫對話框（不再允許廣告獎勵）
-                                  navigator.push(
-                                    RawDialogRoute(
-                                      barrierDismissible: false,
-                                      barrierColor: Colors.black54,
-                                      pageBuilder: (ctx, a1, a2) => GachaAnimationDialog(
+                              // 關閉目前對話框，等待廣告完成
+                              navigator.pop();
+                              await adFuture;
+
+                              // 在 async gap 之後再次確認 mounted 並重新取得 rootNavigator/context
+                              if (!mounted) return;
+
+                              final gacha = GachaService();
+                              List<GachaResult> newResults;
+                              if (widget.results.length > 1) {
+                                // 十一連：走服務的每日配額流程
+                                newResults = await gacha.drawTenPlusOneWithAd();
+                              } else {
+                                // 單抽：補 1 張後再執行單抽（淨消耗 0）
+                                await gacha.addPetTickets(1);
+                                final r = await gacha.performSingleDraw();
+                                newResults = [r];
+                              }
+
+                              // 重新打開動畫對話框（不再允許廣告獎勵）
+                              navigator.push(
+                                RawDialogRoute(
+                                  barrierDismissible: false,
+                                  barrierColor: Colors.black54,
+                                  pageBuilder: (ctx, a1, a2) =>
+                                      GachaAnimationDialog(
                                         results: newResults,
                                         onComplete: widget.onComplete,
                                         onReveal: widget.onReveal,
                                         onAdvance: widget.onAdvance,
                                         allowAdReward: false,
                                       ),
+                                ),
+                              );
+                            } catch (_) {
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    _localization.getString(
+                                      'pets.gacha.ad_failed',
+                                      defaultValue:
+                                          'Ad failed, please try again later',
                                     ),
-                                  );
-                                } catch (_) {
-                                  if (!mounted) return;
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        _localization.getString('pets.gacha.ad_failed', defaultValue: 'Ad failed, please try again later'),
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                } finally {
-                                  if (mounted) setState(() => _adInProgress = false);
-                                }
-                              };
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            } finally {
+                              if (mounted)
+                                setState(() => _adInProgress = false);
+                            }
+                          };
                         })(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.withValues(alpha: 0.7),
@@ -422,12 +436,18 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                         label: Builder(
                           builder: (ctx) {
                             final isTenPack = widget.results.length > 1;
-                            final noQuota = isTenPack && (_canTenPackAd == false);
+                            final noQuota =
+                                isTenPack && (_canTenPackAd == false);
                             final textKey = noQuota
                                 ? 'pets.gacha.ad_draw_no_more'
                                 : 'pets.gacha.ad_draw_title';
                             return Text(
-                              _localization.getString(textKey, defaultValue: noQuota ? 'No more ads today' : 'Ad Reward'),
+                              _localization.getString(
+                                textKey,
+                                defaultValue: noQuota
+                                    ? 'No more ads today'
+                                    : 'Ad Reward',
+                              ),
                               style: const TextStyle(color: Colors.white),
                             );
                           },
@@ -445,13 +465,8 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
 
   Widget _buildStarField() {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: CustomPaint(
-        painter: StarFieldPainter(),
-        size: Size.infinite,
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+      child: CustomPaint(painter: StarFieldPainter(), size: Size.infinite),
     );
   }
 
@@ -469,7 +484,10 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
           ],
         ),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.blue.withValues(alpha: 0.3),
@@ -479,11 +497,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
         ],
       ),
       child: const Center(
-        child: Icon(
-          Icons.help_outline,
-          size: 80,
-          color: Colors.white,
-        ),
+        child: Icon(Icons.help_outline, size: 80, color: Colors.white),
       ),
     );
   }
@@ -498,11 +512,16 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: _showResult ? rarityColor : Colors.white30, width: 3),
+            border: Border.all(
+              color: _showResult ? rarityColor : Colors.white30,
+              width: 3,
+            ),
             boxShadow: [
               BoxShadow(
                 color: _showResult
-                    ? rarityColor.withValues(alpha: 0.5 + _glowAnimation.value * 0.3)
+                    ? rarityColor.withValues(
+                        alpha: 0.5 + _glowAnimation.value * 0.3,
+                      )
                     : Colors.black.withValues(alpha: 0.2),
                 blurRadius: _showResult ? (20 + _glowAnimation.value * 10) : 8,
                 spreadRadius: _showResult ? (5 + _glowAnimation.value * 3) : 2,
@@ -532,7 +551,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                   ),
                 ),
               ),
-              
+
               // 寵物圖片/名稱區塊
               Expanded(
                 child: Padding(
@@ -559,9 +578,9 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                                 ),
                               ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // 寵物名稱（結果揭示後才顯示）
                       if (_showResult)
                         AnimatedBuilder(
@@ -570,7 +589,10 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                             return Transform.scale(
                               scale: 0.8 + _textAnimation.value * 0.2,
                               child: Text(
-                                _localization.getString('pets.names.${result.petKey}', defaultValue: result.name),
+                                _localization.getString(
+                                  'pets.names.${result.petKey}',
+                                  defaultValue: result.name,
+                                ),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
@@ -581,7 +603,7 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                             );
                           },
                         ),
-                      
+
                       // 新獲得標籤
                       if (result.isNew && _showResult)
                         AnimatedBuilder(
@@ -600,7 +622,10 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  _localization.getString('pets.gacha.new_pet', defaultValue: 'New!'),
+                                  _localization.getString(
+                                    'pets.gacha.new_pet',
+                                    defaultValue: 'New!',
+                                  ),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
@@ -635,7 +660,7 @@ class StarFieldPainter extends CustomPainter {
       final x = (i * 37) % size.width;
       final y = (i * 73) % size.height;
       final opacity = ((i * 17) % 100) / 100.0;
-      
+
       paint.color = Colors.white.withValues(alpha: opacity * 0.8);
       canvas.drawCircle(Offset(x, y), 1, paint);
     }

@@ -14,7 +14,9 @@ class ConfigService {
     try {
       // 載入所有配置檔案
       final gameConfig = await _loadJsonFile('assets/config/game.json');
-      final equipmentsConfig = await _loadJsonFile('assets/config/equipments.json');
+      final equipmentsConfig = await _loadJsonFile(
+        'assets/config/equipments.json',
+      );
       final petsConfig = await _loadJsonFile('assets/config/pets.json');
       final titlesConfig = await _loadJsonFile('assets/config/titles.json');
       final questsConfig = await _loadJsonFile('assets/config/quests.json');
@@ -92,19 +94,19 @@ class ConfigService {
   /// 取得寵物配置
   Map<String, dynamic>? getPetConfig(String petKey) {
     if (!_isLoaded) return null;
-    
+
     final petsConfig = _configs['pets'] as Map<String, dynamic>?;
     if (petsConfig == null) return null;
-    
+
     final pets = petsConfig['pets'] as List<dynamic>?;
     if (pets == null) return null;
-    
+
     for (final pet in pets) {
       if (pet is Map<String, dynamic> && pet['id'] == petKey) {
         return pet;
       }
     }
-    
+
     return null;
   }
 
@@ -117,14 +119,17 @@ class ConfigService {
 
     // 1) 優先讀取該寵物自己的 rarities（向後相容）
     final pet = getPetConfig(petKey);
-    final petRarities = pet != null ? pet['rarities'] as Map<String, dynamic>? : null;
+    final petRarities = pet != null
+        ? pet['rarities'] as Map<String, dynamic>?
+        : null;
     if (petRarities != null && petRarities.containsKey(rarityKey)) {
       final cfg = petRarities[rarityKey];
       return (cfg is Map<String, dynamic>) ? cfg : null;
     }
 
     // 2) 回退到全域 default_rarities
-    final defaultRarities = petsConfig['default_rarities'] as Map<String, dynamic>?;
+    final defaultRarities =
+        petsConfig['default_rarities'] as Map<String, dynamic>?;
     if (defaultRarities != null && defaultRarities.containsKey(rarityKey)) {
       final cfg = defaultRarities[rarityKey];
       return (cfg is Map<String, dynamic>) ? cfg : null;

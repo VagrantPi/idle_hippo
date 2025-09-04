@@ -169,7 +169,7 @@ class _MusicGamePageState extends State<MusicGamePage> {
     if (await _downloader.isCached(song.id)) {
       final path = await _downloader.cachedFilePath(song.id);
       if (!mounted) return;
-      
+
       // 導向遊戲播放頁面
       await Navigator.of(context).push(
         MaterialPageRoute(
@@ -189,9 +189,10 @@ class _MusicGamePageState extends State<MusicGamePage> {
       });
     }
   }
-  
+
   int? _expandedIndex;
-  final FixedExtentScrollController _wheelController = FixedExtentScrollController();
+  final FixedExtentScrollController _wheelController =
+      FixedExtentScrollController();
 
   Future<void> _showDifficultyPicker(KtvSong song) async {
     if (!mounted) return;
@@ -209,9 +210,14 @@ class _MusicGamePageState extends State<MusicGamePage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.black.withValues(alpha: 0.9),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: Text(
-            _loc.getString('ktv.choose_difficulty', defaultValue: 'Choose Difficulty'),
+            _loc.getString(
+              'ktv.choose_difficulty',
+              defaultValue: 'Choose Difficulty',
+            ),
             style: const TextStyle(color: Colors.white),
           ),
           content: Column(
@@ -222,7 +228,10 @@ class _MusicGamePageState extends State<MusicGamePage> {
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: Colors.greenAccent),
                 ),
-                leading: const Icon(Icons.sports_esports, color: Colors.greenAccent),
+                leading: const Icon(
+                  Icons.sports_esports,
+                  color: Colors.greenAccent,
+                ),
                 title: Text(
                   _loc.getString('ktv.easy', defaultValue: 'EASY'),
                   style: const TextStyle(color: Colors.white),
@@ -270,10 +279,7 @@ class _MusicGamePageState extends State<MusicGamePage> {
               style: const TextStyle(color: Colors.redAccent),
             ),
             const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.white70),
-            ),
+            Text(_error!, style: const TextStyle(color: Colors.white70)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadSongs,
@@ -337,11 +343,13 @@ class _MusicGamePageState extends State<MusicGamePage> {
                 IgnorePointer(
                   ignoring: true,
                   child: Center(
-                    child: _buildCenterOverlayCardVisual(_songs[_expandedIndex!]),
+                    child: _buildCenterOverlayCardVisual(
+                      _songs[_expandedIndex!],
+                    ),
                   ),
                 ),
                 // 互動層：僅提供右下角播放按鈕可點擊（其餘區域不攔截手勢）
-                if(!_isScrolling)
+                if (!_isScrolling)
                   Center(
                     child: SizedBox(
                       height: _centerCardHeight,
@@ -352,16 +360,24 @@ class _MusicGamePageState extends State<MusicGamePage> {
                           alignment: Alignment.bottomRight,
                           // 對齊卡片內部 padding（右下角）
                           child: Padding(
-                            padding: const EdgeInsets.only(right: 20, bottom: 20),
+                            padding: const EdgeInsets.only(
+                              right: 20,
+                              bottom: 20,
+                            ),
                             child: FloatingActionButton.small(
                               heroTag: null,
-                              backgroundColor: Colors.green.withValues(alpha: 0.9),
+                              backgroundColor: Colors.green.withValues(
+                                alpha: 0.9,
+                              ),
                               onPressed: () {
                                 if (_isScrolling) return;
                                 final song = _songs[_expandedIndex!];
                                 _showDifficultyPicker(song);
                               },
-                              child: const Icon(Icons.play_arrow, color: Colors.white),
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -415,12 +431,16 @@ class _MusicGamePageState extends State<MusicGamePage> {
                           width: 56,
                           height: 56,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 56,
-                            height: 56,
-                            color: Colors.grey[800],
-                            child: const Icon(Icons.music_note, color: Colors.white),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 56,
+                                height: 56,
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.music_note,
+                                  color: Colors.white,
+                                ),
+                              ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -462,11 +482,14 @@ class _MusicGamePageState extends State<MusicGamePage> {
   Widget _buildStarRow(int stars) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (i) => Icon(
-            Icons.star,
-            size: 16,
-            color: i < stars ? Colors.yellow : Colors.grey,
-          )),
+      children: List.generate(
+        5,
+        (i) => Icon(
+          Icons.star,
+          size: 16,
+          color: i < stars ? Colors.yellow : Colors.grey,
+        ),
+      ),
     );
   }
 
@@ -475,9 +498,7 @@ class _MusicGamePageState extends State<MusicGamePage> {
     final title = _loc.getPageName('musicGame');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Stack(
         children: [
           // 背景圖片

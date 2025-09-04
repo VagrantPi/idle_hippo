@@ -7,16 +7,14 @@ class SecureSaveService {
   SecureSaveService._internal();
 
   static const FlutterSecureStorage _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
   );
 
   int _currentVersion = 1;
-  
+
   // Key 命名常數
   static const String _versionKey = 'save_version';
   String get _mainKey => 'game_state_v$_currentVersion';
@@ -25,13 +23,13 @@ class SecureSaveService {
   /// 初始化服務
   Future<void> init({required int currentVersion}) async {
     _currentVersion = currentVersion;
-    
+
     try {
       // 讀取存檔版本
       final storedVersionStr = await _storage.read(key: _versionKey);
       if (storedVersionStr != null) {
         final storedVersion = int.parse(storedVersionStr);
-        
+
         if (storedVersion < currentVersion) {
           // 需要遷移
           await migrateIfNeeded(storedVersion, currentVersion);
@@ -42,7 +40,10 @@ class SecureSaveService {
         }
       } else {
         // 首次啟動，設定版本
-        await _storage.write(key: _versionKey, value: currentVersion.toString());
+        await _storage.write(
+          key: _versionKey,
+          value: currentVersion.toString(),
+        );
       }
     } catch (e) {
       await _setInitialState();
@@ -91,7 +92,7 @@ class SecureSaveService {
 
       // 更新時間戳
       final updatedState = state.updateTimestamp();
-      
+
       // 原子寫入
       await _atomicWrite(updatedState);
     } catch (e) {
@@ -125,7 +126,6 @@ class SecureSaveService {
 
       // 4. 更新版本資訊
       await _storage.write(key: _versionKey, value: _currentVersion.toString());
-      
     } catch (e) {
       await _recoverFromBackup();
       rethrow;
@@ -158,7 +158,7 @@ class SecureSaveService {
       await _storage.delete(key: _mainKey);
       await _storage.delete(key: _backupKey);
       await _storage.delete(key: _versionKey);
-      
+
       // 清除其他版本的存檔
       for (int version = 1; version <= _currentVersion + 1; version++) {
         await _storage.delete(key: 'game_state_v$version');
@@ -175,7 +175,7 @@ class SecureSaveService {
       for (int version = fromVersion; version < toVersion; version++) {
         await _migrateVersion(version, version + 1);
       }
-      
+
       // 更新版本號
       await _storage.write(key: _versionKey, value: toVersion.toString());
     } catch (e) {
@@ -188,14 +188,14 @@ class SecureSaveService {
     // 讀取舊版本資料
     final oldKey = 'game_state_v$from';
     final oldData = await _storage.read(key: oldKey);
-    
+
     if (oldData == null) {
       return;
     }
 
     try {
       final oldState = GameState.fromJson(oldData);
-      
+
       // 執行版本特定的遷移邏輯
       GameState newState;
       switch (to) {
@@ -217,7 +217,6 @@ class SecureSaveService {
 
       final newKey = 'game_state_v$to';
       await _storage.write(key: newKey, value: newState.toJson());
-      
     } catch (e) {
       rethrow;
     }
