@@ -6,8 +6,7 @@ import 'package:idle_hippo/services/config_service.dart';
 import '../components/ktv_lane_layout.dart';
 import '../components/ktv_beatmap_note.dart';
 
-class NoteComponent extends PositionComponent
-    with TapCallbacks, CollisionCallbacks {
+class NoteComponent extends PositionComponent with CollisionCallbacks {
   final BeatmapNote note;
   final int laneIndex;
   final LaneLayout laneLayout;
@@ -121,10 +120,5 @@ class NoteComponent extends PositionComponent
     canvas.drawRRect(rrect, borderPaint);
   }
 
-  @override
-  void onTapDown(TapDownEvent event) {
-    if (!_isActive) return;
-    // Handle tap on note (placeholder for scoring logic later)
-    _despawn();
-  }
+  // 點擊由 KtvGame.onTapDown 處理幾何判定與回收
 }

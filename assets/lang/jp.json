@@ -314,6 +314,28 @@
     "easy": "イージー",
     "hard": "ハード",
     "play": "再生",
-    "choose_difficulty": "難易度を選択"
+    "choose_difficulty": "難易度を選択",
+    "hud": {
+      "score": "スコア",
+      "time": "残り時間",
+      "combo": "COMBO",
+      "max_combo": "最高 COMBO"
+    },
+    "judge": {
+      "perfect": "Perfect",
+      "great": "Great",
+      "miss": "Miss"
+    },
+    "result": {
+      "title": "結果",
+      "perfect": "PERFECT 回数",
+      "great": "GREAT 回数",
+      "miss": "MISS 回数",
+      "max_combo": "最大コンボ記録",
+      "combo_bonus": "コンボボーナス",
+      "base_score": "基本スコア",
+      "total_meme": "総ミームポイント",
+      "ok": "確認"
+    }
   }
 }

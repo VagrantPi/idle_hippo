@@ -94,6 +94,8 @@ assets/config/
 | `ktv.lanePadding` | number | 軌道間水平留白（px） | 16 |
 | `ktv.perspectiveDepth` | number | 透視收斂比例（0~1，越大越陡） | 0.70 |
 | `ktv.noteBaseSize` | number | 音符基準像素（judgeline 處） | 16 |
+| `ktv.containmentEpsilonPx` | number | 幾何完全包含的容忍像素（避免卡線） | 1.0 |
+| `ktv.preJudgeIgnoreHeightPx` | number | 音符距離判定帶上緣超過此高度時，早期點擊將被忽略（避免誤判 MISS） | 50.0 |
 | `ktv.enableObjectPool` | boolean | 啟用物件池 | true |
 | `ktv.maxActiveNotes` | number | 安全上限 | 256 |
 | `ktv.despawnGraceMs` | number | 音符到達判定線後的寬限時間（毫秒） | 150 |

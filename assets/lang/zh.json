@@ -310,6 +310,28 @@
     "easy": "簡單",
     "hard": "困難",
     "play": "播放",
-    "choose_difficulty": "選擇難易度"
+    "choose_difficulty": "選擇難易度",
+    "hud": {
+      "score": "分數",
+      "time": "剩餘時間",
+      "combo": "COMBO",
+      "max_combo": "最高 COMBO"
+    },
+    "judge": {
+      "perfect": "Perfect",
+      "great": "Great",
+      "miss": "Miss"
+    },
+    "result": {
+      "title": "結算",
+      "perfect": "PERFECT 次數",
+      "great": "GREAT 次數",
+      "miss": "MISS 次數",
+      "max_combo": "歷史最大 COMBO",
+      "combo_bonus": "Combo 加成",
+      "base_score": "基礎分數",
+      "total_meme": "總迷因點數",
+      "ok": "確認"
+    }
   }
 }

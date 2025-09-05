@@ -56,10 +56,25 @@ class AudioDownloadService {
     return p.join(audioDir.path, '.$songId.mp3.part');
   }
 
+  Future<String> _getOkMarkerPath(String songId) async {
+    final dir = await baseDirProvider();
+    final audioDir = Directory(p.join(dir.path, 'audio'));
+    if (!await audioDir.exists()) {
+      await audioDir.create(recursive: true);
+    }
+    return p.join(audioDir.path, '.${songId}.ok');
+  }
+
   Future<bool> isCached(String songId) async {
     final path = await _getSongPath(songId);
+    final okPath = await _getOkMarkerPath(songId);
     final f = File(path);
-    return f.existsSync() && (await f.length()) > 0;
+    final ok = File(okPath);
+    final exists = f.existsSync() && (await f.length()) > 0;
+    final valid = exists && ok.existsSync();
+    // ignore: avoid_print
+    print('[AudioDownloadService] isCached($songId) -> file=$exists ok=${ok.existsSync()}');
+    return valid;
   }
 
   Future<void> deleteCache(String songId) async {
@@ -67,6 +82,11 @@ class AudioDownloadService {
     final f = File(path);
     if (await f.exists()) {
       await f.delete();
+    }
+    final okPath = await _getOkMarkerPath(songId);
+    final okFile = File(okPath);
+    if (await okFile.exists()) {
+      await okFile.delete();
     }
   }
 
@@ -160,6 +180,9 @@ class AudioDownloadService {
         await target.delete();
       }
       await f.rename(finalPath);
+      // 建立完成標記檔，代表此歌曲檔案已完整下載
+      final okPath = await _getOkMarkerPath(songId);
+      await File(okPath).writeAsString('ok');
       // 發送完成事件（100%）
       if (!controller.isClosed) {
         controller.add(DownloadProgress(received: 1, total: 1, percent: 100));

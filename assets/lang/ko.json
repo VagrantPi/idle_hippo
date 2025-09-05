@@ -314,6 +314,28 @@
     "easy": "이지",
     "hard": "하드",
     "play": "재생",
-    "choose_difficulty": "난이도 선택"
+    "choose_difficulty": "난이도 선택",
+    "hud": {
+      "score": "점수",
+      "time": "남은 시간",
+      "combo": "COMBO",
+      "max_combo": "최고 COMBO"
+    },
+    "judge": {
+      "perfect": "Perfect",
+      "great": "Great",
+      "miss": "Miss"
+    },
+    "result": {
+      "title": "결산",
+      "perfect": "PERFECT 횟수",
+      "great": "GREAT 횟수",
+      "miss": "MISS 횟수",
+      "max_combo": "최대 콤보",
+      "combo_bonus": "콤보 보너스",
+      "base_score": "기본 점수",
+      "total_meme": "총 밈 점수",
+      "ok": "확인"
+    }
   }
 }

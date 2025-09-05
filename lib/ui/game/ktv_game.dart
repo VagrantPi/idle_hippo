@@ -11,6 +11,10 @@ import 'package:idle_hippo/ui/game/lane_background_component.dart';
 import 'package:idle_hippo/ui/components/ktv_beatmap_note.dart';
 
 import 'package:idle_hippo/game/ktv_game_logic.dart';
+import 'package:idle_hippo/game/ktv_scoring.dart';
+import 'package:idle_hippo/game/ktv_geometry_judge.dart';
+import 'package:idle_hippo/ui/game/judge_band_component.dart';
+import 'package:idle_hippo/services/config_service.dart';
 
 class KtvGame extends FlameGame with TapCallbacks {
   final AudioPlayer audioPlayer;
@@ -20,9 +24,14 @@ class KtvGame extends FlameGame with TapCallbacks {
   final double despawnGraceMs;
 
   late final KtvGameLogic _gameLogic;
+  final KtvScoring scoring = KtvScoring();
   StreamSubscription<JudgementResult>? _judgementSub;
+  // 幾何判定版：自行廣播判定事件供 UI 使用
+  final StreamController<JudgementResult> _judgementCtrl = StreamController<JudgementResult>.broadcast();
+  Stream<JudgementResult> get judgements => _judgementCtrl.stream;
 
   final Map<String, NoteComponent> _activeNotesById = {};
+  final List<JudgeBandComponent> _bands = [];
   final List<BeatmapNote> _beatmap = [];
   int _nextNoteIndex = 0;
   bool _isPlaying = false;
@@ -50,16 +59,18 @@ class KtvGame extends FlameGame with TapCallbacks {
     // 固定解析度視口（遵循專案規範）
     camera.viewport = FixedResolutionViewport(resolution: Vector2(1080, 1920));
 
+    // 舊邏輯保留以利日後比較，但目前改用內部廣播
     _judgementSub = _gameLogic.judgementStream.listen(_onJudgement);
 
     // 背景軌道與判定線
-    add(
-      LaneBackgroundComponent(
-        laneLayout: laneLayout,
-        judgelineY: laneLayout.judgelineY,
-        screenHeight: laneLayout.screenHeight,
-      ),
-    );
+    add(LaneBackgroundComponent(
+      laneLayout: laneLayout,
+      judgelineY: laneLayout.judgelineY,
+      screenHeight: laneLayout.screenHeight,
+    ));
+
+    // 建立各 lane 的幾何判定帶（依新規格）
+    _spawnJudgeBands();
   }
 
   void _loadBeatmap() {
@@ -78,6 +89,30 @@ class KtvGame extends FlameGame with TapCallbacks {
       _beatmap.sort((a, b) => a.time.compareTo(b.time));
     }
     _gameLogic.loadBeatmap(_beatmap);
+  }
+
+  void _spawnJudgeBands() {
+    // 判定帶高度與 LaneBackgroundComponent 的判定線厚度保持一致：noteBaseSize * 2
+    final noteBaseSize = ConfigService()
+        .getValue('game.ktv.noteBaseSize', defaultValue: 56.0)
+        .toDouble();
+    final bandHeight = noteBaseSize * 2;
+
+    final judgeY = laneLayout.lanes.first.bottomY; // 以幾何 layout 的判定線為準
+
+    for (final lane in laneLayout.lanes) {
+      final left = lane.bottomLeftX;
+      final right = lane.bottomRightX;
+      final band = JudgeBandComponent(
+        laneIndex: lane.index,
+        centerY: judgeY,
+        heightPx: bandHeight,
+        laneLeftX: left,
+        laneRightX: right,
+      );
+      _bands.add(band);
+      add(band);
+    }
   }
 
   void start() {
@@ -182,7 +217,8 @@ class KtvGame extends FlameGame with TapCallbacks {
     _despawnNotes(visualTimeSec);
 
     // 判定邏輯更新 (使用更精確的音訊時間)
-    _gameLogic.update(audioPlayer.position.inMilliseconds);
+    // 幾何版自動 MISS：超過譜面時間 + 緩衝即 MISS
+    _autoMissByTime(audioPlayer.position.inMilliseconds);
 
     // Update positions smoothly every frame
     // 使用快照避免在迭代時被回收導致 ConcurrentModificationError
@@ -192,10 +228,30 @@ class KtvGame extends FlameGame with TapCallbacks {
     }
   }
 
+  void _autoMissByTime(int currentMs) {
+    final list = List<NoteComponent>.from(_activeNotesById.values);
+    for (final n in list) {
+      final delta = currentMs - n.note.time.inMilliseconds;
+      if (delta > despawnGraceMs) {
+        // 逾時 MISS
+        scoring.onJudge(Judgement.miss);
+        _judgementCtrl.add(JudgementResult(
+          note: n.note,
+          judgement: Judgement.miss,
+          deltaMs: delta.toInt(),
+        ));
+        _onNoteDespawn(n);
+      }
+    }
+  }
+
   void _onJudgement(JudgementResult result) {
     print(
       '[${result.note.position}] Δ=${result.deltaMs}ms ${result.judgement.toString().split('.').last.toUpperCase()}',
     );
+
+    // 更新分數與連擊統計（UI 可從 scoring 讀取）
+    scoring.onJudge(result.judgement);
 
     final noteComponent = _activeNotesById[result.note.id];
     if (noteComponent != null) {
@@ -208,9 +264,54 @@ class KtvGame extends FlameGame with TapCallbacks {
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
     final laneIndex = laneLayout.laneIndexOf(event.localPosition.x);
-    if (laneIndex != null) {
-      _gameLogic.onLaneTap(laneIndex, audioPlayer.position.inMilliseconds);
+    if (laneIndex == null) return;
+
+    // 取該 lane 的前排音符候選（最接近判定帶中心 y）
+    final judgeBand = _bands[laneIndex];
+    final candidates = _activeNotesById.values
+        .where((n) => n.laneIndex == laneIndex)
+        .toList();
+    if (candidates.isEmpty) return; // 防幽靈點
+
+    candidates.sort((a, b) {
+      final da = (a.position.y - judgeBand.centerY).abs();
+      final db = (b.position.y - judgeBand.centerY).abs();
+      if (da == db) {
+        return a.note.time.compareTo(b.note.time);
+      }
+      return da.compareTo(db);
+    });
+    final note = candidates.first;
+
+    // 若音符仍在判定帶上方超過預留距離，忽略此次點擊（避免早期誤擊被判 MISS）
+    final preIgnoreHeight = ConfigService()
+        .getValue('game.ktv.preJudgeIgnoreHeightPx', defaultValue: 50.0)
+        .toDouble();
+    final bandTop = judgeBand.centerY - judgeBand.heightPx / 2;
+    final noteBottom = note.position.y + note.size.y / 2;
+    if (noteBottom <= bandTop - preIgnoreHeight) {
+      return; // 忽略早期點擊，不產生判定
     }
+
+    // 幾何判定（以 y 為主）
+    final judgement = KtvGeometryJudge.judge(
+      bandCenterY: judgeBand.centerY,
+      bandHeight: judgeBand.heightPx,
+      noteCenterY: note.position.y,
+      noteHeight: note.size.y,
+      eps: ConfigService()
+          .getValue('game.ktv.containmentEpsilonPx', defaultValue: 1.0)
+          .toDouble(),
+    );
+
+    // 記分與移除
+    scoring.onJudge(judgement);
+    _judgementCtrl.add(JudgementResult(
+      note: note.note,
+      judgement: judgement,
+      deltaMs: 0,
+    ));
+    _onNoteDespawn(note);
   }
 
   @override
