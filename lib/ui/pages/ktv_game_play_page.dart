@@ -9,6 +9,8 @@ import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/models/ktv_models.dart';
 import 'package:idle_hippo/ui/components/ktv_lane_layout.dart';
 import 'package:idle_hippo/ui/game/ktv_game.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
+import 'package:idle_hippo/services/decimal_utils.dart';
 
 class KtvGamePlayPage extends StatefulWidget {
   final String songId;
@@ -40,6 +42,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   Timer? _countdownTimer;
   bool _isPlaying = false;
   bool _isPaused = false;
+  bool _settled = false; // 是否已結算入帳
 
   // KTV 遊戲
   LaneLayout? _laneLayout;
@@ -56,8 +59,26 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   late double _despawnGraceMs;
 
   // 遊戲狀態
-  int _score = 0;
-  int _combo = 0;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  // HUD 倒數顯示（每秒更新）
+  Timer? _hudTimer;
+  String _hudTimeText = '00:00';
+  DateTime? _hudNextAllowedUpdate; // 用於控制首次載入延遲 1 秒才開始倒數
+
+  // HUD：即時判定彈字
+  String? _judgeText;
+  Color _judgeColor = Colors.white;
+  Timer? _judgeTimer;
+
+  StreamSubscription<Duration>? _hudPosSub;
+  StreamSubscription<Duration?>? _hudDurSub;
+  StreamSubscription<JudgementResult>? _judgementUiSub;
+
+  // 中央 COMBO 顯示與跳動動畫
+  int _lastComboShown = 0;
+  double _comboScale = 1.0;
+  Timer? _comboPulseTimer;
 
   @override
   void initState() {
@@ -139,6 +160,12 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   void dispose() {
     _player.dispose();
     _countdownTimer?.cancel();
+    _hudPosSub?.cancel();
+    _hudDurSub?.cancel();
+    _judgeTimer?.cancel();
+    _judgementUiSub?.cancel();
+    _comboPulseTimer?.cancel();
+    _hudTimer?.cancel();
     super.dispose();
   }
 
@@ -160,20 +187,70 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
 
   Future<void> _startPlayback() async {
     try {
-      await _player.setFilePath(widget.filePath);
+      // 確保已載入 collect.json 的歌曲資料，取得 length_seconds
+      if (_song == null) {
+        await _loadBeatmapFromAssets();
+      }
+
+      // 先用 metadata 的長度預填，讓 HUD 立即顯示總長度
+      if ((_song?.lengthSeconds ?? 0) > 0) {
+        setState(() {
+          _duration = Duration(seconds: _song!.lengthSeconds);
+        });
+        _recomputeHudTime();
+      }
+
+      final loadedDur = await _player.setFilePath(widget.filePath);
+      // 立即取得曲長（避免一開始顯示 00:00）
+      setState(() {
+        _duration = loadedDur ?? Duration(seconds: _song?.lengthSeconds ?? 0);
+      });
+
+      // 然後開始播放音樂
+      _player.play();
 
       // 先啟動 Flame 遊戲時序
       _game?.start();
 
-      // 然後開始播放音樂
-      await _player.play();
+      // 啟動每秒 HUD 倒數計時器（首次開始：延遲 1 秒再開始倒數）
+      _startHudTicker(delayFirstTick: true);
 
       setState(() => _isPlaying = true);
 
+      // HUD 時間顯示
+      // 監聽曲長（有些平台需透過 durationStream 才會正確更新）
+      _duration = _player.duration ?? Duration.zero;
+      _hudDurSub?.cancel();
+      _hudDurSub = _player.durationStream.listen((d) {
+        if (!mounted) return;
+        if (d != null) {
+          setState(() => _duration = d);
+          // 曲長改變時立即重算 HUD
+          _recomputeHudTime();
+        }
+      });
+      _hudPosSub?.cancel();
+      _hudPosSub = _player.positionStream.listen((pos) {
+        if (!mounted) return;
+        setState(() {
+          _position = pos;
+        });
+        // 位置更新時即時刷新 HUD 倒數（只在文字有變化時 setState）
+        _updateHudTimeFromPosition();
+      });
+
+      // 監聽曲終，開結算畫面
       _player.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed) {
-          if (mounted) {
-            Navigator.of(context).pop();
+          // 曲終：停止 HUD 計時器並開啟結算
+          _hudTimer?.cancel();
+          if (mounted) _openResult();
+        } else if (state.processingState == ProcessingState.ready) {
+          // 有些平台在 ready 才能可靠拿到 duration
+          final d = _player.duration;
+          if (d != null && mounted) {
+            setState(() => _duration = d);
+            _recomputeHudTime();
           }
         }
       });
@@ -186,13 +263,224 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     }
   }
 
+  void _startHudTicker({bool delayFirstTick = false}) {
+    _hudTimer?.cancel();
+    // 設定 HUD 更新允許時間：首次載入延遲 1 秒，其餘情境立即允許
+    _hudNextAllowedUpdate = delayFirstTick
+        ? DateTime.now().add(const Duration(seconds: 1))
+        : null;
+    _hudTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      // 若尚未到達允許更新時間，略過這次
+      if (_hudNextAllowedUpdate != null && DateTime.now().isBefore(_hudNextAllowedUpdate!)) {
+        return;
+      }
+      _recomputeHudTime();
+    });
+  }
+
+  void _recomputeHudTime() {
+    final remaining = (_duration > Duration.zero)
+        ? ((_duration - _position).isNegative ? Duration.zero : _duration - _position)
+        : Duration.zero;
+    setState(() {
+      _hudTimeText = _formatMmSs(remaining);
+    });
+  }
+
+  void _updateHudTimeFromPosition() {
+    final remaining = (_duration > Duration.zero)
+        ? ((_duration - _position).isNegative ? Duration.zero : _duration - _position)
+        : Duration.zero;
+    final nextText = _formatMmSs(remaining);
+    // 首次載入的第一秒內不更新 HUD，避免一開始就扣一秒
+    if (_hudNextAllowedUpdate != null && DateTime.now().isBefore(_hudNextAllowedUpdate!)) {
+      return;
+    }
+    if (nextText != _hudTimeText && mounted) {
+      setState(() {
+        _hudTimeText = nextText;
+      });
+    }
+  }
+
+  void _subscribeJudgementIfNeeded() {
+    if (_game == null) return;
+    // 僅在首次建立 _game 後掛上一次
+    _judgementUiSub ??= _game!.judgements.listen((result) {
+      // 顯示彈字 200~350ms
+      final loc = _loc;
+      switch (result.judgement) {
+        case Judgement.perfect:
+          _judgeText = loc.getString('ktv.judge.perfect', defaultValue: 'Perfect');
+          _judgeColor = Colors.limeAccent;
+          break;
+        case Judgement.great:
+          _judgeText = loc.getString('ktv.judge.great', defaultValue: 'Great');
+          _judgeColor = Colors.lightBlueAccent;
+          break;
+        case Judgement.miss:
+          _judgeText = loc.getString('ktv.judge.miss', defaultValue: 'Miss');
+          _judgeColor = Colors.redAccent;
+          break;
+      }
+      _judgeTimer?.cancel();
+      setState(() {});
+      _judgeTimer = Timer(const Duration(milliseconds: 250), () {
+        if (!mounted) return;
+        setState(() => _judgeText = null);
+      });
+      // 也觸發 HUD 重繪（分數/COMBO 來自 _game!.scoring）
+      if (mounted) setState(() {});
+
+      // 若為 Perfect/Great，且 COMBO 有增加，觸發中央 COMBO 跳動
+      if (result.judgement != Judgement.miss && _game != null) {
+        final currentCombo = _game!.scoring.combo;
+        if (currentCombo > _lastComboShown) {
+          _triggerComboPulse(currentCombo);
+        }
+      } else if (result.judgement == Judgement.miss) {
+        // MISS 時重置上次顯示，避免之後從 1 開始不觸發
+        _lastComboShown = _game?.scoring.combo ?? 0;
+      }
+    });
+  }
+
+  void _triggerComboPulse(int newCombo) {
+    _lastComboShown = newCombo;
+    _comboPulseTimer?.cancel();
+    setState(() => _comboScale = 1.25);
+    _comboPulseTimer = Timer(const Duration(milliseconds: 120), () {
+      if (!mounted) return;
+      setState(() => _comboScale = 1.0);
+    });
+  }
+
+  String _formatMmSs(Duration d) {
+    final total = d.inSeconds;
+    final m = (total ~/ 60).toString().padLeft(2, '0');
+    final s = (total % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  double _roundDown2(double x) {
+    final scaled = (x * 100).floor() / 100.0;
+    return scaled;
+  }
+
+  Future<void> _openResult() async {
+    if (_settled || _game == null) return;
+    _settled = true;
+    final scoring = _game!.scoring;
+    final base = scoring.baseScoreSum;
+    final mult = scoring.comboMultiplier;
+    final finalPoints = scoring.finalizeMemePoints();
+
+    // 入帳（只做一次）
+    try {
+      final service = GameStateService();
+      final current = service.currentState;
+      final newState = current.copyWith(
+        memePoints: DecimalUtils.add(current.memePoints, finalPoints),
+      );
+      await service.updateGameState(newState);
+    } catch (_) {
+      // 測試或無初始化環境下允許跳過持久化錯誤
+    }
+
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.grey.withValues(alpha: 0.9),
+          title: Text(
+            _loc.getString('ktv.result.title', defaultValue: 'Results'),
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildResultRow('ktv.result.perfect', 'PERFECT', scoring.perfectCount),
+              _buildResultRow('ktv.result.great', 'GREAT', scoring.greatCount),
+              _buildResultRow('ktv.result.miss', 'MISS', scoring.missCount),
+              _buildResultRow('ktv.result.max_combo', 'Max Combo', scoring.maxCombo),
+              _buildResultRow(
+                'ktv.result.combo_bonus',
+                'Combo Bonus',
+                'x${_roundDown2(mult).toStringAsFixed(2)}',
+              ),
+              _buildResultRow(
+                'ktv.result.base_score',
+                'Base Score',
+                _roundDown2(base).toStringAsFixed(2),
+              ),
+              _buildResultRow(
+                'ktv.result.total_meme',
+                'Total Meme Points',
+                finalPoints.toStringAsFixed(2),
+                highlight: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                  (states) => Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                _loc.getString('ktv.result.ok', defaultValue: 'OK'),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildResultRow(String key, String fallback, Object value, {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            _loc.getString(key, defaultValue: fallback),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          Text(
+            '$value',
+            style: TextStyle(
+              color: highlight ? Colors.amberAccent : Colors.white,
+              fontSize: highlight ? 16 : 14,
+              fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _togglePause() {
     if (_isPaused) {
       _player.play();
       _game?.resume();
+      // 恢復每秒 HUD 計時
+      _startHudTicker();
     } else {
       _player.pause();
       _game?.pause();
+      // 暫停時停止 HUD 計時
+      _hudTimer?.cancel();
     }
     setState(() => _isPaused = !_isPaused);
   }
@@ -278,6 +566,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
             approachTimeMs: _approachTimeMs,
             despawnGraceMs: _despawnGraceMs,
           );
+          _subscribeJudgementIfNeeded();
           // 若音樂已經在播放，立即啟動遊戲時序以對齊進度
           if (_isPlaying) {
             _game!.start();
@@ -365,61 +654,123 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
           ),
         ),
 
-        // 分數顯示
+        // HUD：分數 / 連擊 / 時間
         Positioned(
           top: 100,
+          left: 16,
           right: 16,
           child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 分數
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '分數: $_score',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                // 左：分數
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _hudChip(
+                      label: _loc.getString('ktv.hud.score', defaultValue: 'Score'),
+                      value: _roundDown2(_game?.scoring.baseScoreSum ?? 0.0).toStringAsFixed(2),
                     ),
-                  ),
+                  ],
                 ),
 
-                const SizedBox(height: 8),
-
-                // 連擊數（只在有連擊時顯示）
-                if (_combo > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'COMBO: $_combo',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                // 右：剩餘時間
+                _hudChip(
+                  label: _loc.getString('ktv.hud.time', defaultValue: 'Time Left'),
+                  value: _hudTimeText,
+                ),
               ],
             ),
           ),
         ),
+
+        // 即時判定彈字（置中）
+        if (_judgeText != null)
+          Positioned(
+            top: _laneLayout?.screenHeight != null
+                ? (_laneLayout!.judgelineY * _laneLayout!.screenHeight) - 64
+                : 300,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _judgeText!,
+                  style: TextStyle(
+                    color: _judgeColor,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // 中央：COMBO 顯示（僅在有連擊或曾經有 maxCombo>0 時顯示）
+        if ((_game?.scoring.combo ?? 0) > 0)
+          Positioned(
+            top: _laneLayout?.screenHeight != null
+                ? _laneLayout!.screenHeight * 0.2
+                : 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedScale(
+                  scale: _comboScale,
+                  duration: const Duration(milliseconds: 120),
+                  curve: Curves.easeOutBack,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${_game?.scoring.combo ?? 0} COMBO',
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
+    );
+  }
+
+  Widget _hudChip({required String label, required String value, Widget? trailing}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$label: ', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing,
+          ],
+        ],
+      ),
     );
   }
 }

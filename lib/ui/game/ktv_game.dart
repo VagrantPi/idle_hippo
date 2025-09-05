@@ -11,6 +11,7 @@ import 'package:idle_hippo/ui/game/lane_background_component.dart';
 import 'package:idle_hippo/ui/components/ktv_beatmap_note.dart';
 
 import 'package:idle_hippo/game/ktv_game_logic.dart';
+import 'package:idle_hippo/game/ktv_scoring.dart';
 
 class KtvGame extends FlameGame with TapCallbacks {
   final AudioPlayer audioPlayer;
@@ -20,7 +21,9 @@ class KtvGame extends FlameGame with TapCallbacks {
   final double despawnGraceMs;
 
   late final KtvGameLogic _gameLogic;
+  final KtvScoring scoring = KtvScoring();
   StreamSubscription<JudgementResult>? _judgementSub;
+  Stream<JudgementResult> get judgements => _gameLogic.judgementStream;
 
   final Map<String, NoteComponent> _activeNotesById = {};
   final List<BeatmapNote> _beatmap = [];
@@ -196,6 +199,9 @@ class KtvGame extends FlameGame with TapCallbacks {
     print(
       '[${result.note.position}] Δ=${result.deltaMs}ms ${result.judgement.toString().split('.').last.toUpperCase()}',
     );
+
+    // 更新分數與連擊統計（UI 可從 scoring 讀取）
+    scoring.onJudge(result.judgement);
 
     final noteComponent = _activeNotesById[result.note.id];
     if (noteComponent != null) {

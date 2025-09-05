@@ -317,6 +317,28 @@
     "easy": "Easy",
     "hard": "Hard",
     "play": "Play",
-    "choose_difficulty": "Choose Difficulty"
+    "choose_difficulty": "Choose Difficulty",
+    "hud": {
+      "score": "Score",
+      "time": "Time Left",
+      "combo": "COMBO",
+      "max_combo": "MAX COMBO"
+    },
+    "judge": {
+      "perfect": "Perfect",
+      "great": "Great",
+      "miss": "Miss"
+    },
+    "result": {
+      "title": "Results",
+      "perfect": "PERFECT",
+      "great": "GREAT",
+      "miss": "MISS",
+      "max_combo": "Max Combo",
+      "combo_bonus": "Combo Bonus",
+      "base_score": "Base Score",
+      "total_meme": "Total Meme Points",
+      "ok": "OK"
+    }
   }
 }
