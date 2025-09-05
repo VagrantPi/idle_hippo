@@ -339,6 +339,10 @@
       "base_score": "Base Score",
       "total_meme": "Total Meme Points",
       "ok": "OK"
-    }
+    },
+    "rule": "You may play freely until you finish one game. Only the first completed game counts for daily reward.",
+    "download_all": "Download All",
+    "all_downloaded": "All downloaded",
+    "daily_locked": "Already completed today. Come back tomorrow!"
   }
 }

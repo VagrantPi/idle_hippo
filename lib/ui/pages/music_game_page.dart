@@ -5,6 +5,10 @@ import 'package:idle_hippo/models/ktv_models.dart';
 import 'package:idle_hippo/services/audio_download_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/song_catalog_service.dart';
+import 'package:idle_hippo/services/karaoke_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
+import 'package:idle_hippo/ui/components/ktv_batch_download_dialog.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:idle_hippo/ui/components/ktv_download_dialog.dart';
 import 'package:idle_hippo/ui/pages/ktv_game_play_page.dart';
 
@@ -25,6 +29,9 @@ class _MusicGamePageState extends State<MusicGamePage> {
   final AudioDownloadService _downloader = AudioDownloadService();
   final LocalizationService _loc = LocalizationService();
   final SongCatalogService _catalog = SongCatalogService();
+  final KaraokeService _karaoke = KaraokeService(deferWrite: true);
+  final AudioPlayer _previewPlayer = AudioPlayer();
+  final GameStateService _gameStateService = GameStateService();
 
   List<KtvSong> _songs = [];
   bool _isLoading = true;
@@ -32,11 +39,30 @@ class _MusicGamePageState extends State<MusicGamePage> {
   KtvSong? _downloadingSong;
   String? _pendingDifficulty;
   bool _isScrolling = false;
+  bool _playLocked = false;
+  bool _allDownloaded = false;
+  List<KtvBatchSong>? _batchSongs; // 批次下載 Overlay 開關
+  Timer? _previewTimer;
+  VoidCallback? _gsListener;
 
   @override
   void initState() {
     super.initState();
+    _initKaraokeState();
     _loadSongs();
+    // 監聽全域 GameState，當結算更新 `playedToday` 後立即鎖住按鈕
+    _gsListener = () {
+      _karaoke.isPlayableToday().then((playable) {
+        if (mounted) setState(() => _playLocked = !playable);
+      });
+    };
+    _gameStateService.gameState.addListener(_gsListener!);
+  }
+
+  Future<void> _initKaraokeState() async {
+    await _karaoke.ensureKaraokeBlock();
+    final playable = await _karaoke.isPlayableToday();
+    if (mounted) setState(() => _playLocked = !playable);
   }
 
   // 高度為參數的遮罩，圖片置中，超出即裁切
@@ -122,6 +148,12 @@ class _MusicGamePageState extends State<MusicGamePage> {
   void dispose() {
     // AudioDownloadService doesn't have a dispose method
     _wheelController.dispose();
+    _previewTimer?.cancel();
+    _previewPlayer.dispose();
+    if (_gsListener != null) {
+      _gameStateService.gameState.removeListener(_gsListener!);
+      _gsListener = null;
+    }
     super.dispose();
   }
 
@@ -145,12 +177,16 @@ class _MusicGamePageState extends State<MusicGamePage> {
         });
         // 將滾輪捲動到中間項目
         if (_songs.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              _wheelController.jumpToItem(0);
-            }
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            _wheelController.jumpToItem(0);
+            // 首次進入頁面：若首曲已下載，立即試聽
+            await _autoPreviewCurrent();
           });
         }
+        // 檢查是否已全部下載
+        final allOk = await _karaoke.allSongsDownloaded();
+        if (mounted) setState(() => _allDownloaded = allOk);
       }
     } catch (e) {
       if (mounted) {
@@ -164,6 +200,20 @@ class _MusicGamePageState extends State<MusicGamePage> {
 
   Future<void> _onTapDifficulty(KtvSong song, String difficulty) async {
     if (!mounted) return;
+
+    if (_playLocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _loc.getString(
+              'ktv.daily_locked',
+              defaultValue: 'Already completed today. Come back tomorrow!',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
 
     // 檢查是否已快取
     if (await _downloader.isCached(song.id)) {
@@ -181,6 +231,8 @@ class _MusicGamePageState extends State<MusicGamePage> {
           ),
         ),
       );
+      // 返回後刷新今日鎖狀態（確保結算後立即鎖住）
+      await _initKaraokeState();
     } else {
       // 未快取 → 顯示下載對話框
       setState(() {
@@ -264,6 +316,65 @@ class _MusicGamePageState extends State<MusicGamePage> {
     }
   }
 
+  Future<void> _onTapDownloadAll() async {
+    if (!mounted) return;
+    final pending = await _karaoke.pendingDownloadIds();
+    if (pending.isEmpty) {
+      if (mounted) setState(() => _allDownloaded = true);
+      return;
+    }
+
+    // 準備批次清單並開啟 Overlay 對話框
+    final entries = <KtvBatchSong>[];
+    for (final id in pending) {
+      final song = _songs.firstWhere(
+        (s) => s.id == id,
+        orElse: () => const KtvSong(
+          id: '',
+          title: '',
+          image: '',
+          music: '',
+          lengthSeconds: 0,
+          difficulties: [],
+        ),
+      );
+      if (song.id.isEmpty || song.music.isEmpty) continue;
+      entries.add(KtvBatchSong(id: song.id, url: song.music, title: song.title));
+    }
+    if (entries.isEmpty) return;
+    if (mounted) setState(() => _batchSongs = entries);
+  }
+
+  Future<void> _autoPreviewCurrent() async {
+    if (!mounted) return;
+    if (_expandedIndex == null) return;
+    if (_isScrolling) return;
+    final song = _songs[_expandedIndex!];
+    await _tryAutoPreview(song);
+  }
+
+  Future<void> _tryAutoPreview(KtvSong song) async {
+    // 僅當音檔已下載才試聽
+    if (!await _downloader.isCached(song.id)) return;
+    try {
+      _stopPreview();
+      final path = await _downloader.cachedFilePath(song.id);
+      await _previewPlayer.setFilePath(path);
+      await _previewPlayer.play();
+      _previewTimer = Timer(const Duration(seconds: 10), () {
+        _previewPlayer.stop();
+      });
+    } catch (_) {
+      // 若裝置/格式限制導致失敗，靜默略過（整曲播放可在 setFilePath 成功後自然進行）
+    }
+  }
+
+  void _stopPreview() {
+    _previewTimer?.cancel();
+    _previewTimer = null;
+    _previewPlayer.stop();
+  }
+
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -307,10 +418,12 @@ class _MusicGamePageState extends State<MusicGamePage> {
               if (!_isScrolling) {
                 setState(() => _isScrolling = true);
               }
+              _stopPreview();
             } else if (notification is ScrollEndNotification) {
               if (_isScrolling) {
                 setState(() => _isScrolling = false);
               }
+              _autoPreviewCurrent();
             }
             return false;
           },
@@ -366,11 +479,13 @@ class _MusicGamePageState extends State<MusicGamePage> {
                             ),
                             child: FloatingActionButton.small(
                               heroTag: null,
-                              backgroundColor: Colors.green.withValues(
-                                alpha: 0.9,
-                              ),
+                              backgroundColor: _playLocked
+                                  ? Colors.grey
+                                  : Colors.green.withValues(alpha: 0.9),
                               onPressed: () {
                                 if (_isScrolling) return;
+                                if (_playLocked) return;
+                                _stopPreview();
                                 final song = _songs[_expandedIndex!];
                                 _showDifficultyPicker(song);
                               },
@@ -511,17 +626,20 @@ class _MusicGamePageState extends State<MusicGamePage> {
           ),
           _buildBody(),
           // 下載 Overlay
+          // 下載 Overlay
           if (_downloadingSong != null)
             Positioned.fill(
               child: KtvDownloadDialog(
                 songId: _downloadingSong!.id,
                 url: _downloadingSong!.music,
-                onClose: () {
+                onClose: () async {
                   // 關閉 overlay（未開始播放）
                   setState(() {
                     _downloadingSong = null;
                     _pendingDifficulty = null;
                   });
+                  final allOk = await _karaoke.allSongsDownloaded();
+                  if (mounted) setState(() => _allDownloaded = allOk);
                 },
                 onDownloaded: () async {
                   // 下載完成後：自動轉跳到遊戲畫面
@@ -553,9 +671,75 @@ class _MusicGamePageState extends State<MusicGamePage> {
                       ),
                     ),
                   );
+                  await _initKaraokeState();
+                  final allOk = await _karaoke.allSongsDownloaded();
+                  if (mounted) setState(() => _allDownloaded = allOk);
                 },
               ),
             ),
+          if (_batchSongs != null)
+            Positioned.fill(
+              child: KtvBatchDownloadDialog(
+                songs: _batchSongs!,
+                onClose: () async {
+                  setState(() => _batchSongs = null);
+                  final allOk = await _karaoke.allSongsDownloaded();
+                  if (mounted) setState(() => _allDownloaded = allOk);
+                },
+                onCompleted: () async {
+                  setState(() => _batchSongs = null);
+                  final allOk = await _karaoke.allSongsDownloaded();
+                  if (mounted) setState(() => _allDownloaded = allOk);
+                  // 批次下載完成後，立即試聽目前顯示的歌曲
+                  await _autoPreviewCurrent();
+                },
+              ),
+            ),
+          // 規則說明與右下 Download All（最上層顯示）
+          Positioned(
+            top: 8,
+            left: 8,
+            right: 8,
+            child: Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 120, 48),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _loc.getString(
+                      'ktv.rule',
+                      defaultValue:
+                          'You may play freely until you finish one game. Only the first completed game counts for daily reward.',
+                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+                Positioned(
+                  right: 10,
+                  bottom: 6,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: _allDownloaded ? null : _onTapDownloadAll,
+                    child: Text(
+                      _allDownloaded
+                          ? _loc.getString('ktv.all_downloaded', defaultValue: 'All downloaded')
+                          : _loc.getString('ktv.download_all', defaultValue: 'Download All'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

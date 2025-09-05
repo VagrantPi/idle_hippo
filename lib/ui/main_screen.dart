@@ -793,14 +793,52 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(height: 16),
-          AnimatedButton(
-            iconPath: 'assets/images/icon/MusicGame.png',
-            onTap: () => _pageManager.navigateToPage(PageType.musicGame),
-            size: 70,
+          SizedBox(
+            width: 70,
+            height: 70,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: AnimatedButton(
+                    iconPath: 'assets/images/icon/MusicGame.png',
+                    onTap: () => _pageManager.navigateToPage(PageType.musicGame),
+                    size: 70,
+                  ),
+                ),
+                if (!_isMusicGameLockedToday())
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: ScaleTransition(
+                      scale: _badgePulseAnimation,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  bool _isMusicGameLockedToday() {
+    final k = widget.gameState.karaoke;
+    if (k == null) return false;
+    // tz=Asia/Taipei (UTC+8)
+    final nowUtc = DateTime.now().toUtc();
+    final taipei = nowUtc.add(const Duration(hours: 8));
+    final today =
+        '${taipei.year.toString().padLeft(4, '0')}-${taipei.month.toString().padLeft(2, '0')}-${taipei.day.toString().padLeft(2, '0')}';
+    return k.playedToday && k.lastPlayDate == today;
   }
 
   Widget _buildBottomNavigation() {

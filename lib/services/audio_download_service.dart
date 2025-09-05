@@ -72,8 +72,6 @@ class AudioDownloadService {
     final ok = File(okPath);
     final exists = f.existsSync() && (await f.length()) > 0;
     final valid = exists && ok.existsSync();
-    // ignore: avoid_print
-    print('[AudioDownloadService] isCached($songId) -> file=$exists ok=${ok.existsSync()}');
     return valid;
   }
 
