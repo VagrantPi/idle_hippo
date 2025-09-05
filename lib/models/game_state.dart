@@ -165,6 +165,52 @@ class GachaState {
   int get hashCode => lastDate.hashCode ^ tenPackAdRemaining.hashCode;
 }
 
+/// Step 23: 卡拉 OK 每日限制狀態
+class KaraokeState {
+  final String lastPlayDate; // YYYY-MM-DD in Asia/Taipei
+  final bool playedToday; // 是否已於當日完成並結算過
+
+  const KaraokeState({
+    required this.lastPlayDate,
+    required this.playedToday,
+  });
+
+  factory KaraokeState.initial() => const KaraokeState(
+        lastPlayDate: '',
+        playedToday: false,
+      );
+
+  factory KaraokeState.fromMap(Map<String, dynamic> map) {
+    return KaraokeState(
+      lastPlayDate: (map['lastPlayDate'] ?? '') as String,
+      playedToday: (map['playedToday'] ?? false) as bool,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'lastPlayDate': lastPlayDate,
+        'playedToday': playedToday,
+      };
+
+  KaraokeState copyWith({String? lastPlayDate, bool? playedToday}) {
+    return KaraokeState(
+      lastPlayDate: lastPlayDate ?? this.lastPlayDate,
+      playedToday: playedToday ?? this.playedToday,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is KaraokeState &&
+        other.lastPlayDate == lastPlayDate &&
+        other.playedToday == playedToday;
+  }
+
+  @override
+  int get hashCode => lastPlayDate.hashCode ^ playedToday.hashCode;
+}
+
 class PetTicketQuest {
   final double k;
   final double target;
@@ -1091,6 +1137,7 @@ class GameState {
   final TitlesState? titles;
   final PendingGachaBatch? pendingGachaBatch;
   final CheckinState? checkin;
+  final KaraokeState? karaoke; // Step23: 每日卡拉OK次數限制
 
   const GameState({
     required this.saveVersion,
@@ -1109,6 +1156,7 @@ class GameState {
     this.titles,
     this.pendingGachaBatch,
     this.checkin,
+    this.karaoke,
   });
 
   /// 建立初始狀態
@@ -1127,6 +1175,7 @@ class GameState {
       gachaHistory: const [],
       gacha: null,
       titles: const TitlesState(),
+      karaoke: null,
     );
   }
 
@@ -1203,6 +1252,9 @@ class GameState {
           map.containsKey('checkin') && map['checkin'] is Map<String, dynamic>
           ? CheckinState.fromMap(map['checkin'] as Map<String, dynamic>)
           : null,
+      karaoke: map.containsKey('karaoke') && map['karaoke'] is Map<String, dynamic>
+          ? KaraokeState.fromMap(map['karaoke'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -1231,6 +1283,7 @@ class GameState {
       if (pendingGachaBatch != null)
         'pendingGachaBatch': pendingGachaBatch!.toMap(),
       if (checkin != null) 'checkin': checkin!.toMap(),
+      if (karaoke != null) 'karaoke': karaoke!.toMap(),
     };
   }
 
@@ -1285,6 +1338,7 @@ class GameState {
     PendingGachaBatch? pendingGachaBatch,
     bool? clearPendingGachaBatch,
     CheckinState? checkin,
+    KaraokeState? karaoke,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1306,6 +1360,7 @@ class GameState {
           ? null
           : (pendingGachaBatch ?? this.pendingGachaBatch),
       checkin: checkin ?? this.checkin,
+      karaoke: karaoke ?? this.karaoke,
     );
   }
 
@@ -1341,7 +1396,8 @@ class GameState {
         other.gacha == gacha &&
         other.titles == titles &&
         _pendingBatchEquals(other.pendingGachaBatch, pendingGachaBatch) &&
-        other.checkin == checkin;
+        other.checkin == checkin &&
+        other.karaoke == karaoke;
   }
 
   @override
@@ -1361,7 +1417,8 @@ class GameState {
         (gacha?.hashCode ?? 0) ^
         (titles?.hashCode ?? 0) ^
         (pendingGachaBatch?.hashCode ?? 0) ^
-        (checkin?.hashCode ?? 0);
+        (checkin?.hashCode ?? 0) ^
+        (karaoke?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

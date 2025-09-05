@@ -11,6 +11,7 @@ import 'package:idle_hippo/ui/components/ktv_lane_layout.dart';
 import 'package:idle_hippo/ui/game/ktv_game.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
+import 'package:idle_hippo/services/karaoke_service.dart';
 
 class KtvGamePlayPage extends StatefulWidget {
   final String songId;
@@ -398,6 +399,11 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     } catch (_) {
       // 測試或無初始化環境下允許跳過持久化錯誤
     }
+
+    // Step23: 標記卡拉OK當日已結算
+    try {
+      await KaraokeService().markSettledToday();
+    } catch (_) {}
 
     if (!mounted) return;
     await showDialog(
