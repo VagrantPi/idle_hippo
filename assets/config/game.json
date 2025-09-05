@@ -34,6 +34,8 @@
     "lanePadding": 16,
     "perspectiveDepth": 0.7,
     "noteBaseSize": 16,
+    "containmentEpsilonPx": 1.0,
+    "preJudgeIgnoreHeightPx": 50.0,
     "enableObjectPool": true,
     "maxActiveNotes": 256,
     "despawnGraceMs": 150

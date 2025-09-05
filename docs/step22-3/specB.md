@@ -26,10 +26,7 @@
   "ktv": {
     "lanes": { "easy": 3, "hard": 5 },
     "approachMs": 1100,          // 音符從生成點到判定帶中心的飛行時間
-    "judgeBand": {
-      "heightPx": 64,           // 橘色帶的可視高度（幾何判定以此為準）
-      "yPx": 1080               // 帶中心或上緣/下緣的基準（視設計，以下採中心對齊）
-    },
+    // 判定帶高度 = noteBaseSize * 2（與背景判定線厚度一致，不獨立配置）
     "note": {
       "widthPx": 120,
       "heightPx": 28
@@ -104,6 +101,7 @@ y(t) = lerp(ySpawn, yJudgeline, progress)
   `noteBottom <= bandTop || noteTop >= bandBottom`
 
 > `eps = containmentEpsilonPx`：避免像素捨入或縮放誤差。
+> 判定帶高度與 `LaneBackgroundComponent` 的橘色判定線厚度相同：`height = noteBaseSize * 2`。
 
 ### 4.2 前排優先（同一軌）
 
@@ -117,8 +115,9 @@ y(t) = lerp(ySpawn, yJudgeline, progress)
 * **Down 觸發**：
 
   1. 由 `info.eventPosition.widget.x` 映射 `laneIndex`
-  2. 取該 lane 的 `note0`，用**當下幾何**分類（4.1）
-  3. 回報 `geomJudge=PERFECT/GREAT/MISS`，疊加 Log/浮字
+  2. 取該 lane 的 `note0`；若 `note0` 的 `noteBottom <= bandTop - preJudgeIgnoreHeightPx`（預設 50px），視為仍距離判定帶過遠 → 直接忽略本次點擊（不判 MISS）
+  3. 否則，用**當下幾何**分類（4.1）
+  4. 回報 `geomJudge=PERFECT/GREAT/MISS`，疊加 Log/浮字
 * 若該 lane 無 `note0` → **忽略輸入**（防幽靈點）。
 
 ### 4.4 自動 MISS（逾時回收）
@@ -238,3 +237,15 @@ JudgeResult judgeByGeometry(Note n, Rect band, double eps) {
 ```
 
 > `containsRect` 可自寫：`noteTop >= bandTop-eps && noteBottom <= bandBottom+eps`。
+
+---
+
+## 10. 視覺與色彩（Neon Style）
+
+- 判定顏色（即時彈字與結算畫面一致）：
+  - PERFECT：藍色（neon）
+  - GREAT：綠色（neon）
+  - MISS：紅色（neon）
+- 呈現方式：使用高亮色與多層陰影（外擴 8~16px）營造螢光感。
+- 彈字位置：顯示於當前 COMBO 文字上方約 40~50px，避免重疊。
+- 動畫：判定彈字以 300ms `easeOut` 漸隱，總顯示時間約 300ms。

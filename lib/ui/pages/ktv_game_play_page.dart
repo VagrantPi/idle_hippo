@@ -70,6 +70,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   String? _judgeText;
   Color _judgeColor = Colors.white;
   Timer? _judgeTimer;
+  double _judgeOpacity = 0.0;
 
   StreamSubscription<Duration>? _hudPosSub;
   StreamSubscription<Duration?>? _hudDurSub;
@@ -308,16 +309,16 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     if (_game == null) return;
     // 僅在首次建立 _game 後掛上一次
     _judgementUiSub ??= _game!.judgements.listen((result) {
-      // 顯示彈字 200~350ms
+      // 顯示彈字 300ms 並淡出
       final loc = _loc;
       switch (result.judgement) {
         case Judgement.perfect:
           _judgeText = loc.getString('ktv.judge.perfect', defaultValue: 'Perfect');
-          _judgeColor = Colors.limeAccent;
+          _judgeColor = Colors.blueAccent;
           break;
         case Judgement.great:
           _judgeText = loc.getString('ktv.judge.great', defaultValue: 'Great');
-          _judgeColor = Colors.lightBlueAccent;
+          _judgeColor = Colors.greenAccent;
           break;
         case Judgement.miss:
           _judgeText = loc.getString('ktv.judge.miss', defaultValue: 'Miss');
@@ -325,10 +326,20 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
           break;
       }
       _judgeTimer?.cancel();
-      setState(() {});
-      _judgeTimer = Timer(const Duration(milliseconds: 250), () {
+      setState(() {
+        _judgeOpacity = 1.0;
+      });
+      // 啟動淡出
+      _judgeTimer = Timer(const Duration(milliseconds: 300), () {
         if (!mounted) return;
-        setState(() => _judgeText = null);
+        setState(() {
+          _judgeOpacity = 0.0;
+        });
+        // 在淡出結束後清理文字
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (!mounted) return;
+          setState(() => _judgeText = null);
+        });
       });
       // 也觸發 HUD 重繪（分數/COMBO 來自 _game!.scoring）
       if (mounted) setState(() {});
@@ -394,7 +405,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
       barrierDismissible: false,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: Colors.grey.withValues(alpha: 0.9),
+          backgroundColor: Colors.grey.shade900,
           title: Text(
             _loc.getString('ktv.result.title', defaultValue: 'Results'),
             style: const TextStyle(color: Colors.white),
@@ -403,9 +414,9 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildResultRow('ktv.result.perfect', 'PERFECT', scoring.perfectCount),
-              _buildResultRow('ktv.result.great', 'GREAT', scoring.greatCount),
-              _buildResultRow('ktv.result.miss', 'MISS', scoring.missCount),
+              _buildResultRow('ktv.result.perfect', 'PERFECT', scoring.perfectCount, color: Colors.blueAccent),
+              _buildResultRow('ktv.result.great', 'GREAT', scoring.greatCount, color: Colors.greenAccent),
+              _buildResultRow('ktv.result.miss', 'MISS', scoring.missCount, color: Colors.redAccent),
               _buildResultRow('ktv.result.max_combo', 'Max Combo', scoring.maxCombo),
               _buildResultRow(
                 'ktv.result.combo_bonus',
@@ -447,7 +458,19 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     );
   }
 
-  Widget _buildResultRow(String key, String fallback, Object value, {bool highlight = false}) {
+  TextStyle _neonStyle(Color color, {double fontSize = 14, bool bold = false}) {
+    return TextStyle(
+      color: color,
+      fontSize: fontSize,
+      fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+      shadows: [
+        Shadow(color: color.withValues(alpha: 0.9), blurRadius: 8, offset: const Offset(0, 0)),
+        Shadow(color: color.withValues(alpha: 0.6), blurRadius: 16, offset: const Offset(0, 0)),
+      ],
+    );
+  }
+
+  Widget _buildResultRow(String key, String fallback, Object value, {bool highlight = false, Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -455,15 +478,13 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
         children: [
           Text(
             _loc.getString(key, defaultValue: fallback),
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            style: color != null ? _neonStyle(color) : const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           Text(
             '$value',
-            style: TextStyle(
-              color: highlight ? Colors.amberAccent : Colors.white,
-              fontSize: highlight ? 16 : 14,
-              fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
-            ),
+            style: highlight
+                ? _neonStyle(Colors.amberAccent, fontSize: 16, bold: true)
+                : (color != null ? _neonStyle(color) : const TextStyle(color: Colors.white, fontSize: 14)),
           ),
         ],
       ),
@@ -684,27 +705,30 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
           ),
         ),
 
-        // 即時判定彈字（置中）
+        // 即時判定彈字（在 COMBO 顯示上方，300ms 淡出）
         if (_judgeText != null)
           Positioned(
             top: _laneLayout?.screenHeight != null
-                ? (_laneLayout!.judgelineY * _laneLayout!.screenHeight) - 64
-                : 300,
+                ? (_laneLayout!.screenHeight * 0.2) - 48
+                : 120,
             left: 0,
             right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _judgeText!,
-                  style: TextStyle(
-                    color: _judgeColor,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _judgeOpacity,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _judgeText!,
+                      style: _neonStyle(_judgeColor ?? Colors.white, fontSize: 24, bold: true),
+                    ),
                   ),
                 ),
               ),
@@ -736,11 +760,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                         ),
                         child: Text(
                           '${_game?.scoring.combo ?? 0} COMBO',
-                          style: const TextStyle(
-                            color: Colors.greenAccent,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: _neonStyle(Colors.greenAccent, fontSize: 28, bold: true),
                         ),
                       ),
                     ],
