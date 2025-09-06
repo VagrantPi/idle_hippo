@@ -5,7 +5,7 @@ import 'package:idle_hippo/models/ktv_models.dart';
 import 'package:idle_hippo/services/audio_download_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/services/karaoke_service.dart';
-import 'package:idle_hippo/services/song_catalog_service.dart';
+import 'package:idle_hippo/services/song_catalog_service.dart' as sc;
 
 class _FakeDownloader implements AudioDownloadService {
   final Map<String, bool> cached;
@@ -37,12 +37,22 @@ class _FakeDownloader implements AudioDownloadService {
   Stream<DownloadProgress> download(String songId, String url, {CancelToken? cancelToken}) => const Stream.empty();
 }
 
-class _FakeCatalog implements SongCatalogService {
+class _FakeCatalog implements sc.SongCatalogService {
   final List<KtvSong> songs;
   _FakeCatalog(this.songs);
 
   @override
-  AssetLoader assetLoader = (path) => Future.value('');
+  sc.AssetLoader assetLoader = (path) => Future.value('');
+
+  @override
+  sc.BaseDirProvider baseDirProvider =
+      (() async => throw UnimplementedError('not used in test'));
+
+  @override
+  sc.FileReader fileReader = (path) async => '';
+
+  @override
+  GameStateService gameStateService = GameStateService();
 
   @override
   Future<List<KtvSong>> loadSongs() async => songs;

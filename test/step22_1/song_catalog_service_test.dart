@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/ktv_models.dart';
 import 'package:idle_hippo/services/song_catalog_service.dart';
@@ -6,6 +7,8 @@ void main() {
   group('歌曲清單解析 - SongCatalogService', () {
     test('正常解析一首歌（標題/時長/難度星數）', () async {
       final svc = SongCatalogService();
+      final tmp = await Directory.systemTemp.createTemp('sc_test1');
+      svc.baseDirProvider = () async => tmp;
       svc.assetLoader = (_) async =>
           '{"songs":[{"id":"EchoesOfTheVoid","title":"Echoes Of The Void","image":"assets/images/musicGame/EchoesOfTheVoid.jpg","music":"https://example.com/EchoesOfTheVoid.mp3","length_seconds":120,"difficulties":[{"level":"easy","key_count":3},{"level":"hard","key_count":5}]}]}';
 
@@ -24,6 +27,8 @@ void main() {
 
     test('資料異常或空清單時回傳空陣列', () async {
       final svc = SongCatalogService();
+      final tmp = await Directory.systemTemp.createTemp('sc_test2');
+      svc.baseDirProvider = () async => tmp;
       // 缺少 songs 欄位
       svc.assetLoader = (_) async => '{"foo":1}';
       final list1 = await svc.loadSongs();

@@ -169,33 +169,69 @@ class GachaState {
 class KaraokeState {
   final String lastPlayDate; // YYYY-MM-DD in Asia/Taipei
   final bool playedToday; // 是否已於當日完成並結算過
+  // Step24: collect.json SWR/ETag 狀態
+  final int collectVersion; // 版本遞增（304 不變，200 +1）
+  final String collectEtag; // 最近一次 200 回應的 ETag
+  final int collectUpdatedAt; // 最近一次成功更新時間（epoch ms）
+  final String collectPath; // 預期位置：appdata://collect.json
 
   const KaraokeState({
     required this.lastPlayDate,
     required this.playedToday,
+    this.collectVersion = 0,
+    this.collectEtag = '',
+    this.collectUpdatedAt = 0,
+    this.collectPath = 'appdata://collect.json',
   });
 
   factory KaraokeState.initial() => const KaraokeState(
         lastPlayDate: '',
         playedToday: false,
+        collectVersion: 0,
+        collectEtag: '',
+        collectUpdatedAt: 0,
+        collectPath: 'appdata://collect.json',
       );
 
   factory KaraokeState.fromMap(Map<String, dynamic> map) {
     return KaraokeState(
       lastPlayDate: (map['lastPlayDate'] ?? '') as String,
       playedToday: (map['playedToday'] ?? false) as bool,
+      collectVersion: (map['collectVersion'] ?? map['collect_version'] ?? 0)
+          as int,
+      collectEtag: (map['collectEtag'] ?? map['collect_etag'] ?? '') as String,
+      collectUpdatedAt:
+          (map['collectUpdatedAt'] ?? map['collect_updated_at'] ?? 0) as int,
+      collectPath:
+          (map['collectPath'] ?? map['collect_path'] ?? 'appdata://collect.json')
+              as String,
     );
   }
 
   Map<String, dynamic> toMap() => {
         'lastPlayDate': lastPlayDate,
         'playedToday': playedToday,
+        'collectVersion': collectVersion,
+        'collectEtag': collectEtag,
+        'collectUpdatedAt': collectUpdatedAt,
+        'collectPath': collectPath,
       };
 
-  KaraokeState copyWith({String? lastPlayDate, bool? playedToday}) {
+  KaraokeState copyWith({
+    String? lastPlayDate,
+    bool? playedToday,
+    int? collectVersion,
+    String? collectEtag,
+    int? collectUpdatedAt,
+    String? collectPath,
+  }) {
     return KaraokeState(
       lastPlayDate: lastPlayDate ?? this.lastPlayDate,
       playedToday: playedToday ?? this.playedToday,
+      collectVersion: collectVersion ?? this.collectVersion,
+      collectEtag: collectEtag ?? this.collectEtag,
+      collectUpdatedAt: collectUpdatedAt ?? this.collectUpdatedAt,
+      collectPath: collectPath ?? this.collectPath,
     );
   }
 
@@ -204,11 +240,21 @@ class KaraokeState {
     if (identical(this, other)) return true;
     return other is KaraokeState &&
         other.lastPlayDate == lastPlayDate &&
-        other.playedToday == playedToday;
+        other.playedToday == playedToday &&
+        other.collectVersion == collectVersion &&
+        other.collectEtag == collectEtag &&
+        other.collectUpdatedAt == collectUpdatedAt &&
+        other.collectPath == collectPath;
   }
 
   @override
-  int get hashCode => lastPlayDate.hashCode ^ playedToday.hashCode;
+  int get hashCode =>
+      lastPlayDate.hashCode ^
+      playedToday.hashCode ^
+      collectVersion.hashCode ^
+      collectEtag.hashCode ^
+      collectUpdatedAt.hashCode ^
+      collectPath.hashCode;
 }
 
 class PetTicketQuest {

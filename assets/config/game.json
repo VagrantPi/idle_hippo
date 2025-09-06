@@ -38,6 +38,8 @@
     "preJudgeIgnoreHeightPx": 50.0,
     "enableObjectPool": true,
     "maxActiveNotes": 256,
-    "despawnGraceMs": 150
+    "despawnGraceMs": 150,
+    "versionUrl": "https://raw.githubusercontent.com/VagrantPi/idle_hippo_music_resource/refs/heads/main/version.json",
+    "collectUrl": "https://raw.githubusercontent.com/VagrantPi/idle_hippo_music_resource/refs/heads/main/collect.json"
   }
 }

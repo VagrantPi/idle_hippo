@@ -142,6 +142,11 @@ class OfflineRewardService with WidgetsBindingObserver {
     );
   }
 
+  /// Step 24: 允許啟動流程主動觸發一次離線獎勵檢查（在 Loading 期間）。
+  Future<void> checkNow() async {
+    await _onResumed();
+  }
+
   Duration _effectiveDuration(GameState gs) {
     final now = _nowMs();
     final last = gs.offline.lastExitUtcMs;

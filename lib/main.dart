@@ -22,6 +22,7 @@ import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
 import 'package:idle_hippo/ui/components/slide_in_dialog.dart';
+import 'package:idle_hippo/ui/loading_screen.dart';
 
 void main() {
   runApp(const IdleHippoApp());
@@ -39,7 +40,11 @@ class IdleHippoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: IdleHippoScreen(testMode: testMode),
+      // Step 24: 啟動時先進 Loading 畫面
+      home: testMode ? IdleHippoScreen(testMode: testMode) : const LoadingScreen(),
+      routes: {
+        '/main': (_) => IdleHippoScreen(testMode: testMode),
+      },
       debugShowCheckedModeBanner: false,
     );
   }
@@ -1112,7 +1117,9 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 重置遊戲狀態（含每日上限區塊與資源）
     setState(() {
       // 使用初始建構，確保主線/離線/寵物/抽卡歷史等欄位一併回到預設
-      _gameState = GameState.initial(_saveService.currentVersion);
+      _gameState = GameState.initial(_saveService.currentVersion)
+          // Step24: 立即建立 Karaoke 區塊，將 collect 狀態歸零方便 Debug Panel 顯示
+          .copyWith(karaoke: KaraokeState.initial());
       // 同步清空本地暫存顯示/收益
       _accumulatedIdleIncome = 0.0;
       _lastTapDisplayValue = 0.0;
