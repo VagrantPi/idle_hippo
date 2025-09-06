@@ -99,6 +99,8 @@ assets/config/
 | `ktv.enableObjectPool` | boolean | 啟用物件池 | true |
 | `ktv.maxActiveNotes` | number | 安全上限 | 256 |
 | `ktv.despawnGraceMs` | number | 音符到達判定線後的寬限時間（毫秒） | 150 |
+| `ktv.versionUrl` | string | 遠端版本檔 URL（version.json，含 `version` 數字） | https://raw.githubusercontent.com/VagrantPi/idle_hippo_music_resource/refs/heads/main/version.json |
+| `ktv.collectUrl` | string | 遠端歌曲清單 URL（collect.json） | https://raw.githubusercontent.com/VagrantPi/idle_hippo_music_resource/refs/heads/main/collect.json |
 
 ### 範例配置
 

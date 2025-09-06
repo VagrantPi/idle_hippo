@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/models/ktv_models.dart';
@@ -67,23 +68,29 @@ class _MusicGamePageState extends State<MusicGamePage> {
 
   // 高度為參數的遮罩，圖片置中，超出即裁切
   Widget _maskedImageStrip(String imagePath, double height) {
+    final isAsset = imagePath.startsWith('assets/');
+    final imageWidget = isAsset
+        ? Image.asset(
+            imagePath,
+            width: double.infinity,
+            height: height,
+            fit: BoxFit.cover,
+          )
+        : Image.file(
+            File(imagePath),
+            width: double.infinity,
+            height: height,
+            fit: BoxFit.cover,
+          );
+
     return SizedBox(
       height: height,
       width: double.infinity,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: Image.asset(
-          imagePath,
-          width: double.infinity,
-          height: height,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: double.infinity,
-            height: height,
-            color: Colors.grey[800],
-            child: const Icon(Icons.music_note, color: Colors.white),
-          ),
-        ),
+        child: Builder(builder: (context) {
+          return imageWidget;
+        }),
       ),
     );
   }

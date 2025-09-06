@@ -132,6 +132,16 @@ class _DebugPanelState extends State<DebugPanel> {
                   const SizedBox(height: 8),
                 ],
 
+                // KTV/Collect Section
+                if (widget.gameState?.karaoke != null) ...[
+                  _buildSectionTitle('KTV Collect'),
+                  _buildConfigRow(
+                    'collectVersion',
+                    widget.gameState!.karaoke!.collectVersion,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 // Offline Section
                 if (widget.gameState != null) ...[
                   _buildSectionTitle('Offline'),

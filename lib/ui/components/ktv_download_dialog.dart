@@ -33,7 +33,7 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
   StreamSubscription? _sub;
 
   double? _percent; // 0..100
-  Object? _error;
+  String? _error;
 
   @override
   void initState() {
@@ -65,9 +65,28 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
             });
           },
           onError: (e) {
-            setState(() {
-              _error = e;
-            });
+            String msg = e.toString();
+            try {
+              if (e is DioException) {
+                switch (e.type) {
+                  case DioExceptionType.connectionTimeout:
+                  case DioExceptionType.sendTimeout:
+                  case DioExceptionType.receiveTimeout:
+                  case DioExceptionType.connectionError:
+                    msg = _loc.getString(
+                      'ktv.network_unavailable',
+                      defaultValue: 'Network unavailable',
+                    );
+                    break;
+                  default:
+                    msg = _loc.getString(
+                      'ktv.download_failed',
+                      defaultValue: 'Download failed',
+                    );
+                }
+              }
+            } catch (_) {}
+            setState(() => _error = msg);
           },
           onDone: () {
             widget.onDownloaded();
@@ -147,14 +166,12 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
                       style: const TextStyle(color: Colors.redAccent),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      _error.toString(),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(_error ?? '',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,

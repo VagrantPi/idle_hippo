@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+// removed rootBundle: song list now loads via SongCatalogService
 import 'package:flame/game.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:idle_hippo/services/audio_download_service.dart';
@@ -12,6 +12,7 @@ import 'package:idle_hippo/ui/game/ktv_game.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
 import 'package:idle_hippo/services/karaoke_service.dart';
+import 'package:idle_hippo/services/song_catalog_service.dart';
 
 class KtvGamePlayPage extends StatefulWidget {
   final String songId;
@@ -50,6 +51,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
   KtvGame? _game;
   KtvSong? _song;
   KtvDifficulty? _difficulty; // 由 assets/audio/collect.json 載入
+  final SongCatalogService _catalog = SongCatalogService();
 
   // 遊戲配置
   late double _approachTimeMs;
@@ -87,7 +89,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     super.initState();
     _loadGameConfig();
     _initializeGame();
-    _loadBeatmapFromAssets();
+    _loadBeatmap();
     _startCountdown();
   }
 
@@ -116,12 +118,10 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     // LaneLayout 需等 build 時拿到螢幕尺寸
   }
 
-  Future<void> _loadBeatmapFromAssets() async {
+  Future<void> _loadBeatmap() async {
     try {
-      final jsonString = await rootBundle.loadString(
-        'assets/audio/collect.json',
-      );
-      final songs = KtvCollectionParser.parse(jsonString);
+      // 透過服務載入（優先 appdata，其次 assets）
+      final songs = await _catalog.loadSongs();
       final song = songs.firstWhere(
         (s) => s.id == widget.songId,
         orElse: () => const KtvSong(
@@ -134,10 +134,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
         ),
       );
 
-      if (song.id.isEmpty) {
-        // 找不到歌曲，維持現狀（畫面仍可顯示，但沒有譜面）
-        return;
-      }
+      if (song.id.isEmpty) return;
 
       final difficulty = song.difficulties.firstWhere(
         (d) => d.level == widget.difficulty,
@@ -154,7 +151,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
         _difficulty = difficulty;
       });
     } catch (_) {
-      // 若解析失敗，使用既有 fallback（畫面仍可顯示，但沒有譜面）
+      // 異常時維持現狀（畫面仍可顯示，但沒有譜面）
     }
   }
 
@@ -191,7 +188,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     try {
       // 確保已載入 collect.json 的歌曲資料，取得 length_seconds
       if (_song == null) {
-        await _loadBeatmapFromAssets();
+        await _loadBeatmap();
       }
 
       // 先用 metadata 的長度預填，讓 HUD 立即顯示總長度
