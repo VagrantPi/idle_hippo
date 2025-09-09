@@ -658,9 +658,11 @@ class _MusicGamePageState extends State<MusicGamePage> {
                     return;
                   }
 
+                  // 捕捉當前 BuildContext，避免跨 async 間隙直接使用 State.context
+                  final ctx = context;
                   final path = await _downloader.cachedFilePath(song.id);
 
-                  if (!mounted) return;
+                  if (!ctx.mounted) return;
                   // 先關閉 overlay 狀態
                   setState(() {
                     _downloadingSong = null;
@@ -668,7 +670,7 @@ class _MusicGamePageState extends State<MusicGamePage> {
                   });
 
                   // 導向遊戲播放頁面
-                  await Navigator.of(context).push(
+                  await Navigator.of(ctx).push(
                     MaterialPageRoute(
                       builder: (context) => KtvGamePlayPage(
                         songId: song.id,

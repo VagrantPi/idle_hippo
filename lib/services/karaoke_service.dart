@@ -41,7 +41,7 @@ class KaraokeService {
     final k = s.karaoke;
     if (k == null) {
       final next = s.copyWith(karaoke: KaraokeState.initial());
-      if (_deferWrite && WidgetsBinding.instance != null) {
+      if (_deferWrite) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _state.updateGameState(next);
         });
@@ -53,7 +53,7 @@ class KaraokeService {
     if (k.lastPlayDate != today) {
       final reset = k.copyWith(playedToday: false);
       final next = s.copyWith(karaoke: reset);
-      if (_deferWrite && WidgetsBinding.instance != null) {
+      if (_deferWrite) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _state.updateGameState(next);
         });

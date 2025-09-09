@@ -350,8 +350,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         final id = m['id']?.toString() ?? '';
         final cond = m['condition'] as Map<String, dynamic>?;
         if (id.isEmpty ||
-            (cond?['kind']?.toString() != 'collect_all_titles_except'))
+            (cond?['kind']?.toString() != 'collect_all_titles_except')) {
           continue;
+        }
 
         final exclude = (cond?['exclude'] as List?)?.cast<String>() ?? const [];
         final targetSet = allIds.difference({id, ...exclude});

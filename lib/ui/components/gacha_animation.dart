@@ -424,8 +424,9 @@ class _GachaAnimationDialogState extends State<GachaAnimationDialog>
                                 ),
                               );
                             } finally {
-                              if (mounted)
+                              if (mounted) {
                                 setState(() => _adInProgress = false);
+                              }
                             }
                           };
                         })(),

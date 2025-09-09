@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flame/camera.dart';
-import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
 import 'package:just_audio/just_audio.dart';
@@ -83,7 +82,7 @@ class KtvGame extends FlameGame with TapCallbacks {
           final note = BeatmapNote.fromJson(noteData);
           _beatmap.add(note);
         } catch (e) {
-          print('Failed to parse beatmap note: $e');
+          throw Exception('Failed to parse beatmap note: $e');
         }
       }
       _beatmap.sort((a, b) => a.time.compareTo(b.time));
@@ -246,16 +245,10 @@ class KtvGame extends FlameGame with TapCallbacks {
   }
 
   void _onJudgement(JudgementResult result) {
-    print(
-      '[${result.note.position}] Δ=${result.deltaMs}ms ${result.judgement.toString().split('.').last.toUpperCase()}',
-    );
-
-    // 更新分數與連擊統計（UI 可從 scoring 讀取）
     scoring.onJudge(result.judgement);
 
     final noteComponent = _activeNotesById[result.note.id];
     if (noteComponent != null) {
-      // TODO: 根據判定結果播放動畫或效果
       _onNoteDespawn(noteComponent);
     }
   }

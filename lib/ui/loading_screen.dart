@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/collect_sync_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
@@ -63,7 +62,7 @@ class _LoadingScreenState extends State<LoadingScreen>
         onPersist: (updated) async {
           await _gs.updateGameState(updated);
         },
-        onOfflineReward: (_, __, {required bool canDouble}) {
+        onOfflineReward: (_, _, {required bool canDouble}) {
           // 彈窗交由 Main 畫面處理；此處只是提前計算入帳，避免主畫面前又等待
         },
       );
@@ -125,7 +124,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                   fit: BoxFit.contain,
                   alignment: Alignment.center,
                   filterQuality: FilterQuality.high,
-                  errorBuilder: (_, __, ___) => Container(),
+                  errorBuilder: (_, _, _) => Container(),
                 ),
               ),
             ),

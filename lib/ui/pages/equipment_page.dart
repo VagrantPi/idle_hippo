@@ -530,8 +530,9 @@ class _EquipmentPageState extends State<EquipmentPage>
                             );
                           }
                           final unlock = e['unlock'] as Map<String, dynamic>?;
-                          if (unlock == null)
+                          if (unlock == null) {
                             return localization.getUI('locked');
+                          }
                           final reqId = unlock['id'] as String? ?? '';
                           final reqLevel =
                               (unlock['level'] as num?)?.toInt() ?? 0;

@@ -1516,8 +1516,9 @@ class GameState {
       final y = b.results[i];
       if (x.petKey != y.petKey ||
           x.rarity != y.rarity ||
-          x.timestamp != y.timestamp)
+          x.timestamp != y.timestamp) {
         return false;
+      }
     }
     return true;
   }

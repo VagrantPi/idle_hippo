@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 // removed rootBundle: song list now loads via SongCatalogService
 import 'package:flame/game.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:idle_hippo/services/audio_download_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/models/ktv_models.dart';
@@ -442,7 +441,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
           actions: [
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
                   (states) => Theme.of(context).colorScheme.secondary,
                 ),
               ),
@@ -730,7 +729,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                     ),
                     child: Text(
                       _judgeText!,
-                      style: _neonStyle(_judgeColor ?? Colors.white, fontSize: 24, bold: true),
+                      style: _neonStyle(_judgeColor, fontSize: 24, bold: true),
                     ),
                   ),
                 ),

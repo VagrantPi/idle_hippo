@@ -62,7 +62,7 @@ class AudioDownloadService {
     if (!await audioDir.exists()) {
       await audioDir.create(recursive: true);
     }
-    return p.join(audioDir.path, '.${songId}.ok');
+    return p.join(audioDir.path, '.$songId.ok');
   }
 
   Future<bool> isCached(String songId) async {
@@ -103,8 +103,7 @@ class AudioDownloadService {
         }
       }
     } catch (e) {
-      // 忽略錯誤，繼續執行
-      print('Error clearing audio cache: $e');
+      rethrow;
     }
   }
 

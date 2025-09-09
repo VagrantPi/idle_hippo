@@ -128,12 +128,10 @@ class CheckinService {
     final weekStart = _getWeekStart(localToday, weekStartDow);
 
     // 檢查是否跨週
-    bool isNewWeek = false;
     CheckinWeek newWeek;
     if (existingCheckin == null ||
         existingCheckin.week.weekStart != weekStart) {
       // 跨週：重置週狀態
-      isNewWeek = true;
       newWeek = CheckinWeek(
         weekStart: weekStart,
         mask: 0,
