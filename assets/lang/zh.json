@@ -339,6 +339,9 @@
     "daily_locked": "今日已完成，請明日再來！"
   },
   "tutorial": {
+    "pet_intro": "寵物可以靠抽卡獲取，寵物是你最強力的夥伴",
+    "pet_ticket_info": "現在開始可以通過每日任務獲得抽獎券",
+    "pet_ticket_reward": "獲得 10 張寵物抽獎券！",
     "tap_hippo": "點擊角色可以獲得迷因點數，我們先累積 10 個迷因點數！",
     "open_mainline": "點擊主線任務首頁",
     "mainline_story": "隨著主線任務發展，河馬寶寶可以成為迷因王",

@@ -347,6 +347,9 @@
   }
   ,
   "tutorial": {
+    "pet_intro": "Pets can be obtained through gacha; they are your strongest allies",
+    "pet_ticket_info": "You can now earn gacha tickets from daily quests",
+    "pet_ticket_reward": "You received 10 Pet Gacha Tickets!",
     "tap_hippo": "Tap the Hippo to earn Meme Points. Let's reach 10 points!",
     "open_mainline": "Open the Mainline Quest",
     "mainline_story": "Follow the Mainline to help Hippo become the Meme King",

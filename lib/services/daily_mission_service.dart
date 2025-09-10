@@ -32,12 +32,16 @@ class DailyMissionService {
       _tapTargetOverride = tapTargetOverride;
 
   double _tapTarget() {
-    if (_tapTargetOverride != null) return _tapTargetOverride.toDouble();
+    if (_tapTargetOverride != null) {
+      return _tapTargetOverride.toDouble();
+    }
     final v = ConfigService().getValue(
       'game.daily_mission.tap_target',
       defaultValue: 50,
     );
-    if (v is num) return v.toDouble();
+    if (v is num) {
+      return v.toDouble();
+    }
     return 50.0;
   }
 
@@ -185,7 +189,9 @@ class DailyMissionService {
 
   /// 處理資源獲得事件（B類任務進度）
   GameState onEarnPoints(GameState state, double delta) {
-    if (delta <= 0) return state;
+    if (delta <= 0) {
+      return state;
+    }
 
     final s0 = ensureDailyMissionBlock(state);
     final mission = s0.dailyMission!;
@@ -263,7 +269,9 @@ class DailyMissionService {
 
   /// 取得指定序號的獎勵點數
   double getRewardForIndex(int index) {
-    if (index < 1 || index > _rewardSequence.length) return 0.0;
+    if (index < 1 || index > _rewardSequence.length) {
+      return 0.0;
+    }
     return _rewardSequence[index - 1].toDouble();
   }
 

@@ -9,6 +9,7 @@ import '../services/tap_service.dart';
 import '../services/daily_mission_service.dart';
 import '../services/checkin_service.dart';
 import '../services/tutorial_service.dart';
+import '../services/pet_tutorial_service.dart';
 
 class DebugPanel extends StatefulWidget {
   final GameState? gameState;
@@ -445,6 +446,10 @@ class _DebugPanelState extends State<DebugPanel> {
               final t = TutorialService();
               await t.initialize();
               await t.reset();
+              // 清理寵物系統引導狀態
+              final pt = PetTutorialService();
+              await pt.initialize();
+              await pt.reset();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
