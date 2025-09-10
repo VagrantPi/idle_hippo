@@ -104,9 +104,7 @@ class KtvGameLogic {
     if (_judgedNoteIds.contains(note.id)) return;
 
     _judgedNoteIds.add(note.id);
-    _emit(
-      JudgementResult(note: note, judgement: judgement, deltaMs: deltaMs),
-    );
+    _emit(JudgementResult(note: note, judgement: judgement, deltaMs: deltaMs));
 
     // 從佇列中移除，確保它不會被再次判定
     final queue = _laneQueues[note.position - 1];

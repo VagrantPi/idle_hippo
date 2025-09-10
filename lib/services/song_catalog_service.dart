@@ -55,14 +55,16 @@ class SongCatalogService {
             }
           }
         }
-        mapped.add(KtvSong(
-          id: s.id,
-          title: s.title,
-          image: imgPath,
-          music: s.music,
-          lengthSeconds: s.lengthSeconds,
-          difficulties: s.difficulties,
-        ));
+        mapped.add(
+          KtvSong(
+            id: s.id,
+            title: s.title,
+            image: imgPath,
+            music: s.music,
+            lengthSeconds: s.lengthSeconds,
+            difficulties: s.difficulties,
+          ),
+        );
       }
       return mapped;
     } catch (_) {

@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:ui' show Rect;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/checkin_service.dart';
 import 'package:idle_hippo/ui/components/daily_cap_progress_bar.dart';
@@ -8,6 +10,9 @@ import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 import 'package:idle_hippo/ui/components/animated_button.dart';
+import 'package:idle_hippo/ui/components/tutorial_overlay.dart';
+import 'package:idle_hippo/services/tutorial_service.dart';
+import 'package:idle_hippo/services/tutorial_focus_service.dart';
 import 'package:idle_hippo/ui/components/plus_meme_particle.dart';
 import 'package:idle_hippo/ui/pages/equipment_page.dart';
 import 'package:idle_hippo/ui/pages/pets_page.dart';
@@ -23,6 +28,7 @@ import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/config_service.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
 
 class MainScreen extends StatefulWidget {
   final double memePoints;
@@ -98,8 +104,13 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final PageManager _pageManager = PageManager();
   final GachaService _gachaService = GachaService();
   final CheckinService _checkinService = CheckinService();
+  // 測量資源顯示（迷因點數）面板的位置
+  final GlobalKey _resourceDisplayKey = GlobalKey(
+    debugLabel: 'resource_display',
+  );
 
   late AnimationController _characterController;
+  final tutorial = TutorialService();
   late final IdleIncomeService _idleIncome;
   late Animation<double> _characterScaleAnimation;
   late AnimationController _swingController;
@@ -168,6 +179,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _idleIncome = IdleIncomeService();
     // 確保抽獎券初始值會透過 stream 發送
     _gachaService.initialize();
+    // Tutorial: lazy initialize
+    tutorial.initialize();
+    tutorial.state.addListener(_syncTutorialPage);
+    // 初次同步於第一幀後進行，避免 build 階段導頁閃爍
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncTutorialPage());
 
     _characterController = AnimationController(
       duration: const Duration(milliseconds: 100),
@@ -249,7 +265,59 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _characterController.dispose();
     _badgePulseController.dispose();
     _pageManager.removeListener(_onPageChanged);
+    tutorial.state.removeListener(_syncTutorialPage);
     super.dispose();
+  }
+
+  void _syncTutorialPage() {
+    final step = tutorial.state.value.step;
+    if (tutorial.isCompleted || step <= 0) return;
+    final key = tutorial.currentTargetPageKey;
+    if (key == null || key.isEmpty) return;
+
+    PageType? mapKey(String k) {
+      switch (k) {
+        case 'home':
+          return PageType.home;
+        case 'equipment':
+          return PageType.equipment;
+        case 'pets':
+          return PageType.pets;
+        case 'shop':
+          return PageType.shop;
+        case 'titles':
+          return PageType.titles;
+        case 'quest':
+          return PageType.quest;
+        case 'settings':
+          return PageType.settings;
+        case 'musicGame':
+          return PageType.musicGame;
+        case 'noAds':
+          return PageType.noAds;
+        case 'checkin':
+          return PageType.checkin;
+        default:
+          return null;
+      }
+    }
+
+    final page = mapKey(key);
+    if (page == null) return;
+
+    // 依照步驟調整初始分頁
+    if (page == PageType.quest) {
+      // Step 4/5 應該在主線 tab
+      _questInitialTabIndex = 1;
+    } else if (page == PageType.equipment) {
+      // Step 6 切到放置/YouTube 分頁（index=1）
+      _equipmentInitialTabIndex = 1;
+    }
+
+    if (_pageManager.currentPage != page) {
+      _pageManager.navigateToPage(page);
+      setState(() {});
+    }
   }
 
   void _onPageChanged() {
@@ -257,6 +325,14 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   void _onCharacterTapped() {
+    // Tutorial gating: 只在對應步驟允許點擊角色
+    if (!tutorial.isCompleted) {
+      if (!tutorial.isAllowedTarget('hippo')) {
+        return;
+      }
+      // 記錄動作（進度前進）
+      unawaited(tutorial.recordAction('hippo'));
+    }
     // 播放角色壓感動畫
     _characterController.forward().then((_) {
       _characterController.reverse();
@@ -277,6 +353,20 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     // 僅在實際加分時生成粒子
     if (gained > 0) {
       _generateParticle(gained);
+    }
+
+    // 教學 Step2：到達 10 點才前進到下一步
+    if (!tutorial.isCompleted && tutorial.state.value.step == 2) {
+      try {
+        final svc = GameStateService();
+        final mp = svc.currentState.memePoints;
+        final approx = (widget.displayMemePoints ?? widget.memePoints) + gained;
+        final value = (mp > 0) ? mp : approx;
+        unawaited(tutorial.checkMemePoints(value));
+      } catch (_) {
+        final approx = (widget.displayMemePoints ?? widget.memePoints) + gained;
+        unawaited(tutorial.checkMemePoints(approx));
+      }
     }
   }
 
@@ -467,21 +557,50 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildDailyMissionBar() {
+    // 佈局後量測 DailyMissionBar 的螢幕位置，用於教學焦點
+    void captureRect(BuildContext ctx) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final box = ctx.findRenderObject() as RenderBox?;
+        if (box == null || !box.attached) return;
+        final topLeft = box.localToGlobal(Offset.zero);
+        final size = box.size;
+        final rect = Rect.fromLTWH(
+          topLeft.dx,
+          topLeft.dy,
+          size.width,
+          size.height,
+        );
+        TutorialFocusService().setRect('btn_daily_quests', rect);
+      });
+    }
+
     // 若今日已完成 10 個任務，顯示完成狀態（mission.done_today）
     if ((widget.missionsTodayCompleted ?? 0) >= 10) {
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            _questInitialTabIndex = 0; // 0 = 每日任務 tab
-            _pageManager.navigateToPage(PageType.quest);
-          });
+      return Builder(
+        builder: (ctx) {
+          captureRect(ctx);
+          return GestureDetector(
+            onTap: () {
+              // Tutorial gating for daily quests entry (step 9)
+              if (!tutorial.isCompleted) {
+                if (!tutorial.isAllowedTarget('btn_daily_quests')) {
+                  return;
+                }
+                unawaited(tutorial.recordAction('btn_daily_quests'));
+              }
+              setState(() {
+                _questInitialTabIndex = 0; // 0 = 每日任務 tab
+                _pageManager.navigateToPage(PageType.quest);
+              });
+            },
+            child: DailyMissionBar(
+              type: 'completed',
+              progress: 1,
+              target: 1,
+              completedCount: widget.missionsTodayCompleted ?? 10,
+            ),
+          );
         },
-        child: DailyMissionBar(
-          type: 'completed',
-          progress: 1,
-          target: 1,
-          completedCount: widget.missionsTodayCompleted ?? 10,
-        ),
       );
     }
 
@@ -493,20 +612,32 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     }
 
     // 在右上角 Column 中直接回傳普通 Widget，避免 Positioned 插入 Row/Column 造成 ParentDataWidget 錯誤
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _questInitialTabIndex = 0; // 0 = 每日任務 tab
-          _pageManager.navigateToPage(PageType.quest);
-        });
+    return Builder(
+      builder: (ctx) {
+        captureRect(ctx);
+        return GestureDetector(
+          onTap: () {
+            // Tutorial gating for daily quests entry (step 9)
+            if (!tutorial.isCompleted) {
+              if (!tutorial.isAllowedTarget('btn_daily_quests')) {
+                return;
+              }
+              unawaited(tutorial.recordAction('btn_daily_quests'));
+            }
+            setState(() {
+              _questInitialTabIndex = 0; // 0 = 每日任務 tab
+              _pageManager.navigateToPage(PageType.quest);
+            });
+          },
+          child: DailyMissionBar(
+            type: widget.missionType!,
+            progress: widget.missionProgress!,
+            target: widget.missionTarget!,
+            points: widget.missionPoints,
+            completedCount: widget.missionsTodayCompleted,
+          ),
+        );
       },
-      child: DailyMissionBar(
-        type: widget.missionType!,
-        progress: widget.missionProgress!,
-        target: widget.missionTarget!,
-        points: widget.missionPoints,
-        completedCount: widget.missionsTodayCompleted,
-      ),
     );
   }
 
@@ -515,96 +646,119 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       // 放在日常點數顯示之下，避免重疊
       top: MediaQuery.of(context).padding.top + 8 + 45,
       left: 8,
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 迷因點數區塊
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Builder(
+        builder: (ctx) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final box =
+                _resourceDisplayKey.currentContext?.findRenderObject()
+                    as RenderBox?;
+            if (box == null || !box.attached) return;
+            final topLeft = box.localToGlobal(Offset.zero);
+            final size = box.size;
+            final rect = Rect.fromLTWH(
+              topLeft.dx,
+              topLeft.dy,
+              size.width,
+              size.height,
+            );
+            TutorialFocusService().setRect('panel_meme_points', rect);
+          });
+          return Container(
+            key: _resourceDisplayKey,
+            constraints: const BoxConstraints(minWidth: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // 迷因點數區塊
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      _localization.getCommon('memePoints'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _localization.getCommon('memePoints'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${_formatPerSecond(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
+                          style: const TextStyle(
+                            color: Colors.yellow,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(width: 8),
                     Text(
-                      '${_formatPerSecond(_idleIncome.currentIdlePerSec)} ${_localization.getCommon('perSecond')}',
+                      _formatNumber(
+                        widget.displayMemePoints ?? widget.memePoints,
+                      ),
+                      textAlign: TextAlign.right,
+                      softWrap: false,
                       style: const TextStyle(
                         color: Colors.yellow,
-                        fontSize: 12,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatNumber(widget.displayMemePoints ?? widget.memePoints),
-                  textAlign: TextAlign.right,
-                  softWrap: false,
-                  style: const TextStyle(
-                    color: Colors.yellow,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+
+                const SizedBox(height: 8),
+
+                // 抽獎券數量顯示（僅圖示 + 數值，避免新增多語系字串）
+                if ((widget.gameState.mainQuest?.currentStage ?? 0) > 3)
+                  StreamBuilder<int>(
+                    stream: _gachaService.petTicketsStream,
+                    initialData: widget.gameState.petTickets,
+                    builder: (context, snapshot) {
+                      final tickets =
+                          snapshot.data ?? widget.gameState.petTickets;
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'assets/images/icon/Lottery.png',
+                            width: 20,
+                            height: 20,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.confirmation_num,
+                                color: Colors.cyanAccent,
+                                size: 20,
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
+                            style: const TextStyle(
+                              color: Colors.cyanAccent,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ),
               ],
             ),
-
-            const SizedBox(height: 8),
-
-            // 抽獎券數量顯示（僅圖示 + 數值，避免新增多語系字串）
-            if ((widget.gameState.mainQuest?.currentStage ?? 0) > 3)
-              StreamBuilder<int>(
-                stream: _gachaService.petTicketsStream,
-                initialData: widget.gameState.petTickets,
-                builder: (context, snapshot) {
-                  final tickets = snapshot.data ?? widget.gameState.petTickets;
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/icon/Lottery.png',
-                        width: 20,
-                        height: 20,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.confirmation_num,
-                            color: Colors.cyanAccent,
-                            size: 20,
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
-                        style: const TextStyle(
-                          color: Colors.cyanAccent,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -640,8 +794,15 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     Positioned.fill(
                       child: AnimatedButton(
                         iconPath: 'assets/images/icon/Setting.png',
-                        onTap: () =>
-                            _pageManager.navigateToPage(PageType.settings),
+                        onTap: () {
+                          // Tutorial gating for settings entry (step 10)
+                          if (!tutorial.isCompleted &&
+                              !tutorial.isAllowedTarget('btn_settings')) {
+                            return;
+                          }
+                          unawaited(tutorial.recordAction('btn_settings'));
+                          _pageManager.navigateToPage(PageType.settings);
+                        },
                         size: 50,
                       ),
                     ),
@@ -681,6 +842,22 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildMainQuestBar() {
+    void captureRect(BuildContext ctx) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final box = ctx.findRenderObject() as RenderBox?;
+        if (box == null || !box.attached) return;
+        final topLeft = box.localToGlobal(Offset.zero);
+        final size = box.size;
+        final rect = Rect.fromLTWH(
+          topLeft.dx,
+          topLeft.dy,
+          size.width,
+          size.height,
+        );
+        TutorialFocusService().setRect('btn_mainline', rect);
+      });
+    }
+
     final stats = MainQuestService().getStats(widget.gameState);
     // 轉換文字進度/目標為整數顯示
     int toInt(dynamic v) {
@@ -699,14 +876,29 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     // 若無效，則不顯示
     if (target <= 0) return const SizedBox.shrink();
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _questInitialTabIndex = 1; // 1 = 主線任務 tab
-          _pageManager.navigateToPage(PageType.quest);
-        });
+    return Builder(
+      builder: (ctx) {
+        captureRect(ctx);
+        return GestureDetector(
+          onTap: () {
+            // Tutorial gating for mainline entry (step 3)
+            if (!tutorial.isCompleted) {
+              if (!tutorial.isAllowedTarget('btn_mainline')) {
+                return;
+              }
+              unawaited(tutorial.recordAction('btn_mainline'));
+            }
+            setState(() {
+              _questInitialTabIndex = 1; // 1 = 主線任務 tab
+              _pageManager.navigateToPage(PageType.quest);
+            });
+          },
+          child: MainQuestBar(
+            progress: progress.clamp(0, target),
+            target: target,
+          ),
+        );
       },
-      child: MainQuestBar(progress: progress.clamp(0, target), target: target),
     );
   }
 
@@ -769,7 +961,19 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 Positioned.fill(
                   child: AnimatedButton(
                     iconPath: 'assets/images/icon/Quest.png',
-                    onTap: () => _pageManager.navigateToPage(PageType.quest),
+                    onTap: () {
+                      // Tutorial gating for quest buttons
+                      final target = tutorial.currentFocusTargetId;
+                      if (!tutorial.isCompleted) {
+                        // Only allow when focus is mainline (step 3) or daily quests (step 9)
+                        if (target != 'btn_mainline' &&
+                            target != 'btn_daily_quests') {
+                          return;
+                        }
+                        unawaited(tutorial.recordAction(target!));
+                      }
+                      _pageManager.navigateToPage(PageType.quest);
+                    },
                     size: 80,
                   ),
                 ),
@@ -802,7 +1006,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 Positioned.fill(
                   child: AnimatedButton(
                     iconPath: 'assets/images/icon/MusicGame.png',
-                    onTap: () => _pageManager.navigateToPage(PageType.musicGame),
+                    onTap: () =>
+                        _pageManager.navigateToPage(PageType.musicGame),
                     size: 70,
                   ),
                 ),
@@ -943,6 +1148,12 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               title: getButtonTitle(),
               onTap: () {
                 if (isHome) {
+                  // Tutorial gating for nav_home (steps 7 & 12)
+                  if (!tutorial.isCompleted &&
+                      !tutorial.isAllowedTarget('nav_home')) {
+                    return;
+                  }
+                  unawaited(tutorial.recordAction('nav_home'));
                   _pageManager.navigateToHome();
                 } else if (pageType != null) {
                   _pageManager.navigateToPage(pageType);
@@ -1277,7 +1488,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           // 底部導航欄
           _buildBottomNavigation(),
 
-          // 左側 y 軸中心 Debug 切換按鈕
+          // Tutorial Overlay (遮罩 + 說明)
+          const TutorialOverlay(),
+
+          // 左側 y 軸中心 Debug 切換按鈕（放在最上層，覆蓋教學遮罩）
           _buildDebugToggle(),
         ],
       ),

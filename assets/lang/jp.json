@@ -342,4 +342,21 @@
     "all_downloaded": "すべてダウンロード済み",
     "daily_locked": "本日は完了しました。明日また来てください！"
   }
+  ,
+  "tutorial": {
+    "tap_hippo": "カバをタップしてミームポイントを獲得。まずは10ポイント貯めましょう！",
+    "open_mainline": "メインクエストを開く",
+    "mainline_story": "主線に沿ってカバをミーム王にしよう",
+    "claim_first_mainline": "ミーム王への第一歩を受け取ろう",
+    "upgrade_youtube": "YouTube 装備を1回強化",
+    "back_home": "ホームに戻る",
+    "explain_idle_vs_tap": "放置蓄積の上限は6時間",
+    "daily_quests": "デイリーミッションで追加報酬を獲得",
+    "daily_checkin_entry": "毎日ログインタスクもあります。設定ボタンをタップしてください",
+    "daily_checkin_detail": "7日連続で半日分の放置報酬",
+    "back_home_again": "ホームに戻る",
+    "epilogue": "ここからカバの伝説が始まる",
+    "manga": "タップして続行",
+    "next": "次"
+  }
 }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 // removed rootBundle: song list now loads via SongCatalogService
 import 'package:flame/game.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:idle_hippo/services/audio_download_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/models/ktv_models.dart';
@@ -271,7 +270,8 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     _hudTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       // 若尚未到達允許更新時間，略過這次
-      if (_hudNextAllowedUpdate != null && DateTime.now().isBefore(_hudNextAllowedUpdate!)) {
+      if (_hudNextAllowedUpdate != null &&
+          DateTime.now().isBefore(_hudNextAllowedUpdate!)) {
         return;
       }
       _recomputeHudTime();
@@ -280,7 +280,9 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
 
   void _recomputeHudTime() {
     final remaining = (_duration > Duration.zero)
-        ? ((_duration - _position).isNegative ? Duration.zero : _duration - _position)
+        ? ((_duration - _position).isNegative
+              ? Duration.zero
+              : _duration - _position)
         : Duration.zero;
     setState(() {
       _hudTimeText = _formatMmSs(remaining);
@@ -289,11 +291,14 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
 
   void _updateHudTimeFromPosition() {
     final remaining = (_duration > Duration.zero)
-        ? ((_duration - _position).isNegative ? Duration.zero : _duration - _position)
+        ? ((_duration - _position).isNegative
+              ? Duration.zero
+              : _duration - _position)
         : Duration.zero;
     final nextText = _formatMmSs(remaining);
     // 首次載入的第一秒內不更新 HUD，避免一開始就扣一秒
-    if (_hudNextAllowedUpdate != null && DateTime.now().isBefore(_hudNextAllowedUpdate!)) {
+    if (_hudNextAllowedUpdate != null &&
+        DateTime.now().isBefore(_hudNextAllowedUpdate!)) {
       return;
     }
     if (nextText != _hudTimeText && mounted) {
@@ -311,7 +316,10 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
       final loc = _loc;
       switch (result.judgement) {
         case Judgement.perfect:
-          _judgeText = loc.getString('ktv.judge.perfect', defaultValue: 'Perfect');
+          _judgeText = loc.getString(
+            'ktv.judge.perfect',
+            defaultValue: 'Perfect',
+          );
           _judgeColor = Colors.blueAccent;
           break;
         case Judgement.great:
@@ -417,10 +425,29 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildResultRow('ktv.result.perfect', 'PERFECT', scoring.perfectCount, color: Colors.blueAccent),
-              _buildResultRow('ktv.result.great', 'GREAT', scoring.greatCount, color: Colors.greenAccent),
-              _buildResultRow('ktv.result.miss', 'MISS', scoring.missCount, color: Colors.redAccent),
-              _buildResultRow('ktv.result.max_combo', 'Max Combo', scoring.maxCombo),
+              _buildResultRow(
+                'ktv.result.perfect',
+                'PERFECT',
+                scoring.perfectCount,
+                color: Colors.blueAccent,
+              ),
+              _buildResultRow(
+                'ktv.result.great',
+                'GREAT',
+                scoring.greatCount,
+                color: Colors.greenAccent,
+              ),
+              _buildResultRow(
+                'ktv.result.miss',
+                'MISS',
+                scoring.missCount,
+                color: Colors.redAccent,
+              ),
+              _buildResultRow(
+                'ktv.result.max_combo',
+                'Max Combo',
+                scoring.maxCombo,
+              ),
               _buildResultRow(
                 'ktv.result.combo_bonus',
                 'Combo Bonus',
@@ -442,7 +469,7 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
           actions: [
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
                   (states) => Theme.of(context).colorScheme.secondary,
                 ),
               ),
@@ -467,13 +494,27 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
       fontSize: fontSize,
       fontWeight: bold ? FontWeight.bold : FontWeight.normal,
       shadows: [
-        Shadow(color: color.withValues(alpha: 0.9), blurRadius: 8, offset: const Offset(0, 0)),
-        Shadow(color: color.withValues(alpha: 0.6), blurRadius: 16, offset: const Offset(0, 0)),
+        Shadow(
+          color: color.withValues(alpha: 0.9),
+          blurRadius: 8,
+          offset: const Offset(0, 0),
+        ),
+        Shadow(
+          color: color.withValues(alpha: 0.6),
+          blurRadius: 16,
+          offset: const Offset(0, 0),
+        ),
       ],
     );
   }
 
-  Widget _buildResultRow(String key, String fallback, Object value, {bool highlight = false, Color? color}) {
+  Widget _buildResultRow(
+    String key,
+    String fallback,
+    Object value, {
+    bool highlight = false,
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -481,13 +522,17 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
         children: [
           Text(
             _loc.getString(key, defaultValue: fallback),
-            style: color != null ? _neonStyle(color) : const TextStyle(color: Colors.white70, fontSize: 14),
+            style: color != null
+                ? _neonStyle(color)
+                : const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           Text(
             '$value',
             style: highlight
                 ? _neonStyle(Colors.amberAccent, fontSize: 16, bold: true)
-                : (color != null ? _neonStyle(color) : const TextStyle(color: Colors.white, fontSize: 14)),
+                : (color != null
+                      ? _neonStyle(color)
+                      : const TextStyle(color: Colors.white, fontSize: 14)),
           ),
         ],
       ),
@@ -692,15 +737,23 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _hudChip(
-                      label: _loc.getString('ktv.hud.score', defaultValue: 'Score'),
-                      value: _roundDown2(_game?.scoring.baseScoreSum ?? 0.0).toStringAsFixed(2),
+                      label: _loc.getString(
+                        'ktv.hud.score',
+                        defaultValue: 'Score',
+                      ),
+                      value: _roundDown2(
+                        _game?.scoring.baseScoreSum ?? 0.0,
+                      ).toStringAsFixed(2),
                     ),
                   ],
                 ),
 
                 // 右：剩餘時間
                 _hudChip(
-                  label: _loc.getString('ktv.hud.time', defaultValue: 'Time Left'),
+                  label: _loc.getString(
+                    'ktv.hud.time',
+                    defaultValue: 'Time Left',
+                  ),
                   value: _hudTimeText,
                 ),
               ],
@@ -723,14 +776,17 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       _judgeText!,
-                      style: _neonStyle(_judgeColor ?? Colors.white, fontSize: 24, bold: true),
+                      style: _neonStyle(_judgeColor, fontSize: 24, bold: true),
                     ),
                   ),
                 ),
@@ -756,14 +812,21 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${_game?.scoring.combo ?? 0} COMBO',
-                          style: _neonStyle(Colors.greenAccent, fontSize: 28, bold: true),
+                          style: _neonStyle(
+                            Colors.greenAccent,
+                            fontSize: 28,
+                            bold: true,
+                          ),
                         ),
                       ),
                     ],
@@ -776,7 +839,11 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
     );
   }
 
-  Widget _hudChip({required String label, required String value, Widget? trailing}) {
+  Widget _hudChip({
+    required String label,
+    required String value,
+    Widget? trailing,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -786,12 +853,19 @@ class _KtvGamePlayPageState extends State<KtvGamePlayPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$label: ', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-          if (trailing != null) ...[
-            const SizedBox(width: 8),
-            trailing,
-          ],
+          Text(
+            '$label: ',
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (trailing != null) ...[const SizedBox(width: 8), trailing],
         ],
       ),
     );

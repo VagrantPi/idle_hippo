@@ -345,4 +345,21 @@
     "all_downloaded": "All downloaded",
     "daily_locked": "Already completed today. Come back tomorrow!"
   }
+  ,
+  "tutorial": {
+    "tap_hippo": "Tap the Hippo to earn Meme Points. Let's reach 10 points!",
+    "open_mainline": "Open the Mainline Quest",
+    "mainline_story": "Follow the Mainline to help Hippo become the Meme King",
+    "claim_first_mainline": "Claim the first step towards becoming Meme King",
+    "upgrade_youtube": "Upgrade the YouTube equipment once",
+    "back_home": "Return to Home",
+    "explain_idle_vs_tap": "Idle accumulation has a 6-hour offline cap",
+    "daily_quests": "Complete Daily Quests for extra rewards",
+    "daily_checkin_entry": "You also have a Daily Check-in task, please tap the Settings button",
+    "daily_checkin_detail": "Check in 7 days to earn half a day's idle rewards",
+    "back_home_again": "Back to Home",
+    "epilogue": "This is the beginning of Hippo's legend",
+    "manga": "Tap to continue",
+    "next": "Next"
+  }
 }

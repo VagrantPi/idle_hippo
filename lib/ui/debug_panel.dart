@@ -8,6 +8,7 @@ import '../models/game_state.dart';
 import '../services/tap_service.dart';
 import '../services/daily_mission_service.dart';
 import '../services/checkin_service.dart';
+import '../services/tutorial_service.dart';
 
 class DebugPanel extends StatefulWidget {
   final GameState? gameState;
@@ -190,6 +191,16 @@ class _DebugPanelState extends State<DebugPanel> {
                   // _buildPetActions(),
                   // const SizedBox(height: 8),
                 ],
+
+                // Tutorial Section (current step)
+                _buildSectionTitle('Tutorial'),
+                ValueListenableBuilder(
+                  valueListenable: TutorialService().state,
+                  builder: (context, st, _) {
+                    return _buildConfigRow('tutorial.step', st.step);
+                  },
+                ),
+                const SizedBox(height: 8),
 
                 // Actions
                 _buildActions(),
@@ -430,6 +441,10 @@ class _DebugPanelState extends State<DebugPanel> {
           onTap: () async {
             if (widget.onResetAll != null) {
               await widget.onResetAll!();
+              // 也清理新手教學狀態（SharedPreferences）
+              final t = TutorialService();
+              await t.initialize();
+              await t.reset();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -450,6 +465,74 @@ class _DebugPanelState extends State<DebugPanel> {
             child: const Text(
               'Reset All State',
               style: TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        // Skip Tutorial Button
+        GestureDetector(
+          onTap: () async {
+            final t = TutorialService();
+            await t.initialize();
+            await t.complete();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Tutorial skipped (completed=true)'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+            setState(() {});
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Skip Tutorial',
+              style: TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 4),
+
+        // Tutorial: Prev Step Button
+        GestureDetector(
+          onTap: () async {
+            final t = TutorialService();
+            await t.initialize();
+            final cur = t.state.value.step;
+            final prev = (cur - 1).clamp(0, 14);
+            await t.setStep(prev);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Tutorial step -> $prev'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+            setState(() {});
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.yellow.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'Tutorial Prev Step',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),

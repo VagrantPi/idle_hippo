@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/collect_sync_service.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
@@ -52,8 +51,9 @@ class _LoadingScreenState extends State<LoadingScreen>
       await _gs.initialize();
     } catch (_) {}
     await _karaoke.ensureKaraokeBlock();
-    final firstOpen =
-        (_gs.currentState.karaoke?.collectVersion ?? 0) == 0 ? true : false;
+    final firstOpen = (_gs.currentState.karaoke?.collectVersion ?? 0) == 0
+        ? true
+        : false;
 
     // 2) 啟動離線獎勵檢查（在 Loading 期間）
     try {
@@ -63,7 +63,7 @@ class _LoadingScreenState extends State<LoadingScreen>
         onPersist: (updated) async {
           await _gs.updateGameState(updated);
         },
-        onOfflineReward: (_, __, {required bool canDouble}) {
+        onOfflineReward: (_, _, {required bool canDouble}) {
           // 彈窗交由 Main 畫面處理；此處只是提前計算入帳，避免主畫面前又等待
         },
       );
@@ -80,23 +80,28 @@ class _LoadingScreenState extends State<LoadingScreen>
       if (firstOpen) {
         setState(() => _status = 'Checking updates…');
         try {
-          await CollectSyncService(remoteUrl: url!, versionUrl: verUrl)
-              .checkAndUpdate();
+          await CollectSyncService(
+            remoteUrl: url!,
+            versionUrl: verUrl,
+          ).checkAndUpdate();
         } catch (_) {}
       } else {
         // 非首次：背景更新（非阻塞）
         // 提醒狀態，但不等待
         setState(() => _status = 'Updating songs…');
-        unawaited(CollectSyncService(remoteUrl: url!, versionUrl: verUrl)
-            .checkAndUpdate());
+        unawaited(
+          CollectSyncService(
+            remoteUrl: url!,
+            versionUrl: verUrl,
+          ).checkAndUpdate(),
+        );
       }
     }
 
     // 4) 最小顯示 1 秒
     final elapsed = DateTime.now().difference(started);
     if (elapsed < const Duration(seconds: 1)) {
-      await Future.delayed(const Duration(seconds: 1))
-          .catchError((_) => null);
+      await Future.delayed(const Duration(seconds: 1)).catchError((_) => null);
     }
 
     if (!mounted) return;
@@ -114,9 +119,7 @@ class _LoadingScreenState extends State<LoadingScreen>
           // 背景圖
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black,
-              ),
+              decoration: BoxDecoration(color: Colors.black),
               child: Center(
                 child: Image.asset(
                   'assets/images/background/Loading.png',
@@ -125,7 +128,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                   fit: BoxFit.contain,
                   alignment: Alignment.center,
                   filterQuality: FilterQuality.high,
-                  errorBuilder: (_, __, ___) => Container(),
+                  errorBuilder: (_, _, _) => Container(),
                 ),
               ),
             ),

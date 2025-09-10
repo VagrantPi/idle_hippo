@@ -140,9 +140,7 @@ class GachaService {
     _emitPetTickets();
     _emitGachaHistory();
     await _gameStateService.updateGameState(state);
-    await PetService().initialize(
-      state.petState,
-    ); // TODO: PetService 應拆出自己的狀態管理
+    await PetService().initialize(state.petState);
   }
 
   /// 執行單次抽卡

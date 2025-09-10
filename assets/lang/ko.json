@@ -342,4 +342,21 @@
     "all_downloaded": "모두 다운로드됨",
     "daily_locked": "오늘은 이미 완료했습니다. 내일 다시 오세요!"
   }
+  ,
+  "tutorial": {
+    "tap_hippo": "하마를 탭하여 밈 포인트를 모아봐요. 우선 10포인트를 달성해요!",
+    "open_mainline": "메인 퀘스트 열기",
+    "mainline_story": "주선을 따라 하마를 밈의 왕으로",
+    "claim_first_mainline": "밈의 왕으로 가는 첫걸음 수령",
+    "upgrade_youtube": "YouTube 장비를 한 번 업그레이드",
+    "back_home": "홈으로 돌아가기",
+    "explain_idle_vs_tap": "방치 누적 상한은 6시간",
+    "daily_quests": "일일 미션으로 추가 보상",
+    "daily_checkin_entry": "매일 출석 과제도 있어요. 설정 버튼을 눌러 주세요",
+    "daily_checkin_detail": "7일 연속 출석 시 반나절 보상",
+    "back_home_again": "홈으로 돌아가기",
+    "epilogue": "지금부터 하마의 전설이 시작된다",
+    "manga": "탭하여 계속",
+    "next": "다음"
+  }
 }

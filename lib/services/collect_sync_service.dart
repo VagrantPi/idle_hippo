@@ -19,17 +19,11 @@ class CollectHttpResponse {
   final int statusCode; // 200 | 304 | other
   final String? body;
   final String? etag;
-  const CollectHttpResponse({
-    required this.statusCode,
-    this.body,
-    this.etag,
-  });
+  const CollectHttpResponse({required this.statusCode, this.body, this.etag});
 }
 
-typedef HttpFetch = Future<CollectHttpResponse> Function(
-  String url, {
-  String? ifNoneMatch,
-});
+typedef HttpFetch =
+    Future<CollectHttpResponse> Function(String url, {String? ifNoneMatch});
 typedef ImageExists = Future<bool> Function(String id);
 typedef ImageDownload = Future<String> Function(String id, String url);
 
@@ -63,49 +57,50 @@ class CollectSyncService {
     SleepFn? sleep,
     ImageExists? imageExists,
     ImageDownload? imageDownload,
-  })  : _state = state ?? GameStateService(),
-        baseDirProvider = baseDirProvider ?? getApplicationDocumentsDirectory,
-        dio = Dio(),
-        httpFetch = httpFetch ??
-            ((url, {String? ifNoneMatch}) async {
-              final d = Dio();
-              try {
-                final resp = await d.get(
-                  url,
-                  options: Options(
-                    followRedirects: true,
-                    validateStatus: (s) => true,
-                    headers: {
-                      if (ifNoneMatch != null && ifNoneMatch.isNotEmpty)
-                        'If-None-Match': ifNoneMatch,
-                    },
-                  ),
-                );
-                final sc = resp.statusCode ?? 0;
-                final etag = resp.headers.value('etag');
-                if (sc == 200) {
-                  final data = resp.data;
-                  final body = data is String
-                      ? data
-                      : (data is List<int>
-                          ? utf8.decode(data)
-                          : jsonEncode(data));
-                  return CollectHttpResponse(
-                    statusCode: sc,
-                    body: body,
-                    etag: etag,
-                  );
-                }
-                return CollectHttpResponse(statusCode: sc, etag: etag);
-              } catch (_) {
-                // 視為錯誤，由外層重試
-                rethrow;
-              }
-            }),
-        now = now ?? DateTime.now,
-        sleep = sleep ?? ((d) => Future.delayed(d)),
-        imageExists = imageExists ?? ImageCacheService().isCached,
-        imageDownload = imageDownload ?? ImageCacheService().download;
+  }) : _state = state ?? GameStateService(),
+       baseDirProvider = baseDirProvider ?? getApplicationDocumentsDirectory,
+       dio = Dio(),
+       httpFetch =
+           httpFetch ??
+           ((url, {String? ifNoneMatch}) async {
+             final d = Dio();
+             try {
+               final resp = await d.get(
+                 url,
+                 options: Options(
+                   followRedirects: true,
+                   validateStatus: (s) => true,
+                   headers: {
+                     if (ifNoneMatch != null && ifNoneMatch.isNotEmpty)
+                       'If-None-Match': ifNoneMatch,
+                   },
+                 ),
+               );
+               final sc = resp.statusCode ?? 0;
+               final etag = resp.headers.value('etag');
+               if (sc == 200) {
+                 final data = resp.data;
+                 final body = data is String
+                     ? data
+                     : (data is List<int>
+                           ? utf8.decode(data)
+                           : jsonEncode(data));
+                 return CollectHttpResponse(
+                   statusCode: sc,
+                   body: body,
+                   etag: etag,
+                 );
+               }
+               return CollectHttpResponse(statusCode: sc, etag: etag);
+             } catch (_) {
+               // 視為錯誤，由外層重試
+               rethrow;
+             }
+           }),
+       now = now ?? DateTime.now,
+       sleep = sleep ?? ((d) => Future.delayed(d)),
+       imageExists = imageExists ?? ImageCacheService().isCached,
+       imageDownload = imageDownload ?? ImageCacheService().download;
 
   Future<String> _localPath() async {
     final dir = await baseDirProvider();
@@ -166,8 +161,11 @@ class CollectSyncService {
           final parsed = KtvCollectionParser.parse(resp.body!);
           if (parsed.isEmpty) {
             // 不覆寫舊檔
-            return CollectUpdateResult('failed', attempts,
-                message: 'invalid_json');
+            return CollectUpdateResult(
+              'failed',
+              attempts,
+              message: 'invalid_json',
+            );
           }
           // 嘗試讀取 version 欄位
           int? newVersion;
@@ -193,7 +191,8 @@ class CollectSyncService {
           await tmp.rename(path);
 
           // 更新狀態（version.json > JSON 內 version > +1）
-          final resolvedVersion = targetVersion ?? newVersion ?? (k0.collectVersion + 1);
+          final resolvedVersion =
+              targetVersion ?? newVersion ?? (k0.collectVersion + 1);
           final k1 = k0.copyWith(
             collectVersion: resolvedVersion,
             collectEtag: resp.etag ?? k0.collectEtag,

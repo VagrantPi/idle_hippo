@@ -39,4 +39,3 @@ class JudgeBandComponent extends PositionComponent {
     canvas.drawRect(rect, border);
   }
 }
-

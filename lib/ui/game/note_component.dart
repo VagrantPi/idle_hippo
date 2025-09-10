@@ -1,6 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
-import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import '../components/ktv_lane_layout.dart';

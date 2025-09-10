@@ -88,9 +88,11 @@ class _MusicGamePageState extends State<MusicGamePage> {
       width: double.infinity,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: Builder(builder: (context) {
-          return imageWidget;
-        }),
+        child: Builder(
+          builder: (context) {
+            return imageWidget;
+          },
+        ),
       ),
     );
   }
@@ -346,7 +348,9 @@ class _MusicGamePageState extends State<MusicGamePage> {
         ),
       );
       if (song.id.isEmpty || song.music.isEmpty) continue;
-      entries.add(KtvBatchSong(id: song.id, url: song.music, title: song.title));
+      entries.add(
+        KtvBatchSong(id: song.id, url: song.music, title: song.title),
+      );
     }
     if (entries.isEmpty) return;
     if (mounted) setState(() => _batchSongs = entries);
@@ -658,9 +662,11 @@ class _MusicGamePageState extends State<MusicGamePage> {
                     return;
                   }
 
+                  // 捕捉當前 BuildContext，避免跨 async 間隙直接使用 State.context
+                  final ctx = context;
                   final path = await _downloader.cachedFilePath(song.id);
 
-                  if (!mounted) return;
+                  if (!ctx.mounted) return;
                   // 先關閉 overlay 狀態
                   setState(() {
                     _downloadingSong = null;
@@ -668,7 +674,7 @@ class _MusicGamePageState extends State<MusicGamePage> {
                   });
 
                   // 導向遊戲播放頁面
-                  await Navigator.of(context).push(
+                  await Navigator.of(ctx).push(
                     MaterialPageRoute(
                       builder: (context) => KtvGamePlayPage(
                         songId: song.id,
@@ -731,7 +737,10 @@ class _MusicGamePageState extends State<MusicGamePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -739,8 +748,14 @@ class _MusicGamePageState extends State<MusicGamePage> {
                     onPressed: _allDownloaded ? null : _onTapDownloadAll,
                     child: Text(
                       _allDownloaded
-                          ? _loc.getString('ktv.all_downloaded', defaultValue: 'All downloaded')
-                          : _loc.getString('ktv.download_all', defaultValue: 'Download All'),
+                          ? _loc.getString(
+                              'ktv.all_downloaded',
+                              defaultValue: 'All downloaded',
+                            )
+                          : _loc.getString(
+                              'ktv.download_all',
+                              defaultValue: 'Download All',
+                            ),
                     ),
                   ),
                 ),

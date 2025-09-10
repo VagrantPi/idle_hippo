@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
+import 'package:idle_hippo/services/tutorial_focus_service.dart';
 
 class SettingsPage extends StatefulWidget {
   final VoidCallback onLanguageChanged;
@@ -164,54 +165,78 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // 導向「每日打卡」頁面
-                      GestureDetector(
-                        onTap: () {
-                          final pm = PageManager();
-                          pm.navigateToPage(PageType.checkin, isModal: true);
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.blueAccent,
-                              width: 2,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
+                      // 導向「每日打卡」頁面（供教學聚焦量測）
+                      Builder(
+                        builder: (ctx) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            final box = ctx.findRenderObject() as RenderBox?;
+                            if (box == null || !box.attached) return;
+                            final topLeft = box.localToGlobal(Offset.zero);
+                            final size = box.size;
+                            final rect = Rect.fromLTWH(
+                              topLeft.dx,
+                              topLeft.dy,
+                              size.width,
+                              size.height,
+                            );
+                            TutorialFocusService().setRect(
+                              'item_daily_checkin',
+                              rect,
+                            );
+                          });
+                          return GestureDetector(
+                            onTap: () {
+                              final pm = PageManager();
+                              pm.navigateToPage(
+                                PageType.checkin,
+                                isModal: true,
+                              );
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.blueAccent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Icon(
-                                    Icons.calendar_month,
-                                    color: Colors.white,
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_month,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _localization.getPageName('checkin'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _localization.getPageName('checkin'),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  const Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.white70,
+                                    size: 18,
                                   ),
                                 ],
                               ),
-                              const Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.white70,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

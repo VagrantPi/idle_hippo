@@ -10,7 +10,11 @@ class KtvBatchSong {
   final String url;
   final String title;
 
-  const KtvBatchSong({required this.id, required this.url, required this.title});
+  const KtvBatchSong({
+    required this.id,
+    required this.url,
+    required this.title,
+  });
 }
 
 class KtvBatchDownloadDialog extends StatefulWidget {
@@ -73,25 +77,31 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
     _sub?.cancel();
     _sub = _downloader
         .download(s.id, s.url, cancelToken: _cancelToken)
-        .listen((p) {
-      setState(() => _percent = p.percent);
-    }, onError: (e) {
-      setState(() => _error = e);
-    }, onDone: () {
-      if (_cancelled) return; // 若已取消則忽略
-      setState(() {
-        _currentIndex++;
-        _percent = null;
-      });
-      _startCurrent();
-    });
+        .listen(
+          (p) {
+            setState(() => _percent = p.percent);
+          },
+          onError: (e) {
+            setState(() => _error = e);
+          },
+          onDone: () {
+            if (_cancelled) return; // 若已取消則忽略
+            setState(() {
+              _currentIndex++;
+              _percent = null;
+            });
+            _startCurrent();
+          },
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final total = widget.songs.length;
     final idx = (_currentIndex < total) ? _currentIndex + 1 : total;
-    final title = (_currentIndex < total) ? widget.songs[_currentIndex].title : '';
+    final title = (_currentIndex < total)
+        ? widget.songs[_currentIndex].title
+        : '';
 
     return Container(
       color: Colors.black.withValues(alpha: 0.65),
@@ -109,8 +119,15 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    _loc.getString('ktv.downloading', defaultValue: 'Downloading...'),
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    _loc.getString(
+                      'ktv.downloading',
+                      defaultValue: 'Downloading...',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -122,13 +139,17 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
                   const SizedBox(height: 12),
                   if (_error == null) ...[
                     LinearProgressIndicator(
-                      value: (_percent != null) ? (_percent!.clamp(0, 100) / 100.0) : null,
+                      value: (_percent != null)
+                          ? (_percent!.clamp(0, 100) / 100.0)
+                          : null,
                       backgroundColor: Colors.white12,
                       color: Colors.lightBlueAccent,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _percent != null ? '${_percent!.toStringAsFixed(0)}%' : '—',
+                      _percent != null
+                          ? '${_percent!.toStringAsFixed(0)}%'
+                          : '—',
                       style: const TextStyle(color: Colors.white70),
                       textAlign: TextAlign.right,
                     ),
@@ -142,17 +163,33 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
                             _cancelToken?.cancel('user_cancel');
                             widget.onClose();
                           },
-                          child: Text(_loc.getString('ktv.cancel', defaultValue: 'Cancel')),
+                          child: Text(
+                            _loc.getString(
+                              'ktv.cancel',
+                              defaultValue: 'Cancel',
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ] else ...[
-                    Icon(Icons.error_outline, color: Colors.red.withValues(alpha: 0.9)),
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.withValues(alpha: 0.9),
+                    ),
                     const SizedBox(height: 8),
-                    Text(_loc.getString('ktv.error', defaultValue: 'Error'),
-                        style: const TextStyle(color: Colors.redAccent)),
+                    Text(
+                      _loc.getString('ktv.error', defaultValue: 'Error'),
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
                     const SizedBox(height: 4),
-                    Text('$_error', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(
+                      '$_error',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -162,7 +199,9 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
                             _cancelled = true;
                             widget.onClose();
                           },
-                          child: Text(_loc.getString('ktv.back', defaultValue: 'Back')),
+                          child: Text(
+                            _loc.getString('ktv.back', defaultValue: 'Back'),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
@@ -171,7 +210,9 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
                             _cancelled = false;
                             _startCurrent();
                           },
-                          child: Text(_loc.getString('ktv.retry', defaultValue: 'Retry')),
+                          child: Text(
+                            _loc.getString('ktv.retry', defaultValue: 'Retry'),
+                          ),
                         ),
                       ],
                     ),
@@ -185,4 +226,3 @@ class _KtvBatchDownloadDialogState extends State<KtvBatchDownloadDialog> {
     );
   }
 }
-

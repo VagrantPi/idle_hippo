@@ -5,7 +5,7 @@
   },
   "pages": {
     "home": "主頁",
-    "equipment": "裝備", 
+    "equipment": "裝備",
     "pets": "寵物",
     "shop": "商城",
     "titles": "稱號",
@@ -337,5 +337,21 @@
     "download_all": "全部下載",
     "all_downloaded": "已全部下載",
     "daily_locked": "今日已完成，請明日再來！"
+  },
+  "tutorial": {
+    "tap_hippo": "點擊角色可以獲得迷因點數，我們先累積 10 個迷因點數！",
+    "open_mainline": "點擊主線任務首頁",
+    "mainline_story": "隨著主線任務發展，河馬寶寶可以成為迷因王",
+    "claim_first_mainline": "開啟成為迷因王的第一步吧",
+    "upgrade_youtube": "升級 YouTube 裝備一次",
+    "back_home": "返回首頁",
+    "explain_idle_vs_tap": "被動累積離線獎勵上限為 6 小時",
+    "daily_quests": "除了主線任務以外還有每日任務可以解",
+    "daily_checkin_entry": "此外還有每日打卡任務，請點擊設定按鍵",
+    "daily_checkin_detail": "連續打卡七日可獲得半日放置收益",
+    "back_home_again": "返回首頁",
+    "epilogue": "接下來是河馬寶寶成為傳說的開始",
+    "manga": "點擊以繼續",
+    "next": "下一步"
   }
 }

@@ -166,12 +166,14 @@ class _KtvDownloadDialogState extends State<KtvDownloadDialog> {
                       style: const TextStyle(color: Colors.redAccent),
                     ),
                     const SizedBox(height: 4),
-                    Text(_error ?? '',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center),
+                    Text(
+                      _error ?? '',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,

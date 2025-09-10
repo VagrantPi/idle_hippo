@@ -74,7 +74,8 @@ void main() {
       );
       await state.updateGameState(init);
 
-      final body = '{"songs":[{"id":"s1","title":"T","image":"i","music":"u","length_seconds":60,"difficulties":[]}]}';
+      final body =
+          '{"songs":[{"id":"s1","title":"T","image":"i","music":"u","length_seconds":60,"difficulties":[]}]}';
       int calls = 0;
       final svc = CollectSyncService(
         state: state,
@@ -116,7 +117,8 @@ void main() {
       await state.updateGameState(init);
 
       // 包含 version 與 image URL
-      final body = '{"version":3,"songs":[{"id":"new1","title":"N","image":"https://example.com/new1.png","music":"u","length_seconds":10,"difficulties":[]}]}';
+      final body =
+          '{"version":3,"songs":[{"id":"new1","title":"N","image":"https://example.com/new1.png","music":"u","length_seconds":10,"difficulties":[]}]}';
       int downloads = 0;
       final svc = CollectSyncService(
         state: state,
@@ -178,21 +180,24 @@ void main() {
     });
 
     test('SongCatalogService 優先載入本地 appdata 檔案', () async {
-      final jsonBody = '{"songs":[{"id":"x","title":"X","image":"i","music":"u","length_seconds":30,"difficulties":[]}]}';
+      final jsonBody =
+          '{"songs":[{"id":"x","title":"X","image":"i","music":"u","length_seconds":30,"difficulties":[]}]}';
       final file = File('${tmp.path}/collect.json');
       await file.writeAsString(jsonBody);
 
       // 打上 karaoke.collectPath 讓服務啟用本地模式
-      await state.updateGameState(state.currentState.copyWith(
-        karaoke: const KaraokeState(
-          lastPlayDate: '',
-          playedToday: false,
-          collectVersion: 1,
-          collectEtag: 'e',
-          collectUpdatedAt: 1,
-          collectPath: 'appdata://collect.json',
+      await state.updateGameState(
+        state.currentState.copyWith(
+          karaoke: const KaraokeState(
+            lastPlayDate: '',
+            playedToday: false,
+            collectVersion: 1,
+            collectEtag: 'e',
+            collectUpdatedAt: 1,
+            collectPath: 'appdata://collect.json',
+          ),
         ),
-      ));
+      );
 
       final svc = SongCatalogService();
       svc.baseDirProvider = () async => tmp;
@@ -205,16 +210,18 @@ void main() {
     });
 
     test('透過 version.json 判斷需要更新，下載 collect 並同步 collectVersion', () async {
-      await state.updateGameState(state.currentState.copyWith(
-        karaoke: const KaraokeState(
-          lastPlayDate: '',
-          playedToday: false,
-          collectVersion: 1,
-          collectEtag: '',
-          collectUpdatedAt: 0,
-          collectPath: 'appdata://collect.json',
+      await state.updateGameState(
+        state.currentState.copyWith(
+          karaoke: const KaraokeState(
+            lastPlayDate: '',
+            playedToday: false,
+            collectVersion: 1,
+            collectEtag: '',
+            collectUpdatedAt: 0,
+            collectPath: 'appdata://collect.json',
+          ),
         ),
-      ));
+      );
 
       int calls = 0;
       final svc = CollectSyncService(

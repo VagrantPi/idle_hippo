@@ -3,38 +3,68 @@
     {
       "id": "stage1",
       "title_key": "quest.stage1.title",
-      "requirement": { "type": "tap_count", "value": 10 },
-      "reward": { "unlock": "equipment.youtube" }
+      "requirement": {
+        "type": "tap_count",
+        "value": 10
+      },
+      "reward": {
+        "unlock": "equipment.youtube"
+      }
     },
     {
       "id": "stage2",
       "title_key": "quest.stage2.title",
-      "requirement": { "type": "meme_points", "value": 100 },
-      "reward": { "unlock": "system.title" }
+      "requirement": {
+        "type": "meme_points",
+        "value": 100
+      },
+      "reward": {
+        "unlock": "system.title"
+      }
     },
     {
       "id": "stage3",
       "title_key": "quest.stage3.title",
-      "requirement": { "type": "meme_points", "value": 1000 },
-      "reward": { "unlock": "system.pet" }
+      "requirement": {
+        "type": "meme_points",
+        "value": 1000
+      },
+      "reward": {
+        "unlock": "system.pet"
+      }
     },
     {
       "id": "stage4",
       "title_key": "quest.stage4.title",
-      "requirement": { "type": "meme_points", "value": 50000 },
-      "reward": { "unlock": "hippo.skin1" }
+      "requirement": {
+        "type": "meme_points",
+        "value": 50000
+      },
+      "reward": {
+        "unlock": "hippo.skin1"
+      }
     },
     {
       "id": "stage5",
       "title_key": "quest.stage5.title",
-      "requirement": { "type": "meme_points", "value": 100000 },
-      "reward": { "unlock": "hippo.skin2" }
+      "requirement": {
+        "type": "meme_points",
+        "value": 100000
+      },
+      "reward": {
+        "unlock": "hippo.skin2"
+      }
     },
     {
       "id": "stage6",
       "title_key": "quest.stage6.title",
-      "requirement": { "type": "meme_points", "value": 500000 },
-      "reward": { "unlock": "hippo.skin3" }
+      "requirement": {
+        "type": "meme_points",
+        "value": 500000
+      },
+      "reward": {
+        "unlock": "hippo.skin3"
+      }
     }
   ]
 }

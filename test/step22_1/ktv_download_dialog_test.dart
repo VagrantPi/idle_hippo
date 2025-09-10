@@ -61,15 +61,11 @@ class MockAudioDownloadService extends Mock implements AudioDownloadService {
 }
 
 void main() {
-  late MockAudioDownloadService mockDownloader;
   late Directory tempDir;
   final testSongId = 'test_song';
   final testUrl = 'https://example.com/test.mp3';
 
   setUp(() async {
-    mockDownloader = MockAudioDownloadService(
-      downloadStreamImpl: (_, __, {cancelToken}) => _createSuccessStream(),
-    );
     tempDir = await Directory.systemTemp.createTemp('ktv_test_');
   });
 
@@ -88,7 +84,7 @@ void main() {
     final downloader =
         mockDownloader ??
         MockAudioDownloadService(
-          downloadStreamImpl: (_, __, {cancelToken}) => _createSuccessStream(),
+          downloadStreamImpl: (_, _, {cancelToken}) => _createSuccessStream(),
         );
     await tester.pumpWidget(
       MaterialApp(

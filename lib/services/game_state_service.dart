@@ -18,6 +18,7 @@ class GameStateService {
   ); // 使用預設版本號 1
   bool _initialized = false;
   bool _testMode = false;
+  bool _allowTestFallback = false; // 僅在單元測試允許 fallback
 
   /// 向後相容：回傳目前的遊戲狀態（供舊測試使用）
   GameState get currentState => gameState.value;
@@ -29,31 +30,63 @@ class GameStateService {
     final loadedState = await _saveService.load();
     gameState = ValueNotifier(loadedState);
     _initialized = true;
+    // 確保初次啟動也有基準存檔，避免後續重啟讀到空白初始狀態
+    try {
+      await _saveService.save(loadedState);
+    } catch (_) {
+      // 忽略初始化寫入錯誤；後續 updateGameState 仍會再嘗試
+    }
   }
 
   /// Updates the game state and saves it to secure storage.
   /// This will also notify any listeners.
-  Future<void> updateGameState(GameState newState) async {
-    // 測試友善：若尚未初始化，避免觸發 secure storage 的 initialize()
-    // 直接以記憶體初始化，並啟用 _testMode（不寫入）
+  Future<void> updateGameState(
+    GameState newState, {
+    bool forceReplace = false,
+    bool throwOnError = false,
+  }) async {
+    // 若尚未初始化，優先執行正式初始化，避免誤入測試模式
     if (!_initialized) {
-      gameState = ValueNotifier(newState);
-      _initialized = true;
-      _testMode = true;
+      try {
+        await initialize();
+      } catch (_) {
+        // 最差情況：仍未能初始化時，僅更新記憶體快照，避免崩潰
+        gameState = ValueNotifier(newState);
+        _initialized = true;
+      }
     }
+    // 防止競態導致裝備等級回退：預設以目前狀態為基準做 max 合併；重置流程可強制覆寫
+    final GameState guarded;
+    if (!forceReplace) {
+      final current = gameState.value;
+      final mergedEquip = Map<String, int>.from(newState.equipments);
+      current.equipments.forEach((k, v) {
+        final nv = mergedEquip[k];
+        if (nv == null || nv < v) {
+          mergedEquip[k] = v;
+        }
+      });
+      guarded = newState.copyWith(equipments: mergedEquip);
+    } else {
+      guarded = newState;
+    }
+
     // 在寫入前重新評估稱號（僅針對裝備相關條件）
-    final evaluated = _evaluateTitlesEquipConditions(newState);
+    final evaluated = _evaluateTitlesEquipConditions(guarded);
     gameState.value = evaluated;
     // 在測試模式下避免觸發平台相依的 secure storage
     if (!_testMode) {
       try {
         await _saveService.save(evaluated);
       } on MissingPluginException {
-        // 在測試環境或未註冊插件時，改為測試模式並略過後續寫入
-        _testMode = true;
+        // 僅在允許時才切換為測試模式（單元測試）
+        if (_allowTestFallback) {
+          _testMode = true;
+        }
+        if (throwOnError) rethrow;
       } catch (_) {
-        // 其他寫入錯誤在測試中也不應中斷流程
-        _testMode = true;
+        // 其他寫入錯誤：不切換為測試模式，保留後續寫入嘗試機會
+        if (throwOnError) rethrow;
       }
     }
   }
@@ -63,6 +96,7 @@ class GameStateService {
     gameState = ValueNotifier(initialState);
     _initialized = true;
     _testMode = true;
+    _allowTestFallback = true;
   }
 
   // ----------------------

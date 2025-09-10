@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
+import 'package:idle_hippo/services/tutorial_focus_service.dart';
+import 'package:idle_hippo/services/tutorial_service.dart';
 
 class EquipmentPage extends StatefulWidget {
   final double memePoints;
@@ -27,6 +29,10 @@ class EquipmentPage extends StatefulWidget {
 class _EquipmentPageState extends State<EquipmentPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  // 測量 Idle 分頁 YouTube 卡片位置用的 key
+  final GlobalKey _youtubeIdleCardKey = GlobalKey(
+    debugLabel: 'youtube_idle_card',
+  );
 
   @override
   void initState() {
@@ -135,135 +141,163 @@ class _EquipmentPageState extends State<EquipmentPage>
 
         return Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Icon（縮小 50%，置中）
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: FractionallySizedBox(
-                        widthFactor: 0.5,
-                        child: Image.asset(
-                          icon,
-                          fit: BoxFit.contain,
-                          alignment: Alignment.topCenter,
-                          errorBuilder: (c, e, s) => Container(
+            Builder(
+              builder: (ctx) {
+                if (id == 'youtube') {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    final box = ctx.findRenderObject() as RenderBox?;
+                    if (box == null || !box.attached) return;
+                    final topLeft = box.localToGlobal(Offset.zero);
+                    final size = box.size;
+                    final rect = Rect.fromLTWH(
+                      topLeft.dx,
+                      topLeft.dy,
+                      size.width,
+                      size.height,
+                    );
+                    TutorialFocusService().setRect('btn_upgrade_youtube', rect);
+                  });
+                }
+                return Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Icon（縮小 50%，置中）
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Align(
                             alignment: Alignment.topCenter,
-                            color: Colors.white10,
-                            child: const Icon(
-                              Icons.videogame_asset,
-                              color: Colors.white54,
+                            child: FractionallySizedBox(
+                              widthFactor: 0.5,
+                              child: Image.asset(
+                                icon,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.topCenter,
+                                errorBuilder: (c, e, s) => Container(
+                                  alignment: Alignment.topCenter,
+                                  color: Colors.white10,
+                                  child: const Icon(
+                                    Icons.videogame_asset,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    localization.getString(nameKey),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left info column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${localization.getUI('level')}: $currentLevel',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            Builder(
-                              builder: (_) {
-                                final double delta = !isMax
-                                    ? (nextBonus - currentBonus)
-                                    : 0.0;
-                                final bonusText = !isMax
-                                    ? '+${_fmt(currentBonus)}(+${_fmt(delta)})'
-                                    : '+${_fmt(currentBonus)}';
-                                return Text(
-                                  '${localization.getUI('bonus')}: $bonusText',
+                      const SizedBox(height: 4),
+                      Text(
+                        localization.getString(nameKey),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left info column
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${localization.getUI('level')}: $currentLevel',
                                   style: const TextStyle(
-                                    color: Colors.lightGreenAccent,
+                                    color: Colors.white,
                                     fontSize: 12,
                                   ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 1),
-                            Text(
-                              '${localization.getUI('cost')}: ${nextCost ?? '-'}',
-                              style: TextStyle(
-                                color: (!isMax && canUpgrade)
-                                    ? Colors.yellow
-                                    : Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Right square button
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: (!isMax && canUpgrade)
-                              ? () => widget.onUpgrade(id)
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            backgroundColor: (!isMax && canUpgrade)
-                                ? const Color(0xFF00FFD1)
-                                : Colors.grey,
-                            foregroundColor: Colors.black,
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              !isMax
-                                  ? localization.getUI('upgrade')
-                                  : localization.getUI('maxLevel'),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Builder(
+                                  builder: (_) {
+                                    final double delta = !isMax
+                                        ? (nextBonus - currentBonus)
+                                        : 0.0;
+                                    final bonusText = !isMax
+                                        ? '+${_fmt(currentBonus)}(+${_fmt(delta)})'
+                                        : '+${_fmt(currentBonus)}';
+                                    return Text(
+                                      '${localization.getUI('bonus')}: $bonusText',
+                                      style: const TextStyle(
+                                        color: Colors.lightGreenAccent,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${localization.getUI('cost')}: ${nextCost ?? '-'}',
+                                  style: TextStyle(
+                                    color: (!isMax && canUpgrade)
+                                        ? Colors.yellow
+                                        : Colors.white54,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          // Right square button
+                          SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: ElevatedButton(
+                              onPressed: (!isMax && canUpgrade)
+                                  ? () => widget.onUpgrade(id)
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                backgroundColor: (!isMax && canUpgrade)
+                                    ? const Color(0xFF00FFD1)
+                                    : Colors.grey,
+                                foregroundColor: Colors.black,
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  !isMax
+                                      ? localization.getUI('upgrade')
+                                      : localization.getUI('maxLevel'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
             if (!unlocked)
               Positioned.fill(
@@ -295,6 +329,8 @@ class _EquipmentPageState extends State<EquipmentPage>
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -347,167 +383,213 @@ class _EquipmentPageState extends State<EquipmentPage>
           currentLevel + 1,
         );
 
+        final isYoutube = id == 'youtube';
+        // 於 frame 後量測整張 YouTube 卡片的全域座標
+        if (isYoutube) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final box =
+                _youtubeIdleCardKey.currentContext?.findRenderObject()
+                    as RenderBox?;
+            if (box == null || !box.attached) return;
+            final topLeft = box.localToGlobal(Offset.zero);
+            final size = box.size;
+            final rect = Rect.fromLTWH(
+              topLeft.dx,
+              topLeft.dy,
+              size.width,
+              size.height,
+            );
+            TutorialFocusService().setRect('btn_upgrade_youtube', rect);
+          });
+        }
+
         return Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Icon（縮小 50%，置中）
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: FractionallySizedBox(
-                        widthFactor: 0.5,
-                        child: () {
-                          final img = Image.asset(
-                            icon,
-                            fit: BoxFit.contain,
-                            alignment: Alignment.topCenter,
-                            errorBuilder: (c, e, s) => Container(
-                              alignment: Alignment.topCenter,
-                              color: Colors.white10,
-                              child: const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.white54,
-                              ),
-                            ),
-                          );
-                          if (!uiUnlocked) {
-                            // 鎖定時套用灰階
-                            return ColorFiltered(
-                              colorFilter: const ColorFilter.matrix(<double>[
-                                0.2126,
-                                0.7152,
-                                0.0722,
-                                0,
-                                0,
-                                0.2126,
-                                0.7152,
-                                0.0722,
-                                0,
-                                0,
-                                0.2126,
-                                0.7152,
-                                0.0722,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                1,
-                                0,
-                              ]),
-                              child: img,
-                            );
-                          }
-                          return img;
-                        }(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    localization.getString(nameKey),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left info column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${localization.getUI('level')}: $currentLevel',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            Builder(
-                              builder: (_) {
-                                final double delta = !isMax
-                                    ? (nextBonus - currentBonus)
-                                    : 0.0;
-                                final bonusText = !isMax
-                                    ? '+${_fmt(currentBonus)}/s(+${_fmt(delta)})'
-                                    : '+${_fmt(currentBonus)}/s';
-                                return Text(
-                                  bonusText,
-                                  style: const TextStyle(
-                                    color: Colors.lightGreenAccent,
-                                    fontSize: 12,
+            RepaintBoundary(
+              key: isYoutube ? _youtubeIdleCardKey : null,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Icon（縮小 50%，置中）
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: FractionallySizedBox(
+                            widthFactor: 0.5,
+                            child: () {
+                              final img = Image.asset(
+                                icon,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.topCenter,
+                                errorBuilder: (c, e, s) => Container(
+                                  alignment: Alignment.topCenter,
+                                  color: Colors.white10,
+                                  child: const Icon(
+                                    Icons.auto_awesome,
+                                    color: Colors.white54,
                                   ),
+                                ),
+                              );
+                              // 鎖定時套用灰階
+                              if (!uiUnlocked) {
+                                return ColorFiltered(
+                                  colorFilter:
+                                      const ColorFilter.matrix(<double>[
+                                        0.2126,
+                                        0.7152,
+                                        0.0722,
+                                        0,
+                                        0,
+                                        0.2126,
+                                        0.7152,
+                                        0.0722,
+                                        0,
+                                        0,
+                                        0.2126,
+                                        0.7152,
+                                        0.0722,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        1,
+                                        0,
+                                      ]),
+                                  child: img,
                                 );
-                              },
-                            ),
-                            const SizedBox(height: 1),
-                            Text(
-                              '${localization.getUI('cost')}: ${nextCost ?? '-'}',
-                              style: TextStyle(
-                                color: (!isMax && canUpgrade)
-                                    ? Colors.yellow
-                                    : Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Right square button
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: (!isMax && canUpgrade)
-                              ? () => widget.onUpgradeIdle(id)
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            backgroundColor: (!isMax && canUpgrade)
-                                ? const Color(0xFF00FFD1)
-                                : Colors.grey,
-                            foregroundColor: Colors.black,
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              !isMax
-                                  ? localization.getUI('upgrade')
-                                  : localization.getUI('maxLevel'),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                              }
+                              return img;
+                            }(),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      localization.getString(nameKey),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left info column
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${localization.getUI('level')}: $currentLevel',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Builder(
+                                builder: (_) {
+                                  final double delta = !isMax
+                                      ? (nextBonus - currentBonus)
+                                      : 0.0;
+                                  final bonusText = !isMax
+                                      ? '+${_fmt(currentBonus)}/s(+${_fmt(delta)})'
+                                      : '+${_fmt(currentBonus)}/s';
+                                  return Text(
+                                    bonusText,
+                                    style: const TextStyle(
+                                      color: Colors.lightGreenAccent,
+                                      fontSize: 12,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${localization.getUI('cost')}: ${nextCost ?? '-'}',
+                                style: TextStyle(
+                                  color: (!isMax && canUpgrade)
+                                      ? Colors.yellow
+                                      : Colors.white54,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Right square button
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: (!isMax && canUpgrade)
+                                ? () {
+                                    // 教學 Step6：升級 YouTube
+                                    if (id == 'youtube') {
+                                      final t = TutorialService();
+                                      if (!t.isCompleted &&
+                                          t.isAllowedTarget(
+                                            'btn_upgrade_youtube',
+                                          )) {
+                                        // ignore: discarded_futures
+                                        t.recordAction('btn_upgrade_youtube');
+                                      }
+                                    }
+                                    widget.onUpgradeIdle(id);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              backgroundColor: (!isMax && canUpgrade)
+                                  ? const Color(0xFF00FFD1)
+                                  : Colors.grey,
+                              foregroundColor: Colors.black,
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                !isMax
+                                    ? localization.getUI('upgrade')
+                                    : localization.getUI('maxLevel'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             if (!uiUnlocked)
@@ -530,8 +612,9 @@ class _EquipmentPageState extends State<EquipmentPage>
                             );
                           }
                           final unlock = e['unlock'] as Map<String, dynamic>?;
-                          if (unlock == null)
+                          if (unlock == null) {
                             return localization.getUI('locked');
+                          }
                           final reqId = unlock['id'] as String? ?? '';
                           final reqLevel =
                               (unlock['level'] as num?)?.toInt() ?? 0;
@@ -549,6 +632,8 @@ class _EquipmentPageState extends State<EquipmentPage>
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),

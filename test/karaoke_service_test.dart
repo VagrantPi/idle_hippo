@@ -34,7 +34,11 @@ class _FakeDownloader implements AudioDownloadService {
   Future<void> clearAllCache() async {}
 
   @override
-  Stream<DownloadProgress> download(String songId, String url, {CancelToken? cancelToken}) => const Stream.empty();
+  Stream<DownloadProgress> download(
+    String songId,
+    String url, {
+    CancelToken? cancelToken,
+  }) => const Stream.empty();
 }
 
 class _FakeCatalog implements sc.SongCatalogService {
@@ -45,8 +49,8 @@ class _FakeCatalog implements sc.SongCatalogService {
   sc.AssetLoader assetLoader = (path) => Future.value('');
 
   @override
-  sc.BaseDirProvider baseDirProvider =
-      (() async => throw UnimplementedError('not used in test'));
+  sc.BaseDirProvider baseDirProvider = (() async =>
+      throw UnimplementedError('not used in test'));
 
   @override
   sc.FileReader fileReader = (path) async => '';

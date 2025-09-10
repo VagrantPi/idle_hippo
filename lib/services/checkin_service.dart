@@ -19,6 +19,8 @@ class CheckinService {
   final GameStateService _gameStateService = GameStateService();
   final ConfigService _configService = ConfigService();
   final IdleIncomeService _idleIncomeService = IdleIncomeService();
+  // 內部緩衝：累積 collect 任務的小數點（避免每次 floor 掉 0 造成無法累積）
+  double _collectAccumBuffer = 0.0;
 
   WeeklyBonusCallback? _weeklyBonusCallback;
   void setWeeklyBonusCallback(WeeklyBonusCallback cb) {
@@ -123,17 +125,17 @@ class CheckinService {
 
     // 生成新任務
     final newTask = _generateRandomTask(currentIdlePerSec, tapRangeInt);
+    // 重置 collect 累積緩衝
+    _collectAccumBuffer = 0.0;
 
     // 計算週起始日
     final weekStart = _getWeekStart(localToday, weekStartDow);
 
     // 檢查是否跨週
-    bool isNewWeek = false;
     CheckinWeek newWeek;
     if (existingCheckin == null ||
         existingCheckin.week.weekStart != weekStart) {
       // 跨週：重置週狀態
-      isNewWeek = true;
       newWeek = CheckinWeek(
         weekStart: weekStart,
         mask: 0,
@@ -209,13 +211,17 @@ class CheckinService {
     if (checkinState == null ||
         checkinState.today.status != 'pending' ||
         checkinState.today.task.type != 'collect') {
+      // 非 collect 任務時，清空緩衝避免跨任務殘留
+      _collectAccumBuffer = 0.0;
       return;
     }
 
-    // collect 任務的進度是從今日首次進入開始累積的總點數
-    // 這裡需要與其他服務協調來追蹤今日累積點數
-    // 暫時直接更新進度，實際實作時需要整合 idle_income_service 的今日累積邏輯
-    await updateTaskProgress('collect', memePointsGained.floor());
+    // 將小數先累積在緩衝中，湊滿 1 再轉為整數進度
+    _collectAccumBuffer += memePointsGained;
+    final int whole = _collectAccumBuffer.floor();
+    if (whole <= 0) return;
+    _collectAccumBuffer -= whole;
+    await updateTaskProgress('collect', whole);
   }
 
   /// 廣告跳過簽到

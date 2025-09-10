@@ -350,8 +350,9 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         final id = m['id']?.toString() ?? '';
         final cond = m['condition'] as Map<String, dynamic>?;
         if (id.isEmpty ||
-            (cond?['kind']?.toString() != 'collect_all_titles_except'))
+            (cond?['kind']?.toString() != 'collect_all_titles_except')) {
           continue;
+        }
 
         final exclude = (cond?['exclude'] as List?)?.cast<String>() ?? const [];
         final targetSet = allIds.difference({id, ...exclude});
@@ -676,84 +677,103 @@ class _TitleCard extends StatelessWidget {
         ? (item.isHiddenType ? item.hiddenDesc : item.desc)
         : item.desc;
 
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: claimed
-              ? const Color(0xFFE89A00)
-              : (claimable ? const Color(0xFFE89A00) : Colors.white24),
-          width: 5,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double iconSide = (constraints.maxHeight * 0.12).clamp(
+          36.0,
+          48.0,
+        );
+        return Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: claimed
+                  ? const Color(0xFFE89A00)
+                  : (claimable ? const Color(0xFFE89A00) : Colors.white24),
+              width: 5,
+            ),
+          ),
+          child: Stack(
             children: [
-              // 佔位圖示
-              Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white12,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Icon(Icons.emoji_events, color: Colors.white70),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                displayName,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                displayDesc,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              if (!claimed) const Spacer(),
-              if (!claimed)
-                ElevatedButton(
-                  onPressed: claimable ? onClaim : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: claimable
-                        ? const Color(0xFFE89A00)
-                        : Colors.grey.shade900,
-                    foregroundColor: claimable ? Colors.black : Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                  child: Text(
-                    localization.getString(
-                      'title.btn.claim',
-                      defaultValue: '領取',
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 佔位圖示（隨卡片高度縮放）
+                  Container(
+                    height: iconSide,
+                    width: iconSide,
+                    decoration: BoxDecoration(
+                      color: Colors.white12,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.emoji_events, color: Colors.white70),
                     ),
                   ),
-                )
-              else
-                const SizedBox(height: 4),
+                  const SizedBox(height: 6),
+                  Text(
+                    displayName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    displayDesc,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  if (!claimed) const Spacer(),
+                  if (!claimed)
+                    SizedBox(
+                      height: 32,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: claimable ? onClaim : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: claimable
+                              ? const Color(0xFFE89A00)
+                              : Colors.grey.shade900,
+                          foregroundColor: claimable
+                              ? Colors.black
+                              : Colors.white,
+                          minimumSize: Size.zero,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            localization.getString(
+                              'title.btn.claim',
+                              defaultValue: '領取',
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 4),
+                ],
+              ),
+              if (locked)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
             ],
           ),
-          if (locked)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
