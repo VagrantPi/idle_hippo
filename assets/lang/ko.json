@@ -344,6 +344,9 @@
   }
   ,
   "tutorial": {
+    "pet_intro": "펫은 가챠로 얻을 수 있어요. 가장 든든한 동료입니다",
+    "pet_ticket_info": "이제 일일 미션에서 가챠 티켓을 받을 수 있어요",
+    "pet_ticket_reward": "펫 가챠 티켓 10장을 획득!",
     "tap_hippo": "하마를 탭하여 밈 포인트를 모아봐요. 우선 10포인트를 달성해요!",
     "open_mainline": "메인 퀘스트 열기",
     "mainline_story": "주선을 따라 하마를 밈의 왕으로",

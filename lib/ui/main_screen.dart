@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show Rect;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/checkin_service.dart';
@@ -11,8 +10,10 @@ import 'package:idle_hippo/services/main_quest_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 import 'package:idle_hippo/ui/components/animated_button.dart';
 import 'package:idle_hippo/ui/components/tutorial_overlay.dart';
+import 'package:idle_hippo/ui/components/pet_tutorial_overlay.dart';
 import 'package:idle_hippo/services/tutorial_service.dart';
 import 'package:idle_hippo/services/tutorial_focus_service.dart';
+import 'package:idle_hippo/services/pet_tutorial_service.dart';
 import 'package:idle_hippo/ui/components/plus_meme_particle.dart';
 import 'package:idle_hippo/ui/pages/equipment_page.dart';
 import 'package:idle_hippo/ui/pages/pets_page.dart';
@@ -104,6 +105,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final PageManager _pageManager = PageManager();
   final GachaService _gachaService = GachaService();
   final CheckinService _checkinService = CheckinService();
+  final PetTutorialService _petTutorial = PetTutorialService();
   // 測量資源顯示（迷因點數）面板的位置
   final GlobalKey _resourceDisplayKey = GlobalKey(
     debugLabel: 'resource_display',
@@ -121,6 +123,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   // 右上角任務紅點脈動動畫
   late AnimationController _badgePulseController;
   late Animation<double> _badgePulseAnimation;
+  // Tutorial focus measurement flags（避免重複量測造成頻繁 rebuild）
+  final Set<String> _measuredFocusIds = <String>{};
+  bool _measuredTicketRow = false;
+  bool _measuredResourcePanel = false;
 
   final List<Widget> _particles = [];
   static const int _maxParticles = 10;
@@ -182,6 +188,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     // Tutorial: lazy initialize
     tutorial.initialize();
     tutorial.state.addListener(_syncTutorialPage);
+    // Pet Tutorial: 依主線進度自動觸發
+    _petTutorial.initialize();
+    unawaited(_petTutorial.maybeStartFromGameState(widget.gameState));
     // 初次同步於第一幀後進行，避免 build 階段導頁閃爍
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncTutorialPage());
 
@@ -233,6 +242,14 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _badgePulseAnimation = Tween<double>(begin: 0.9, end: 1.2).animate(
       CurvedAnimation(parent: _badgePulseController, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant MainScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.gameState != widget.gameState) {
+      unawaited(_petTutorial.maybeStartFromGameState(widget.gameState));
+    }
   }
 
   // 在 _MainScreenState 類別中添加這個變數
@@ -649,6 +666,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       child: Builder(
         builder: (ctx) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_measuredResourcePanel) return;
             final box =
                 _resourceDisplayKey.currentContext?.findRenderObject()
                     as RenderBox?;
@@ -662,6 +680,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               size.height,
             );
             TutorialFocusService().setRect('panel_meme_points', rect);
+            _measuredResourcePanel = true;
           });
           return Container(
             key: _resourceDisplayKey,
@@ -727,31 +746,53 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     builder: (context, snapshot) {
                       final tickets =
                           snapshot.data ?? widget.gameState.petTickets;
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/images/icon/Lottery.png',
-                            width: 20,
-                            height: 20,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.confirmation_num,
-                                color: Colors.cyanAccent,
-                                size: 20,
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
-                            style: const TextStyle(
-                              color: Colors.cyanAccent,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      return Builder(
+                        builder: (ctx2) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (_measuredTicketRow) return;
+                            final box = ctx2.findRenderObject() as RenderBox?;
+                            if (box == null || !box.attached) return;
+                            final tl = box.localToGlobal(Offset.zero);
+                            final sz = box.size;
+                            final rect = Rect.fromLTWH(
+                              tl.dx,
+                              tl.dy,
+                              sz.width,
+                              sz.height,
+                            );
+                            TutorialFocusService().setRect(
+                              'home_pet_ticket',
+                              rect,
+                            );
+                            _measuredTicketRow = true;
+                          });
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/images/icon/Lottery.png',
+                                width: 20,
+                                height: 20,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.confirmation_num,
+                                    color: Colors.cyanAccent,
+                                    size: 20,
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${_localization.getString('pets.ticket', defaultValue: '寵物抽獎券')}: $tickets',
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                   ),
@@ -1131,23 +1172,49 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         ? MediaQuery.of(context).size.height / 14 + 20
         : MediaQuery.of(context).size.height / 14;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: containerWidth,
-      height: bottomNavigationBarHeight,
-      alignment: Alignment.center,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: AnimatedButton(
-              iconPath: iconPath,
-              size: bottomNavigationBarHeight.toDouble(), // 調整按鈕大小
-              isNavButton: true,
-              showTitle: isSelected,
-              title: getButtonTitle(),
+    return Builder(
+      builder: (ctx) {
+        // 佈局後回報導航按鈕的位置（僅量測一次）
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final id = isHome
+              ? 'nav_home'
+              : (pageType == PageType.pets ? 'nav_pets' : null);
+          if (id == null || _measuredFocusIds.contains(id)) return;
+          final box = ctx.findRenderObject() as RenderBox?;
+          if (box == null || !box.attached) return;
+          final topLeft = box.localToGlobal(Offset.zero);
+          final size = box.size;
+          final rect = Rect.fromLTWH(topLeft.dx, topLeft.dy, size.width, size.height);
+          TutorialFocusService().setRect(id, rect);
+          _measuredFocusIds.add(id);
+        });
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: containerWidth,
+          height: bottomNavigationBarHeight,
+          alignment: Alignment.center,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: AnimatedButton(
+                  iconPath: iconPath,
+                  size: bottomNavigationBarHeight.toDouble(), // 調整按鈕大小
+                  isNavButton: true,
+                  showTitle: isSelected,
+                  title: getButtonTitle(),
               onTap: () {
                 if (isHome) {
+                  // 寵物引導：僅於流程進行中才進行導覽限制
+                  final petActive =
+                      !_petTutorial.isCompleted && _petTutorial.state.value.step > 0;
+                  if (petActive) {
+                    if (!_petTutorial.isAllowedTarget('nav_home')) {
+                      return;
+                    }
+                    unawaited(_petTutorial.recordAction('nav_home'));
+                  }
                   // Tutorial gating for nav_home (steps 7 & 12)
                   if (!tutorial.isCompleted &&
                       !tutorial.isAllowedTarget('nav_home')) {
@@ -1156,33 +1223,45 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   unawaited(tutorial.recordAction('nav_home'));
                   _pageManager.navigateToHome();
                 } else if (pageType != null) {
+                  // 寵物引導：流程進行中時，僅允許在 step1 聚焦寵物按鈕時進入寵物頁
+                  final petActive =
+                      !_petTutorial.isCompleted && _petTutorial.state.value.step > 0;
+                  if (petActive && pageType == PageType.pets) {
+                    final focusId = _petTutorial.currentFocusTargetId;
+                    final waitNext = _petTutorial.currentStepDef?.action == 'wait_then_next';
+                    if (focusId != 'nav_pets' && !waitNext) {
+                      return;
+                    }
+                  }
                   _pageManager.navigateToPage(pageType);
                 }
               },
-              borderColor: isSelected
-                  ? const Color(0xFF00FFD1)
-                  : const Color(0xFF6B7BD6),
-              borderWidth: 2,
-            ),
-          ),
-          if (showBadge)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: ScaleTransition(
-                scale: _badgePulseAnimation,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
+                  borderColor: isSelected
+                      ? const Color(0xFF00FFD1)
+                      : const Color(0xFF6B7BD6),
+                  borderWidth: 2,
                 ),
               ),
-            ),
-        ],
-      ),
+              if (showBadge)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: ScaleTransition(
+                    scale: _badgePulseAnimation,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1490,6 +1569,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
           // Tutorial Overlay (遮罩 + 說明)
           const TutorialOverlay(),
+
+          // 寵物引導遮罩（解鎖後顯示 4 步教學）
+          const PetTutorialOverlay(),
 
           // 左側 y 軸中心 Debug 切換按鈕（放在最上層，覆蓋教學遮罩）
           _buildDebugToggle(),

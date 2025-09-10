@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/ui/components/animated_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
@@ -12,12 +12,11 @@ void main() {
   group('MainScreen 元件測試', () {
     late PageManager pageManager;
     late VoidCallback onCharacterTap;
-    late ConfigService configService;
     int tapCount = 0;
 
     setUp(() async {
+      SharedPreferences.setMockInitialValues({});
       pageManager = PageManager();
-      configService = ConfigService();
       tapCount = 0;
       onCharacterTap = () {
         tapCount++;
@@ -42,6 +41,8 @@ void main() {
           ),
         ),
       );
+      // 讓第一幀的 post-frame 回呼與動畫初始化完成
+      await tester.pump(const Duration(milliseconds: 20));
 
       // 檢查格式化後的 meme points 顯示
       expect(find.text('12.3K'), findsOneWidget);
@@ -57,6 +58,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 20));
 
       // 檢查格式化後的 meme points 顯示（目前顯示一位小數）
       expect(find.text('1.2'), findsOneWidget);
@@ -72,6 +74,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 20));
 
       // 檢查角色圖片是否存在
       expect(find.byType(Image), findsWidgets);
@@ -89,6 +92,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 20));
 
       // 檢查是否有導航按鈕
       expect(find.byType(GestureDetector), findsWidgets);
@@ -104,9 +108,10 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 20));
 
       // 嘗試在畫面中央點擊（角色位於中央）
-      final size = tester.binding.window.physicalSize / tester.binding.window.devicePixelRatio;
+      final size = tester.view.physicalSize / tester.view.devicePixelRatio;
       await tester.tapAt(Offset(size.width * 0.5, size.height * 0.5));
       await tester.pump();
 
@@ -155,6 +160,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 20));
 
       // 檢查資源顯示區域的數字已格式化
       expect(find.text('12.3K'), findsOneWidget);
@@ -175,6 +181,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 20));
 
       expect(find.text('0.0 /s'), findsOneWidget);
     });

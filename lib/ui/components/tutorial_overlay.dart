@@ -102,7 +102,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: TutorialFocusService(),
-      builder: (context, __) {
+      builder: (context, _) {
         return ValueListenableBuilder(
           valueListenable: _tutorial.state,
           builder: (context, st, _) {
