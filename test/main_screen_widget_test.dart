@@ -6,6 +6,7 @@ import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/page_manager.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/services/tutorial_service.dart';
 
 void main() {
   group('MainScreen 元件測試', () {
@@ -14,7 +15,7 @@ void main() {
     late ConfigService configService;
     int tapCount = 0;
 
-    setUp(() {
+    setUp(() async {
       pageManager = PageManager();
       configService = ConfigService();
       tapCount = 0;
@@ -23,7 +24,11 @@ void main() {
       };
 
       // 初始化服務
-      LocalizationService().init(language: 'en');
+      await LocalizationService().init(language: 'en');
+      // 測試中關閉新手教學遮罩，避免干擾互動
+      final t = TutorialService();
+      await t.initialize();
+      await t.complete();
       pageManager.navigateToPage(PageType.home);
     });
 
@@ -100,9 +105,9 @@ void main() {
         ),
       );
 
-      // 查找角色區域並點擊
-      final characterFinder = find.byType(GestureDetector).first;
-      await tester.tap(characterFinder);
+      // 嘗試在畫面中央點擊（角色位於中央）
+      final size = tester.binding.window.physicalSize / tester.binding.window.devicePixelRatio;
+      await tester.tapAt(Offset(size.width * 0.5, size.height * 0.5));
       await tester.pump();
 
       // 檢查點擊處理函數是否被調用
@@ -160,8 +165,7 @@ void main() {
     testWidgets('應以格式化顯示每秒離線收益（預設 0.1 → 顯示 0.0 /s）', (
       WidgetTester tester,
     ) async {
-      configService.loadConfig();
-
+      // 不載入 ConfigService，測試預設值路徑（isLoaded=false → 0.1）
       await tester.pumpWidget(
         MaterialApp(
           home: MainScreen(

@@ -185,37 +185,39 @@ class KaraokeState {
   });
 
   factory KaraokeState.initial() => const KaraokeState(
-        lastPlayDate: '',
-        playedToday: false,
-        collectVersion: 0,
-        collectEtag: '',
-        collectUpdatedAt: 0,
-        collectPath: 'appdata://collect.json',
-      );
+    lastPlayDate: '',
+    playedToday: false,
+    collectVersion: 0,
+    collectEtag: '',
+    collectUpdatedAt: 0,
+    collectPath: 'appdata://collect.json',
+  );
 
   factory KaraokeState.fromMap(Map<String, dynamic> map) {
     return KaraokeState(
       lastPlayDate: (map['lastPlayDate'] ?? '') as String,
       playedToday: (map['playedToday'] ?? false) as bool,
-      collectVersion: (map['collectVersion'] ?? map['collect_version'] ?? 0)
-          as int,
+      collectVersion:
+          (map['collectVersion'] ?? map['collect_version'] ?? 0) as int,
       collectEtag: (map['collectEtag'] ?? map['collect_etag'] ?? '') as String,
       collectUpdatedAt:
           (map['collectUpdatedAt'] ?? map['collect_updated_at'] ?? 0) as int,
       collectPath:
-          (map['collectPath'] ?? map['collect_path'] ?? 'appdata://collect.json')
+          (map['collectPath'] ??
+                  map['collect_path'] ??
+                  'appdata://collect.json')
               as String,
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'lastPlayDate': lastPlayDate,
-        'playedToday': playedToday,
-        'collectVersion': collectVersion,
-        'collectEtag': collectEtag,
-        'collectUpdatedAt': collectUpdatedAt,
-        'collectPath': collectPath,
-      };
+    'lastPlayDate': lastPlayDate,
+    'playedToday': playedToday,
+    'collectVersion': collectVersion,
+    'collectEtag': collectEtag,
+    'collectUpdatedAt': collectUpdatedAt,
+    'collectPath': collectPath,
+  };
 
   KaraokeState copyWith({
     String? lastPlayDate,
@@ -1298,7 +1300,8 @@ class GameState {
           map.containsKey('checkin') && map['checkin'] is Map<String, dynamic>
           ? CheckinState.fromMap(map['checkin'] as Map<String, dynamic>)
           : null,
-      karaoke: map.containsKey('karaoke') && map['karaoke'] is Map<String, dynamic>
+      karaoke:
+          map.containsKey('karaoke') && map['karaoke'] is Map<String, dynamic>
           ? KaraokeState.fromMap(map['karaoke'] as Map<String, dynamic>)
           : null,
     );

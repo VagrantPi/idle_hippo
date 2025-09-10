@@ -67,4 +67,3 @@ class ImageCacheService {
     return out;
   }
 }
-

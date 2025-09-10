@@ -679,7 +679,10 @@ class _TitleCard extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double iconSide = (constraints.maxHeight * 0.12).clamp(36.0, 48.0);
+        final double iconSide = (constraints.maxHeight * 0.12).clamp(
+          36.0,
+          48.0,
+        );
         return Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -737,8 +740,9 @@ class _TitleCard extends StatelessWidget {
                           backgroundColor: claimable
                               ? const Color(0xFFE89A00)
                               : Colors.grey.shade900,
-                          foregroundColor:
-                              claimable ? Colors.black : Colors.white,
+                          foregroundColor: claimable
+                              ? Colors.black
+                              : Colors.white,
                           minimumSize: Size.zero,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,

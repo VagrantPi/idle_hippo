@@ -164,7 +164,8 @@ class _PowerSaverPageState extends State<PowerSaverPage>
           final estHintH = hintFont * 1.2 + 16; // 含內邊距估計
           final verticalPad = 32.0;
           // 預算圖片邏輯高度：確保三者 + 間距 + padding 不超過 base
-          final estimatedImage = base - (estClockH + estHintH + spacing * 2 + verticalPad);
+          final estimatedImage =
+              base - (estClockH + estHintH + spacing * 2 + verticalPad);
           final imageSide = estimatedImage.clamp(0.0, maxImageSide);
 
           return Center(
@@ -252,7 +253,8 @@ class _PowerSaverPageState extends State<PowerSaverPage>
     double? forcedSize,
   }) {
     final size = MediaQuery.of(context).size;
-    double imageSize = forcedSize ?? (isPortrait ? size.width * 0.5 : size.height * 0.3);
+    double imageSize =
+        forcedSize ?? (isPortrait ? size.width * 0.5 : size.height * 0.3);
     if (maxSide != null) {
       imageSize = math.min(imageSize, maxSide);
     }

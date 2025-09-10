@@ -84,6 +84,7 @@ flutter:
     - assets/images/equipment/
     - assets/images/pet/
     - assets/images/musicGame/
+    - assets/images/manga/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -32,9 +32,9 @@ void main() {
     test('load prefers fast cache when durable is unavailable', () async {
       // Arrange: put a newer state into fast cache
       final prefs = await SharedPreferences.getInstance();
-      final fastState = GameState.initial(1)
-          .copyWith(memePoints: 999.0)
-          .updateTimestamp();
+      final fastState = GameState.initial(
+        1,
+      ).copyWith(memePoints: 999.0).updateTimestamp();
       await prefs.setString('game_state_fast', fastState.toJson());
 
       // Act: load (secure storage plugin is not available in unit tests)
@@ -45,4 +45,3 @@ void main() {
     });
   });
 }
-

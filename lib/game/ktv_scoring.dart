@@ -68,4 +68,3 @@ class KtvScoring {
     missCount = 0;
   }
 }
-

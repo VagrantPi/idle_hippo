@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/services/game_state_service.dart';
-import '../lib/models/game_state.dart';
-import '../lib/models/pet.dart';
+import 'package:idle_hippo/services/game_state_service.dart';
+import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/models/pet.dart';
 
 /// 持久化功能測試
 /// 驗證所有 lib/models 內的數值狀態在應用重啟後都能正確保存和恢復
@@ -56,7 +56,7 @@ void main() {
       await gameStateService.updateGameState(complexState);
 
       final savedState = gameStateService.currentState;
-      
+
       // 驗證 checkin 狀態
       expect(savedState.checkin?.today.date, equals('2025-01-01'));
       expect(savedState.checkin?.today.status, equals('completed'));
@@ -83,9 +83,9 @@ void main() {
         ),
       ];
 
-      final stateWithHistory = GameState.initial(1).copyWith(
-        gachaHistory: gachaHistory,
-      );
+      final stateWithHistory = GameState.initial(
+        1,
+      ).copyWith(gachaHistory: gachaHistory);
 
       await gameStateService.initializeForTest(stateWithHistory);
       await gameStateService.updateGameState(stateWithHistory);
@@ -107,7 +107,7 @@ void main() {
         upgradePoints: 100,
         isEquipped: true,
       );
-      
+
       final testPet2 = Pet(
         petKey: 'another_pet',
         name: '另一隻寵物',
@@ -124,9 +124,7 @@ void main() {
         equippedPetId: 'test_pet_R',
       );
 
-      final stateWithPets = GameState.initial(1).copyWith(
-        petState: petState,
-      );
+      final stateWithPets = GameState.initial(1).copyWith(petState: petState);
 
       await gameStateService.initializeForTest(stateWithPets);
       await gameStateService.updateGameState(stateWithPets);
@@ -145,15 +143,13 @@ void main() {
           'title2': 'claimable',
           'title3': 'locked',
         },
-        claimedAt: {
-          'title1': 1234567890,
-        },
+        claimedAt: {'title1': 1234567890},
         hasClaimable: true,
       );
 
-      final stateWithTitles = GameState.initial(1).copyWith(
-        titles: titlesState,
-      );
+      final stateWithTitles = GameState.initial(
+        1,
+      ).copyWith(titles: titlesState);
 
       await gameStateService.initializeForTest(stateWithTitles);
       await gameStateService.updateGameState(stateWithTitles);
@@ -176,9 +172,9 @@ void main() {
         lastRewardDoubled: true,
       );
 
-      final stateWithOffline = GameState.initial(1).copyWith(
-        offline: offlineState,
-      );
+      final stateWithOffline = GameState.initial(
+        1,
+      ).copyWith(offline: offlineState);
 
       await gameStateService.initializeForTest(stateWithOffline);
       await gameStateService.updateGameState(stateWithOffline);
@@ -202,9 +198,9 @@ void main() {
         completed: [],
       );
 
-      final stateWithMissions = GameState.initial(1).copyWith(
-        dailyMission: dailyMission,
-      );
+      final stateWithMissions = GameState.initial(
+        1,
+      ).copyWith(dailyMission: dailyMission);
 
       await gameStateService.initializeForTest(stateWithMissions);
       await gameStateService.updateGameState(stateWithMissions);
@@ -221,11 +217,7 @@ void main() {
       final complexState = GameState(
         saveVersion: 1,
         memePoints: 99999.99,
-        equipments: {
-          'weapon': 10,
-          'armor': 8,
-          'accessory': 5,
-        },
+        equipments: {'weapon': 10, 'armor': 8, 'accessory': 5},
         petTickets: 15,
         gachaHistory: [
           GachaHistoryRecord(

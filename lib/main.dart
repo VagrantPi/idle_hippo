@@ -46,10 +46,10 @@ class IdleHippoApp extends StatelessWidget {
       ),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       // Step 24: 啟動時先進 Loading 畫面
-      home: testMode ? IdleHippoScreen(testMode: testMode) : const LoadingScreen(),
-      routes: {
-        '/main': (_) => IdleHippoScreen(testMode: testMode),
-      },
+      home: testMode
+          ? IdleHippoScreen(testMode: testMode)
+          : const LoadingScreen(),
+      routes: {'/main': (_) => IdleHippoScreen(testMode: testMode)},
       debugShowCheckedModeBanner: false,
     );
   }
@@ -1135,7 +1135,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen>
     });
   }
 
-  Future<void> _saveGameState({String source = '', bool showToastOnResult = false}) async {
+  Future<void> _saveGameState({
+    String source = '',
+    bool showToastOnResult = false,
+  }) async {
     if (widget.testMode) {
       // 測試模式：不進行任何持久化
       return;
@@ -1145,10 +1148,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen>
     }
     try {
       // 透過 GameStateService 單一路徑持久化，避免與其他服務衝突
-      await _gameStateService.updateGameState(
-        _gameState,
-        throwOnError: true,
-      );
+      await _gameStateService.updateGameState(_gameState, throwOnError: true);
       if (showToastOnResult) {
         final msg = source.isNotEmpty ? '[Save OK] $source' : '[Save OK]';
         rootScaffoldMessengerKey.currentState?.showSnackBar(

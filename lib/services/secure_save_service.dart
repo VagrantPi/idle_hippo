@@ -96,7 +96,8 @@ class SecureSaveService {
       } catch (_) {}
 
       // 3) 回傳更新較新的狀態（以 lastTs 比較）；若 fast 更新，背景刷新安全存檔
-      final chosen = _pickFresher(durable, fast) ?? GameState.initial(_currentVersion);
+      final chosen =
+          _pickFresher(durable, fast) ?? GameState.initial(_currentVersion);
       if (fast != null && (durable == null || fast.lastTs > (durable.lastTs))) {
         // 背景補寫入安全存檔
         unawaited(_atomicWrite(chosen).catchError((_) => null));

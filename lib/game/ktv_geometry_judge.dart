@@ -17,7 +17,8 @@ class KtvGeometryJudge {
     final noteTop = noteCenterY - noteHeight / 2;
     final noteBottom = noteCenterY + noteHeight / 2;
 
-    final fullyInside = noteTop >= bandTop - eps && noteBottom <= bandBottom + eps;
+    final fullyInside =
+        noteTop >= bandTop - eps && noteBottom <= bandBottom + eps;
     if (fullyInside) return Judgement.perfect;
 
     final overlaps = noteBottom > bandTop && noteTop < bandBottom;
@@ -26,4 +27,3 @@ class KtvGeometryJudge {
     return Judgement.miss;
   }
 }
-

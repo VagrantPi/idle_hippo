@@ -157,8 +157,8 @@ void main() {
       final result = service.claimIfReady(s1);
 
       // 檢查獎勵
-      expect(rewardReceived, 1.0); // 第1個任務獎勵是1
-      expect(result.memePoints, 101.0); // 100 + 1
+      expect(rewardReceived, 10.0); // 第1個任務獎勵是10
+      expect(result.memePoints, 110.0); // 100 + 10
 
       // 檢查任務狀態
       expect(result.dailyMission!.todayCompleted, 1);
@@ -201,7 +201,7 @@ void main() {
         state = service.forceCompleteMission(state);
       }
 
-      expect(rewards, [1.0, 2.0, 3.0, 5.0, 8.0]);
+      expect(rewards, [10.0, 20.0, 30.0, 40.0, 50.0]);
     });
 
     test('應該忽略非相關任務類型的事件', () {
@@ -278,7 +278,7 @@ void main() {
       expect(stats['target'], 50.0);
       expect(stats['todayCompleted'], 2);
       expect(stats['isCompleted'], false);
-      expect(stats['nextReward'], 3); // 第3個任務的獎勵
+      expect(stats['nextReward'], 30); // 第3個任務的獎勵
     });
 
     test('應該正確獲取顯示參數', () {

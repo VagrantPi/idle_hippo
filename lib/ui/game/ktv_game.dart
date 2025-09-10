@@ -26,7 +26,8 @@ class KtvGame extends FlameGame with TapCallbacks {
   final KtvScoring scoring = KtvScoring();
   StreamSubscription<JudgementResult>? _judgementSub;
   // 幾何判定版：自行廣播判定事件供 UI 使用
-  final StreamController<JudgementResult> _judgementCtrl = StreamController<JudgementResult>.broadcast();
+  final StreamController<JudgementResult> _judgementCtrl =
+      StreamController<JudgementResult>.broadcast();
   Stream<JudgementResult> get judgements => _judgementCtrl.stream;
 
   final Map<String, NoteComponent> _activeNotesById = {};
@@ -62,11 +63,13 @@ class KtvGame extends FlameGame with TapCallbacks {
     _judgementSub = _gameLogic.judgementStream.listen(_onJudgement);
 
     // 背景軌道與判定線
-    add(LaneBackgroundComponent(
-      laneLayout: laneLayout,
-      judgelineY: laneLayout.judgelineY,
-      screenHeight: laneLayout.screenHeight,
-    ));
+    add(
+      LaneBackgroundComponent(
+        laneLayout: laneLayout,
+        judgelineY: laneLayout.judgelineY,
+        screenHeight: laneLayout.screenHeight,
+      ),
+    );
 
     // 建立各 lane 的幾何判定帶（依新規格）
     _spawnJudgeBands();
@@ -234,11 +237,13 @@ class KtvGame extends FlameGame with TapCallbacks {
       if (delta > despawnGraceMs) {
         // 逾時 MISS
         scoring.onJudge(Judgement.miss);
-        _judgementCtrl.add(JudgementResult(
-          note: n.note,
-          judgement: Judgement.miss,
-          deltaMs: delta.toInt(),
-        ));
+        _judgementCtrl.add(
+          JudgementResult(
+            note: n.note,
+            judgement: Judgement.miss,
+            deltaMs: delta.toInt(),
+          ),
+        );
         _onNoteDespawn(n);
       }
     }
@@ -299,11 +304,9 @@ class KtvGame extends FlameGame with TapCallbacks {
 
     // 記分與移除
     scoring.onJudge(judgement);
-    _judgementCtrl.add(JudgementResult(
-      note: note.note,
-      judgement: judgement,
-      deltaMs: 0,
-    ));
+    _judgementCtrl.add(
+      JudgementResult(note: note.note, judgement: judgement, deltaMs: 0),
+    );
     _onNoteDespawn(note);
   }
 

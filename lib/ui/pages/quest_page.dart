@@ -6,6 +6,8 @@ import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
 import 'package:idle_hippo/services/rewarded_ad_service.dart';
+import 'package:idle_hippo/services/tutorial_service.dart';
+import 'package:idle_hippo/services/tutorial_focus_service.dart';
 
 class QuestPage extends StatefulWidget {
   final List<Map<String, dynamic>> missionPlan;
@@ -576,81 +578,98 @@ class _QuestPageState extends State<QuestPage>
           ),
         ),
         const SizedBox(height: 12),
-        // 進度總覽
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE89A00), width: 1.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                localization.getString(
-                  'quest.current_stage',
-                  replacements: {'n': '$currentStage'},
-                  defaultValue: '目前階段 $currentStage',
-                ),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+        // 進度總覽（提供給新手教學作為 focus: mainline_title）
+        Builder(
+          builder: (ctx) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final box = ctx.findRenderObject() as RenderBox?;
+              if (box == null || !box.attached) return;
+              final topLeft = box.localToGlobal(Offset.zero);
+              final size = box.size;
+              final rect = Rect.fromLTWH(
+                topLeft.dx,
+                topLeft.dy,
+                size.width,
+                size.height,
+              );
+              TutorialFocusService().setRect('mainline_title', rect);
+            });
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE89A00), width: 1.5),
               ),
-              const SizedBox(height: 8),
-              if (requirementType == 'tap_count')
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      localization.getString(
-                        'quest.requirement.title.tap',
-                        defaultValue: '累積點擊次數',
-                      ),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localization.getString(
+                      'quest.current_stage',
+                      replacements: {'n': '$currentStage'},
+                      defaultValue: '目前階段 $currentStage',
                     ),
-                    Text(
-                      '$progressText / $targetText',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                )
-              else if (requirementType == 'meme_points')
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      localization.getString(
-                        'quest.requirement.title.meme',
-                        defaultValue: '累積迷因點數',
-                      ),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (requirementType == 'tap_count')
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          localization.getString(
+                            'quest.requirement.title.tap',
+                            defaultValue: '累積點擊次數',
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '$progressText / $targetText',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (requirementType == 'meme_points')
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          localization.getString(
+                            'quest.requirement.title.meme',
+                            defaultValue: '累積迷因點數',
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '$progressText / $targetText',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '$progressText / $targetText',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
+                ],
+              ),
+            );
+          },
         ),
         // 移除統計卡片與清單之間的留白
         const SizedBox(height: 10),
@@ -676,6 +695,189 @@ class _QuestPageState extends State<QuestPage>
                     quest['progressText']?.toString() ?? '0';
                 final itemTargetText = quest['targetText']?.toString() ?? '0';
                 final reward = (quest['reward'] as Map<String, dynamic>?);
+
+                if (index == 0) {
+                  // 量測第一個任務項目的區域，供 btn_mainline_claim 聚焦使用
+                  return Builder(
+                    builder: (ctx) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        final box = ctx.findRenderObject() as RenderBox?;
+                        if (box == null || !box.attached) return;
+                        final topLeft = box.localToGlobal(Offset.zero);
+                        final size = box.size;
+                        final rect = Rect.fromLTWH(
+                          topLeft.dx,
+                          topLeft.dy,
+                          size.width,
+                          size.height,
+                        );
+                        TutorialFocusService().setRect(
+                          'btn_mainline_claim',
+                          rect,
+                        );
+                      });
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isCompleted
+                                ? const Color(0xFF00FFD1)
+                                : (isCurrent
+                                      ? const Color(0xFFE89A00)
+                                      : Colors.white24),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: isCurrent
+                                      ? const Color(0xFFE89A00)
+                                      : (isCompleted
+                                            ? const Color(0xFF00FFD1)
+                                            : Colors.white24),
+                                  child: Text(
+                                    '$stage',
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    localization.getString(
+                                      'quest.stage$stage.title',
+                                      defaultValue: 'Stage $stage',
+                                    ),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                if (isCompleted)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF00FFD1),
+                                  )
+                                else if (isCurrent)
+                                  SizedBox(
+                                    height: 32,
+                                    child: ElevatedButton(
+                                      onPressed: canClaimCurrent
+                                          ? () {
+                                              if (widget.onClaimCurrentStage !=
+                                                  null) {
+                                                // 教學 Step5：點擊主線任務領取 → 進入 Step6
+                                                final t = TutorialService();
+                                                if (!t.isCompleted &&
+                                                    t.isAllowedTarget(
+                                                      'btn_mainline_claim',
+                                                    )) {
+                                                  // 保險起見：若仍停在 Step5，直接設定到 Step6
+                                                  if (t.state.value.step == 5) {
+                                                    // ignore: discarded_futures
+                                                    t.setStep(6);
+                                                  }
+                                                }
+                                                widget.onClaimCurrentStage!();
+                                              } else {
+                                                setState(() {
+                                                  _state = _mainQuest
+                                                      .claimCurrentQuest(
+                                                        _state,
+                                                      );
+                                                });
+                                              }
+                                            }
+                                          : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: canClaimCurrent
+                                            ? const Color(0xFFE89A00)
+                                            : Colors.grey,
+                                        foregroundColor: Colors.black,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        localization.getString(
+                                          'quest.completed.confirm',
+                                          defaultValue: '確認',
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const Icon(Icons.lock, color: Colors.white38),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // 需求顯示（擇一）
+                            Text(
+                              reqType == 'tap_count'
+                                  ? localization.getString(
+                                      'quest.requirement.text.tap',
+                                      replacements: {
+                                        'progress': itemProgressText,
+                                        'target': itemTargetText,
+                                      },
+                                      defaultValue:
+                                          '需求：點擊 $itemProgressText / $itemTargetText 次',
+                                    )
+                                  : localization.getString(
+                                      'quest.requirement.text.meme',
+                                      replacements: {
+                                        'progress': itemProgressText,
+                                        'target': itemTargetText,
+                                      },
+                                      defaultValue:
+                                          '需求：累積 $itemProgressText / $itemTargetText 迷因點數',
+                                    ),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // 獎勵顯示
+                            Text(
+                              (localization.getString(
+                                    'quest.reward.label',
+                                    defaultValue: '獎勵：',
+                                  )) +
+                                  (reward == null
+                                      ? localization.getString(
+                                          'quest.reward.none',
+                                          defaultValue: '—',
+                                        )
+                                      : _getRewardDisplayText(
+                                          localization,
+                                          reward,
+                                        )),
+                              style: const TextStyle(
+                                color: Color(0xFFE89A00),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }
 
                 return Container(
                   padding: const EdgeInsets.symmetric(
