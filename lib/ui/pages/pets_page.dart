@@ -633,15 +633,13 @@ class _PetsPageState extends State<PetsPage>
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final imageHeight = constraints.maxHeight * 0.38; // 依卡片高度自適應
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 圖片（置中、等比縮放）
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  height: imageHeight,
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: FractionallySizedBox(

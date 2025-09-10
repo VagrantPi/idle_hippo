@@ -90,10 +90,8 @@ class _PowerSaverPageState extends State<PowerSaverPage>
 
       // 設定新亮度
       await ScreenBrightness().setScreenBrightness(brightness);
-      debugPrint('成功設定亮度: $brightness');
     } catch (e) {
       // 如果無法控制亮度，使用黑遮罩替代
-      debugPrint('無法控制系統亮度: $e');
       _originalBrightness ??= 0.5; // 預設值
     }
   }
@@ -157,8 +155,17 @@ class _PowerSaverPageState extends State<PowerSaverPage>
           final w = constraints.maxWidth;
           final base = math.min(h, w);
           final clockSize = base * 0.12; // 自適應字體
-          final spacing = (h * 0.04).clamp(12.0, 40.0);
-          final maxImageSide = h * 0.35; // 限制圖片高度，避免溢出
+          // 注意：容器高度為 base，間距與圖片大小需以 base 為基準，避免溢出
+          final spacing = (base * 0.05).clamp(6.0, 24.0);
+          final maxImageSide = base * 0.55; // 以 base 限制圖片高度
+          final hintFont = (base * 0.06).clamp(14.0, 20.0);
+          // 預估文字高度（單行）與外邊距；父 Padding 上下各 16
+          final estClockH = clockSize; // 單行等寬字
+          final estHintH = hintFont * 1.2 + 16; // 含內邊距估計
+          final verticalPad = 32.0;
+          // 預算圖片邏輯高度：確保三者 + 間距 + padding 不超過 base
+          final estimatedImage = base - (estClockH + estHintH + spacing * 2 + verticalPad);
+          final imageSide = estimatedImage.clamp(0.0, maxImageSide);
 
           return Center(
             child: SizedBox(
@@ -172,9 +179,23 @@ class _PowerSaverPageState extends State<PowerSaverPage>
                   children: [
                     _buildClock(fontSize: clockSize.clamp(56.0, 96.0)),
                     SizedBox(height: spacing),
-                    _buildMoonImage(isPortrait: true, maxSide: maxImageSide),
+                    // 以 Expanded 讓圖片在剩餘空間內自適應，避免 Column 溢出
+                    Expanded(
+                      child: Center(
+                        child: _buildMoonImage(
+                          isPortrait: true,
+                          maxSide: imageSide,
+                        ),
+                      ),
+                    ),
                     SizedBox(height: spacing),
-                    _buildHintText(fontSize: 24),
+                    _buildHintText(
+                      fontSize: hintFont,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -225,9 +246,13 @@ class _PowerSaverPageState extends State<PowerSaverPage>
     );
   }
 
-  Widget _buildMoonImage({required bool isPortrait, double? maxSide}) {
+  Widget _buildMoonImage({
+    required bool isPortrait,
+    double? maxSide,
+    double? forcedSize,
+  }) {
     final size = MediaQuery.of(context).size;
-    double imageSize = isPortrait ? size.width * 0.5 : size.height * 0.3;
+    double imageSize = forcedSize ?? (isPortrait ? size.width * 0.5 : size.height * 0.3);
     if (maxSide != null) {
       imageSize = math.min(imageSize, maxSide);
     }
@@ -261,9 +286,9 @@ class _PowerSaverPageState extends State<PowerSaverPage>
     );
   }
 
-  Widget _buildHintText({required double fontSize}) {
+  Widget _buildHintText({required double fontSize, EdgeInsets? padding}) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: padding ?? const EdgeInsets.all(24.0),
       child: Text(
         LocalizationService().getString('power_save.tap_to_exit'),
         style: TextStyle(

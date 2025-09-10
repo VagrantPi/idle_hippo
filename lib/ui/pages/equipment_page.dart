@@ -146,29 +146,32 @@ class _EquipmentPageState extends State<EquipmentPage>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Icon（縮小 50%，置中）
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: FractionallySizedBox(
-                        widthFactor: 0.5,
-                        child: Image.asset(
-                          icon,
-                          fit: BoxFit.contain,
-                          alignment: Alignment.topCenter,
-                          errorBuilder: (c, e, s) => Container(
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.5,
+                          child: Image.asset(
+                            icon,
+                            fit: BoxFit.contain,
                             alignment: Alignment.topCenter,
-                            color: Colors.white10,
-                            child: const Icon(
-                              Icons.videogame_asset,
-                              color: Colors.white54,
+                            errorBuilder: (c, e, s) => Container(
+                              alignment: Alignment.topCenter,
+                              color: Colors.white10,
+                              child: const Icon(
+                                Icons.videogame_asset,
+                                color: Colors.white54,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 1),
+                  const SizedBox(height: 4),
                   Text(
                     localization.getString(nameKey),
                     style: const TextStyle(
@@ -193,8 +196,10 @@ class _EquipmentPageState extends State<EquipmentPage>
                                 color: Colors.white,
                                 fontSize: 12,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 1),
+                            const SizedBox(height: 2),
                             Builder(
                               builder: (_) {
                                 final double delta = !isMax
@@ -209,10 +214,12 @@ class _EquipmentPageState extends State<EquipmentPage>
                                     color: Colors.lightGreenAccent,
                                     fontSize: 12,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 );
                               },
                             ),
-                            const SizedBox(height: 1),
+                            const SizedBox(height: 2),
                             Text(
                               '${localization.getUI('cost')}: ${nextCost ?? '-'}',
                               style: TextStyle(
@@ -221,6 +228,8 @@ class _EquipmentPageState extends State<EquipmentPage>
                                     : Colors.white54,
                                 fontSize: 12,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -295,6 +304,8 @@ class _EquipmentPageState extends State<EquipmentPage>
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -360,13 +371,15 @@ class _EquipmentPageState extends State<EquipmentPage>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Icon（縮小 50%，置中）
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: FractionallySizedBox(
-                        widthFactor: 0.5,
-                        child: () {
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.5,
+                          child: () {
                           final img = Image.asset(
                             icon,
                             fit: BoxFit.contain,
@@ -409,11 +422,12 @@ class _EquipmentPageState extends State<EquipmentPage>
                             );
                           }
                           return img;
-                        }(),
+                          }(),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 1),
+                  const SizedBox(height: 4),
                   Text(
                     localization.getString(nameKey),
                     style: const TextStyle(
@@ -438,8 +452,10 @@ class _EquipmentPageState extends State<EquipmentPage>
                                 color: Colors.white,
                                 fontSize: 12,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 1),
+                            const SizedBox(height: 2),
                             Builder(
                               builder: (_) {
                                 final double delta = !isMax
@@ -454,10 +470,12 @@ class _EquipmentPageState extends State<EquipmentPage>
                                     color: Colors.lightGreenAccent,
                                     fontSize: 12,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 );
                               },
                             ),
-                            const SizedBox(height: 1),
+                            const SizedBox(height: 2),
                             Text(
                               '${localization.getUI('cost')}: ${nextCost ?? '-'}',
                               style: TextStyle(
@@ -466,6 +484,8 @@ class _EquipmentPageState extends State<EquipmentPage>
                                     : Colors.white54,
                                 fontSize: 12,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -550,6 +570,8 @@ class _EquipmentPageState extends State<EquipmentPage>
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),

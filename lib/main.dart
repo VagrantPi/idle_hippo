@@ -24,6 +24,10 @@ import 'package:idle_hippo/services/decimal_utils.dart';
 import 'package:idle_hippo/ui/components/slide_in_dialog.dart';
 import 'package:idle_hippo/ui/loading_screen.dart';
 
+// 全域 ScaffoldMessenger Key，確保任何頁面都能顯示 Snackbar
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 void main() {
   runApp(const IdleHippoApp());
 }
@@ -40,6 +44,7 @@ class IdleHippoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       // Step 24: 啟動時先進 Loading 畫面
       home: testMode ? IdleHippoScreen(testMode: testMode) : const LoadingScreen(),
       routes: {
@@ -58,7 +63,8 @@ class IdleHippoScreen extends StatefulWidget {
   State<IdleHippoScreen> createState() => _IdleHippoScreenState();
 }
 
-class _IdleHippoScreenState extends State<IdleHippoScreen> {
+class _IdleHippoScreenState extends State<IdleHippoScreen>
+    with WidgetsBindingObserver {
   final ConfigService _configService = ConfigService();
   final SecureSaveService _saveService = SecureSaveService();
   final GameStateService _gameStateService = GameStateService();
@@ -90,9 +96,22 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
   // Gacha tickets 訂閱，避免 autosave 用舊值覆寫
   StreamSubscription<int>? _petTicketsSub;
 
+  // 與打卡服務協調：避免本地狀態覆蓋服務剛更新的 checkin 進度
+  GameState _withLatestCheckin(GameState base) {
+    try {
+      final latest = _gameStateService.gameState.value.checkin;
+      if (identical(latest, base.checkin)) return base;
+      return base.copyWith(checkin: latest ?? base.checkin);
+    } catch (_) {
+      return base;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    // 監聽應用生命週期，用於重要節點即時存檔
+    WidgetsBinding.instance.addObserver(this);
     _gameState = GameState.initial(_saveService.currentVersion);
     _initializeGame();
   }
@@ -162,11 +181,17 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
 
   Future<void> _setupGameStateSync() async {
     try {
-      // 初始化 GameStateService 並以目前已載入的本地狀態為基準
+      // 初始化 GameStateService 並以服務狀態為主，避免覆蓋較新值
       await _gameStateService.initialize();
-
-      // 將目前畫面狀態同步到服務，確保單一來源（也會觸發保存）
-      await _gameStateService.updateGameState(_gameState);
+      if (mounted) {
+        final svcState = _gameStateService.gameState.value;
+        if (!identical(svcState, _gameState)) {
+          setState(() {
+            _gameState = svcState;
+            _idleIncome.updateGameState(_gameState);
+          });
+        }
+      }
 
       // 監聽服務狀態變更，保持畫面狀態與服務一致，避免 autosave 覆寫
       _gameStateService.gameState.addListener(() {
@@ -218,10 +243,25 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _uiUpdateTimer?.cancel();
     _tapFracTimer?.cancel();
     _petTicketsSub?.cancel();
+    // 移除生命週期監聽並嘗試最後一次存檔
+    WidgetsBinding.instance.removeObserver(this);
+    // 嘗試同步最後狀態（忽略錯誤，避免阻塞銷毀）
+    unawaited(_saveGameState().catchError((_) => null));
     _gameClock.dispose();
     _idleIncome.dispose();
     _offline.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // 在 paused/inactive/detached 嘗試非阻塞存檔，避免使用者過早關閉導致未落盤
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      unawaited(_saveGameState().catchError((_) => null));
+    }
   }
 
   Future<void> _loadGameState() async {
@@ -232,9 +272,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
       });
     } else {
       try {
-        final loadedState = await _saveService.load();
+        // 關鍵修正：統一透過 GameStateService 取得狀態，避免雙路徑造成覆寫
+        await _gameStateService.initialize();
         setState(() {
-          _gameState = loadedState;
+          _gameState = _gameStateService.gameState.value;
         });
       } catch (e) {
         throw Exception('Failed to load game state: $e');
@@ -269,12 +310,13 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
           CheckinService().updateCollectProgress(pointsToAdd);
 
           setState(() {
-            _gameState = updatedState.copyWith(
+            final next = updatedState.copyWith(
               memePoints: DecimalUtils.add(
                 updatedState.memePoints,
                 pointsToAdd,
               ),
             );
+            _gameState = _withLatestCheckin(next);
           });
         }
       },
@@ -311,7 +353,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
               updatedState = _mainQuest.onEarnPoints(updatedState, reward);
               // 同步推進寵物抽獎券任務進度（離線收益）
               updatedState = _petTicketQuest.addProgress(updatedState, reward);
-              _gameState = updatedState;
+              _gameState = _withLatestCheckin(updatedState);
             });
           }
         }
@@ -329,9 +371,10 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     _dailyMission.setRewardCallback((points) {
       if (!mounted) return;
       setState(() {
-        _gameState = _gameState.copyWith(
+        final next = _gameState.copyWith(
           memePoints: DecimalUtils.add(_gameState.memePoints, points),
         );
+        _gameState = _withLatestCheckin(next);
       });
     });
 
@@ -1092,7 +1135,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     });
   }
 
-  Future<void> _saveGameState() async {
+  Future<void> _saveGameState({String source = '', bool showToastOnResult = false}) async {
     if (widget.testMode) {
       // 測試模式：不進行任何持久化
       return;
@@ -1102,8 +1145,25 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     }
     try {
       // 透過 GameStateService 單一路徑持久化，避免與其他服務衝突
-      await _gameStateService.updateGameState(_gameState);
+      await _gameStateService.updateGameState(
+        _gameState,
+        throwOnError: true,
+      );
+      if (showToastOnResult) {
+        final msg = source.isNotEmpty ? '[Save OK] $source' : '[Save OK]';
+        rootScaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.green),
+        );
+      }
     } catch (e) {
+      if (showToastOnResult) {
+        final msg = source.isNotEmpty
+            ? '[Save FAILED] $source: $e'
+            : '[Save FAILED]: $e';
+        rootScaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
       rethrow;
     }
   }
@@ -1135,22 +1195,34 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     // 重置每日任務
     await _checkinService.initialize();
 
-    // 立即存檔
-    await _saveGameState();
+    // 立即存檔（強制覆寫），避免被合併策略保留舊裝備等級
+    await _gameStateService.updateGameState(_gameState, forceReplace: true);
   }
 
-  void _onEquipmentUpgrade(String id) {
+  Future<void> _onEquipmentUpgrade(String id) async {
     setState(() {
       _gameState = _equipment.upgrade(_gameState, id);
     });
+    // 升級後立即保存（等待完成），避免立刻關閉導致未落盤
+    if (!widget.testMode) {
+      try {
+        await _saveGameState();
+      } catch (_) {}
+    }
   }
 
-  void _onIdleEquipmentUpgrade(String id) {
+  Future<void> _onIdleEquipmentUpgrade(String id) async {
     setState(() {
       _gameState = _equipment.upgradeIdle(_gameState, id);
       // 更新 IdleIncomeService 的 GameState 參考以重新計算加成
       _idleIncome.updateGameState(_gameState);
     });
+    // 升級後立即保存（等待完成），避免立刻關閉導致未落盤
+    if (!widget.testMode) {
+      try {
+        await _saveGameState();
+      } catch (_) {}
+    }
   }
 
   void _onCharacterTap() {
@@ -1177,17 +1249,22 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     if (result.allowedGain > 0) {
       // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
       setState(() {
-        _gameState = updatedState.copyWith(
+        final next = updatedState.copyWith(
           memePoints: DecimalUtils.add(
             updatedState.memePoints,
             result.allowedGain,
           ),
         );
+        _gameState = _withLatestCheckin(next);
       });
+      // 立即嘗試持久化，避免啟動早期或意外關閉時丟失
+      if (!widget.testMode) {
+        unawaited(_saveGameState().catchError((_) => null));
+      }
     } else {
       // 僅更新狀態以確保 dailyTap block 初始化/維持
       setState(() {
-        _gameState = updatedState;
+        _gameState = _withLatestCheckin(updatedState);
       });
     }
   }
@@ -1218,18 +1295,23 @@ class _IdleHippoScreenState extends State<IdleHippoScreen> {
     if (result.allowedGain > 0) {
       // 累積任務僅由被動來源推進：此處不再計入 onEarnPoints
       setState(() {
-        _gameState = updatedState.copyWith(
+        final next = updatedState.copyWith(
           memePoints: DecimalUtils.add(
             updatedState.memePoints,
             result.allowedGain,
           ),
         );
+        _gameState = _withLatestCheckin(next);
       });
+      // 立即嘗試持久化，避免啟動早期或意外關閉時丟失
+      if (!widget.testMode) {
+        unawaited(_saveGameState().catchError((_) => null));
+      }
       return result.allowedGain.floor();
     } else {
       // 已達每日上限：僅更新狀態（保留任務可能的變更）
       setState(() {
-        _gameState = updatedState;
+        _gameState = _withLatestCheckin(updatedState);
       });
       return 0;
     }
