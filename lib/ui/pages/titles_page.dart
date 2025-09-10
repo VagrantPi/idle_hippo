@@ -587,6 +587,8 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
         .where((e) => e.status == _TitleStatus.locked)
         .toList();
     final list = [...claimables, ...lockeds];
+    // 讓清單底部不會被 Navbar 擋住：安全區 + 額外緩衝
+    final bottomPad = MediaQuery.of(context).padding.bottom + 80;
 
     if (list.isEmpty) {
       return Padding(
@@ -609,7 +611,7 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
     }
 
     return GridView.builder(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.only(bottom: bottomPad),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 0.9,
@@ -637,8 +639,11 @@ class _TitlesPageState extends State<TitlesPage> with TickerProviderStateMixin {
       );
     }
 
+    // 讓清單底部不會被 Navbar 擋住：安全區 + 額外緩衝
+    final bottomPad = MediaQuery.of(context).padding.bottom + 80;
+
     return GridView.builder(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.only(bottom: bottomPad),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 1,
