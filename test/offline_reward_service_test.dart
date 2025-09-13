@@ -39,6 +39,12 @@ void main() {
               json.encode({'quests': []}),
             );
           }
+          if (key.endsWith('store.json')) {
+            // 最小可行的商店設定，避免測試載入資產失敗
+            return const StringCodec().encodeMessage(
+              json.encode({'items': {}, 'tabs': {}}),
+            );
+          }
           return null;
         });
     // Manually init ConfigService for testing

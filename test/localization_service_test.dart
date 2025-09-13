@@ -7,10 +7,10 @@ void main() {
 
   late LocalizationService localizationService;
 
-  setUp(() {
+  setUp(() async {
     localizationService = LocalizationService();
-    // 重置為預設語言
-    localizationService.init(language: 'en');
+    // 重置為預設語言（等待初始化完成，避免與後續 changeLanguage 產生競態）
+    await localizationService.init(language: 'en');
   });
 
   group('LocalizationService 測試', () {
@@ -18,14 +18,15 @@ void main() {
       expect(localizationService.currentLanguage, equals('en'));
     });
 
-    test('應可正確切換語言', () {
-      localizationService.init(language: 'zh');
+    test('應可正確切換語言', () async {
+      // 使用 changeLanguage 方法切換語言
+      await localizationService.changeLanguage('zh');
       expect(localizationService.currentLanguage, equals('zh'));
 
-      localizationService.init(language: 'jp');
+      await localizationService.changeLanguage('jp');
       expect(localizationService.currentLanguage, equals('jp'));
 
-      localizationService.init(language: 'ko');
+      await localizationService.changeLanguage('ko');
       expect(localizationService.currentLanguage, equals('ko'));
     });
 

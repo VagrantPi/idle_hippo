@@ -129,9 +129,12 @@ class RewardedAdService {
     required String dialogTitle,
     required Widget rewardContent,
     bool showSuccessDialog = true,
+    Duration simulateDuration = const Duration(seconds: 3),
   }) async {
     // 1. 模擬觀看廣告
-    await Future.delayed(const Duration(seconds: 3));
+    if (simulateDuration > Duration.zero) {
+      await Future.delayed(simulateDuration);
+    }
 
     // 2. 執行實際的獎勵邏輯 (例如：發放獎勵、存檔)
     await onAdWatched();

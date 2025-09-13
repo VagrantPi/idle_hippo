@@ -1,0 +1,167 @@
+{
+  "items": {
+    "store.card_click_perm": {
+      "name_key": "store.items.card_click_perm.name",
+      "desc_key": "store.items.card_click_perm.desc",
+      "image": "assets/images/store/CardClickPerm.png",
+      "purchase_limit_type": "limited",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    },
+    "store.card_idle_perm": {
+      "name_key": "store.items.card_idle_perm.name",
+      "desc_key": "store.items.card_idle_perm.desc",
+      "image": "assets/images/store/CardIdlePerm.png",
+      "purchase_limit_type": "limited",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    },
+    "store.card_click_2x_30m": {
+      "name_key": "store.items.card_click_2x_30m.name",
+      "desc_key": "store.items.card_click_2x_30m.desc",
+      "image": "assets/images/store/CardClick2x30m.png",
+      "purchase_limit_type": "unlimited",
+      "purchase_max_count": 0,
+      "ads_pay": false
+    },
+    "store.card_idle_2x_1h": {
+      "name_key": "store.items.card_idle_2x_1h.name",
+      "desc_key": "store.items.card_idle_2x_1h.desc",
+      "image": "assets/images/store/CardIdle2x1h.png",
+      "purchase_limit_type": "unlimited",
+      "purchase_max_count": 0,
+      "ads_pay": false
+    },
+    "store.card_offline_perm_6h": {
+      "name_key": "store.items.card_offline_perm_6h.name",
+      "desc_key": "store.items.card_offline_perm_6h.desc",
+      "image": "assets/images/store/CardOfflinePerm6h.png",
+      "purchase_limit_type": "limited",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    },
+    "store.card_offline_once_6h": {
+      "name_key": "store.items.card_offline_once_6h.name",
+      "desc_key": "store.items.card_offline_once_6h.desc",
+      "image": "assets/images/store/CardOfflineOnce6h.png",
+      "purchase_limit_type": "unlimited",
+      "purchase_max_count": 0,
+      "ads_pay": false
+    },
+    "store.card_cap_perm": {
+      "name_key": "store.items.card_cap_perm.name",
+      "desc_key": "store.items.card_cap_perm.desc",
+      "image": "assets/images/store/CardCapPerm.png",
+      "purchase_limit_type": "limited",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    },
+    "store.ticket_pet_single": {
+      "name_key": "store.items.ticket_pet_single.name",
+      "desc_key": "store.items.ticket_pet_single.desc",
+      "image": "assets/images/store/TicketPetSingle.png",
+      "purchase_limit_type": "unlimited",
+      "purchase_max_count": 0,
+      "ads_pay": false
+    },
+    "store.ticket_pet_10plus1": {
+      "name_key": "store.items.ticket_pet_10plus1.name",
+      "desc_key": "store.items.ticket_pet_10plus1.desc",
+      "image": "assets/images/store/TicketPet10Plus1.png",
+      "purchase_limit_type": "unlimited",
+      "purchase_max_count": 0,
+      "ads_pay": false
+    },
+    "store.pack_daily": {
+      "name_key": "store.items.pack_daily.name",
+      "desc_key": "store.items.pack_daily.desc",
+      "image": "assets/images/store/PackDaily.png",
+      "purchase_limit_type": "daily",
+      "purchase_max_count": 1,
+      "ads_pay": true
+    },
+    "store.pack_monthly": {
+      "name_key": "store.items.pack_monthly.name",
+      "desc_key": "store.items.pack_monthly.desc",
+      "image": "assets/images/store/PackMonthly.png",
+      "purchase_limit_type": "monthly",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    },
+    "store.pack_7n_starter": {
+      "name_key": "store.items.pack_7n_starter.name",
+      "desc_key": "store.items.pack_7n_starter.desc",
+      "image": "assets/images/store/PackStarter7n.png",
+      "purchase_limit_type": "first7",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    },
+    "store.pack_30n_starter": {
+      "name_key": "store.items.pack_30n_starter.name",
+      "desc_key": "store.items.pack_30n_starter.desc",
+      "image": "assets/images/store/PackStarter30n.png",
+      "purchase_limit_type": "first30",
+      "purchase_max_count": 1,
+      "ads_pay": false
+    }
+  },
+  "tabs": {
+    "permanent": [
+      {
+        "section_key": "store.section.boost_permanent",
+        "items": [
+          "store.card_click_perm",
+          "store.card_idle_perm"
+        ]
+      },
+      {
+        "section_key": "store.section.boost_temporary",
+        "items": [
+          "store.card_click_2x_30m",
+          "store.card_idle_2x_1h"
+        ]
+      },
+      {
+        "section_key": "store.section.offline",
+        "items": [
+          "store.card_offline_perm_6h",
+          "store.card_offline_once_6h"
+        ]
+      },
+      {
+        "section_key": "store.section.tap_cap",
+        "items": [
+          "store.card_cap_perm"
+        ]
+      },
+      {
+        "section_key": "store.section.tickets",
+        "items": [
+          "store.ticket_pet_single",
+          "store.ticket_pet_10plus1"
+        ]
+      }
+    ],
+    "limited": [
+      {
+        "section_key": "store.section.daily",
+        "items": [
+          "store.pack_daily"
+        ]
+      },
+      {
+        "section_key": "store.section.monthly",
+        "items": [
+          "store.pack_monthly"
+        ]
+      },
+      {
+        "section_key": "store.section.starter",
+        "items": [
+          "store.pack_7n_starter",
+          "store.pack_30n_starter"
+        ]
+      }
+    ]
+  }
+}

@@ -12,7 +12,8 @@ assets/config/
 ├── equipments.json    # 裝備資料配置
 ├── pets.json          # 寵物資料配置
 ├── titles.json        # 稱號資料配置
-└── quests.json        # 任務資料配置
+├── quests.json        # 任務資料配置
+└── store.json         # 商城 UI 資料（Step26）
 ```
 
 ---
@@ -245,6 +246,43 @@ assets/config/
   ]
 }
 ```
+
+---
+
+## 🛒 store.json - 商城 UI 資料（Step26）
+
+本檔提供商城頁面的 UI 渲染資料（不含邏輯），包含分頁（Tabs）、分組（Sections）與卡片內容（Items）。
+
+結構最小示意：
+
+```json
+{
+  "items": {
+    "store.card_click_perm": {
+      "name": {"zh": "永久點擊加成卡", "en": "Permanent Tap Booster"},
+      "desc": {"zh": "永久提升點擊收益倍率。", "en": "Permanently increases tap gains."},
+      "image": "assets/images/store/CardClickPerm.png",
+      "purchase_limit_type": "limited",   // limited|unlimited|daily|monthly|first7|first30
+      "purchase_max_count": 1,
+      "ads_pay": false
+    }
+  },
+  "tabs": {
+    "permanent": [
+      { "section_key": "store.section.boost_permanent", "items": ["store.card_click_perm"] }
+    ],
+    "limited": [
+      { "section_key": "store.section.daily", "items": ["store.pack_daily"] }
+    ]
+  }
+}
+```
+
+注意事項：
+
+- i18n：Tab/分組標題與徽章、按鈕等文案在 `assets/lang/*.json` 下的 `store.*` 鍵位定義。
+- 名稱與描述可直接使用本檔 `name`/`desc`（含多語對應值）；若未提供對應語言，會回退到 `en` 或 `zh`。
+- 僅提供 UI 所需欄位；購買/權益等邏輯將於後續階段實作。
 
 ---
 
