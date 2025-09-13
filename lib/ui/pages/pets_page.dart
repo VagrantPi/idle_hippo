@@ -215,6 +215,8 @@ class _PetsPageState extends State<PetsPage>
       builder: (context, snapshot) {
         final petState = snapshot.data ?? const PetState();
         final pets = _petService.getSortedPets();
+        // 讓清單底部不會被 Navbar 擋住：安全區 + 額外緩衝
+        final bottomPad = MediaQuery.of(context).padding.bottom + 80;
 
         if (pets.isEmpty) {
           return Padding(
@@ -257,7 +259,7 @@ class _PetsPageState extends State<PetsPage>
               // 寵物列表（兩欄 Grid）
               Expanded(
                 child: GridView.builder(
-                  padding: EdgeInsets.zero,
+                  padding: EdgeInsets.only(bottom: bottomPad),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.75,
@@ -389,6 +391,8 @@ class _PetsPageState extends State<PetsPage>
         final visible = history
             .where((r) => !_pendingRevealTimestamps.contains(r.timestamp))
             .toList();
+        // 讓清單底部不會被 Navbar 擋住：安全區 + 額外緩衝
+        final bottomPad = MediaQuery.of(context).padding.bottom + 80;
 
         if (visible.isEmpty) {
           return Center(
@@ -400,7 +404,7 @@ class _PetsPageState extends State<PetsPage>
         }
 
         return ListView.builder(
-          padding: EdgeInsets.zero,
+          padding: EdgeInsets.only(bottom: bottomPad),
           itemCount: visible.length,
           itemBuilder: (context, index) {
             final record = visible[index];

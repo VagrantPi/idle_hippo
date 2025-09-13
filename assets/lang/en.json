@@ -8,7 +8,7 @@
   },
   "pages": {
     "home": "Home",
-    "equipment": "Equipment", 
+    "equipment": "Equipment",
     "pets": "Pets",
     "shop": "Shop",
     "titles": "Titles",
@@ -344,8 +344,7 @@
     "download_all": "Download All",
     "all_downloaded": "All downloaded",
     "daily_locked": "Already completed today. Come back tomorrow!"
-  }
-  ,
+  },
   "tutorial": {
     "pet_intro": "Pets can be obtained through gacha; they are your strongest allies",
     "pet_ticket_info": "You can now earn gacha tickets from daily quests",
@@ -364,5 +363,93 @@
     "epilogue": "This is the beginning of Hippo's legend",
     "manga": "Tap to continue",
     "next": "Next"
+  },
+  "store": {
+    "tab": {
+      "permanent": "Permanent Resources",
+      "limited": "Limited-Time Pack"
+    },
+    "section": {
+      "boost_permanent": "Meme Points Boost Card",
+      "boost_temporary": "Temporary Boost Card",
+      "offline": "Offline Idle Bonus",
+      "tap_cap": "Tap Limit Increase",
+      "tickets": "Pet Lottery Ticket",
+      "daily": "Daily Limited Pack",
+      "monthly": "Monthly Limited Pack",
+      "starter": "Beginner Growth Pack"
+    },
+    "badge": {
+      "once": "One-Time Only",
+      "repeat": "Repeatable",
+      "daily": "Daily Limited",
+      "monthly": "Monthly Limited",
+      "first7": "First 7 Days",
+      "first30": "First 30 Days",
+      "ads": "Video Reward"
+    },
+    "btn": {
+      "buy": "Purchase",
+      "disabled": "Locked",
+      "owned": "Owned",
+      "ad_buy": "Ad Purchase"
+    },
+    "ads": {
+      "title": "Watch Ad to Purchase"
+    },
+    "items": {
+      "card_click_perm": {
+        "name": "Permanent Tap Booster",
+        "desc": "Permanently increases tap gains."
+      },
+      "card_idle_perm": {
+        "name": "Permanent Idle Booster",
+        "desc": "Permanently increases idle gains."
+      },
+      "card_click_2x_30m": {
+        "name": "Tap x2 for 30m",
+        "desc": "Double tap gains for 30 minutes."
+      },
+      "card_idle_2x_1h": {
+        "name": "Idle x2 for 1h",
+        "desc": "Double idle gains for 1 hour."
+      },
+      "card_offline_perm_6h": {
+        "name": "Permanent Offline Cap +6h",
+        "desc": "Permanently increases offline cap by 6 hours."
+      },
+      "card_offline_once_6h": {
+        "name": "Offline +6h (One-time)",
+        "desc": "Increase offline duration by 6 hours once."
+      },
+      "card_cap_perm": {
+        "name": "Permanent Tap Cap +",
+        "desc": "Permanently increases daily tap cap."
+      },
+      "ticket_pet_single": {
+        "name": "Pet Ticket (Single)",
+        "desc": "Use for a single pet gacha."
+      },
+      "ticket_pet_10plus1": {
+        "name": "Pet Ticket (10+1)",
+        "desc": "Eleven pet gachas for the price of ten."
+      },
+      "pack_daily": {
+        "name": "Daily Pack",
+        "desc": "Daily limited pack with mixed rewards."
+      },
+      "pack_monthly": {
+        "name": "Monthly Pack",
+        "desc": "Monthly limited pack with rich rewards."
+      },
+      "pack_7n_starter": {
+        "name": "7-day Starter Pack",
+        "desc": "Available in first 7 days."
+      },
+      "pack_30n_starter": {
+        "name": "30-day Starter Pack",
+        "desc": "Available in first 30 days."
+      }
+    }
   }
 }

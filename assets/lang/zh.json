@@ -356,5 +356,93 @@
     "epilogue": "接下來是河馬寶寶成為傳說的開始",
     "manga": "點擊以繼續",
     "next": "下一步"
+  },
+  "store": {
+    "tab": {
+      "permanent": "常駐資源",
+      "limited": "限時優惠包"
+    },
+    "section": {
+      "boost_permanent": "迷因點數加成卡",
+      "boost_temporary": "臨時加成卡",
+      "offline": "離線掛機時間加成",
+      "tap_cap": "點擊上限提升",
+      "tickets": "寵物抽獎券",
+      "daily": "每日限購禮包",
+      "monthly": "每月限購禮包",
+      "starter": "新手成長包"
+    },
+    "badge": {
+      "once": "一次性",
+      "repeat": "可重複",
+      "daily": "每日限購",
+      "monthly": "每月限購",
+      "first7": "前 7 天",
+      "first30": "前 30 天",
+      "ads": "影片回饋"
+    },
+    "ads": {
+      "title": "觀看廣告以購買"
+    },
+    "btn": {
+      "buy": "購買",
+      "owned": "已擁有",
+      "disabled": "未開放",
+      "ad_buy": "看廣告購買"
+    },
+    "items": {
+      "card_click_perm": {
+        "name": "永久點擊加成卡",
+        "desc": "永久提升點擊收益倍率。"
+      },
+      "card_idle_perm": {
+        "name": "永久放置加成卡",
+        "desc": "永久提升放置收益倍率。"
+      },
+      "card_click_2x_30m": {
+        "name": "點擊加成 30 分鐘",
+        "desc": "臨時提升點擊收益 2 倍，持續 30 分鐘。"
+      },
+      "card_idle_2x_1h": {
+        "name": "放置加成 1 小時",
+        "desc": "臨時提升放置收益 2 倍，持續 1 小時。"
+      },
+      "card_offline_perm_6h": {
+        "name": "永久離線上限 +6h",
+        "desc": "離線收益累積上限永久增加 6 小時。"
+      },
+      "card_offline_once_6h": {
+        "name": "離線時間 +6h（一次）",
+        "desc": "一次性增加 6 小時離線收益時間。"
+      },
+      "card_cap_perm": {
+        "name": "永久點擊上限 +",
+        "desc": "永久提升每日點擊上限。"
+      },
+      "ticket_pet_single": {
+        "name": "寵物抽獎券（單抽）",
+        "desc": "使用一次寵物抽卡。"
+      },
+      "ticket_pet_10plus1": {
+        "name": "寵物抽獎券（10+1）",
+        "desc": "使用十一次寵物抽卡（贈送一次）。"
+      },
+      "pack_daily": {
+        "name": "每日禮包",
+        "desc": "每日限購，含資源與道具。"
+      },
+      "pack_monthly": {
+        "name": "每月禮包",
+        "desc": "每月限購，含豐富資源。"
+      },
+      "pack_7n_starter": {
+        "name": "7 日新手包",
+        "desc": "帳號前 7 天可購買。"
+      },
+      "pack_30n_starter": {
+        "name": "30 日新手包",
+        "desc": "帳號前 30 天可購買。"
+      }
+    }
   }
 }

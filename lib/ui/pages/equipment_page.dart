@@ -108,9 +108,11 @@ class _EquipmentPageState extends State<EquipmentPage>
     final localization = LocalizationService();
     final equipmentService = EquipmentService();
     final items = equipmentService.listTapEquipments();
+    // 讓清單底部不會被 Navbar 擋住：安全區 + 額外緩衝
+    final bottomPad = MediaQuery.of(context).padding.bottom + 80;
 
     return GridView.builder(
-      padding: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.only(top: 10, bottom: bottomPad),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
@@ -346,9 +348,11 @@ class _EquipmentPageState extends State<EquipmentPage>
     final localization = LocalizationService();
     final equipmentService = EquipmentService();
     final items = equipmentService.listIdleEquipments();
+    // 讓清單底部不會被 Navbar 擋住：安全區 + 額外緩衝
+    final bottomPad = MediaQuery.of(context).padding.bottom + 80;
 
     return GridView.builder(
-      padding: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.only(top: 10, bottom: bottomPad),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,

@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/services.dart';
+import 'package:idle_hippo/services/asset_loader.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalizationService {
   static final LocalizationService _instance = LocalizationService._internal();
@@ -8,6 +9,7 @@ class LocalizationService {
 
   Map<String, dynamic> _localizedStrings = {};
   String _currentLanguage = 'en';
+  static const String _prefsKeyLanguage = 'settings.language';
 
   // 支援的語言
   static const List<String> supportedLanguages = ['en', 'zh', 'jp', 'ko'];
@@ -24,22 +26,54 @@ class LocalizationService {
 
   /// 初始化多語系服務
   Future<void> init({String? language}) async {
-    _currentLanguage = language ?? 'en';
-    await _loadLanguage(_currentLanguage);
+    // 參數優先於已儲存的語系；否則使用已儲存或預設 zh
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_prefsKeyLanguage)?.trim();
+      String lang;
+      if (language != null && supportedLanguages.contains(language)) {
+        lang = language;
+      } else if (saved != null && supportedLanguages.contains(saved)) {
+        lang = saved;
+      } else {
+        // 若呼叫端提供了語言但不受支援，統一回退英文，
+        // 以符合測試期望與更直覺的預設。
+        lang = 'en';
+      }
+      _currentLanguage = lang;
+      await _loadLanguage(lang);
+      // 初始化時也持久化一次，確保後續一致
+      try {
+        await prefs.setString(_prefsKeyLanguage, lang);
+      } catch (_) {}
+    } catch (_) {
+      final fallback =
+          (language != null && supportedLanguages.contains(language))
+          ? language
+          : 'en';
+      _currentLanguage = fallback;
+      await _loadLanguage(_currentLanguage);
+    }
   }
 
   /// 載入指定語言的字串資源
   Future<void> _loadLanguage(String languageCode) async {
     try {
-      final String jsonString = await rootBundle.loadString(
+      final String jsonString = await loadAssetString(
         'assets/lang/$languageCode.json',
       );
       _localizedStrings = json.decode(jsonString);
       _currentLanguage = languageCode; // 確保更新當前語言
     } catch (e) {
-      // 載入失敗時使用英文作為備用
+      // 載入失敗時嘗試使用英文字串作為備用，但不改變 currentLanguage
       if (languageCode != 'en') {
-        await _loadLanguage('en');
+        try {
+          final String jsonString = await loadAssetString('assets/lang/en.json');
+          _localizedStrings = json.decode(jsonString);
+          // 保持 _currentLanguage 為原請求語言，以便外部狀態與 UI 顯示一致
+        } catch (_) {
+          // 英文也失敗則保持現狀
+        }
       }
     }
   }
@@ -49,11 +83,19 @@ class LocalizationService {
     if (!supportedLanguages.contains(languageCode)) {
       return;
     }
-
+    
     if (_currentLanguage == languageCode) return;
 
     _currentLanguage = languageCode;
     await _loadLanguage(languageCode);
+
+    
+
+    // 持久化目前語系
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKeyLanguage, languageCode);
+    } catch (_) {}
   }
 
   /// 取得本地化字串

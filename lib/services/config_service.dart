@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/services.dart';
+import 'package:idle_hippo/services/asset_loader.dart';
 
 class ConfigService {
   static final ConfigService _instance = ConfigService._internal();
@@ -20,6 +20,8 @@ class ConfigService {
       final petsConfig = await _loadJsonFile('assets/config/pets.json');
       final titlesConfig = await _loadJsonFile('assets/config/titles.json');
       final questsConfig = await _loadJsonFile('assets/config/quests.json');
+      // 商城配置（Step26）
+      final storeConfig = await _loadJsonFile('assets/config/store.json');
 
       // 合併所有配置到記憶體
       _configs = {
@@ -28,6 +30,7 @@ class ConfigService {
         'pets': petsConfig,
         'titles': titlesConfig,
         'quests': questsConfig,
+        'store': storeConfig,
       };
 
       _isLoaded = true;
@@ -46,7 +49,7 @@ class ConfigService {
   /// 載入單一 JSON 檔案
   Future<Map<String, dynamic>> _loadJsonFile(String path) async {
     try {
-      final String jsonString = await rootBundle.loadString(path);
+      final String jsonString = await loadAssetString(path);
       return json.decode(jsonString) as Map<String, dynamic>;
     } catch (e) {
       rethrow;

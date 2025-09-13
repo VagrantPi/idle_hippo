@@ -5,7 +5,7 @@
   },
   "pages": {
     "home": "홈",
-    "equipment": "장비", 
+    "equipment": "장비",
     "pets": "펫",
     "shop": "상점",
     "titles": "칭호",
@@ -341,8 +341,95 @@
     "download_all": "전체 다운로드",
     "all_downloaded": "모두 다운로드됨",
     "daily_locked": "오늘은 이미 완료했습니다. 내일 다시 오세요!"
-  }
-  ,
+  },
+  "store": {
+    "tab": {
+      "permanent": "상주 자원",
+      "limited": "한정 혜택 패키지"
+    },
+    "section": {
+      "boost_permanent": "밈 포인트 강화 카드",
+      "boost_temporary": "임시 강화 카드",
+      "offline": "오프라인 자동 사냥 시간 보너스",
+      "tap_cap": "탭 한도 증가",
+      "tickets": "펫 뽑기권",
+      "daily": "일일 한정 패키지",
+      "monthly": "월간 한정 패키지",
+      "starter": "초보자 성장 패키지"
+    },
+    "badge": {
+      "once": "1회성",
+      "repeat": "반복 가능",
+      "daily": "일일 한정",
+      "monthly": "월간 한정",
+      "first7": "첫 7일",
+      "first30": "첫 30일",
+      "ads": "영상 보상"
+    },
+    "btn": {
+      "buy": "구매",
+      "owned": "보유중",
+      "disabled": "미개방",
+      "ad_buy": "광고로 구매"
+    },
+    "ads": {
+      "title": "광고 시청 후 구매"
+    },
+    "items": {
+      "card_click_perm": {
+        "name": "탭 강화 (영구)",
+        "desc": "탭 수익 배율을 영구적으로 증가시킵니다."
+      },
+      "card_idle_perm": {
+        "name": "방치 강화 (영구)",
+        "desc": "방치 수익 배율을 영구적으로 증가시킵니다."
+      },
+      "card_click_2x_30m": {
+        "name": "탭 강화 30분",
+        "desc": "30분 동안 탭 수익이 2배가 되는 일시 효과."
+      },
+      "card_idle_2x_1h": {
+        "name": "방치 강화 1시간",
+        "desc": "1시간 동안 방치 수익이 2배가 되는 일시 효과."
+      },
+      "card_offline_perm_6h": {
+        "name": "오프라인 상한 영구 +6시간",
+        "desc": "오프라인 보상 누적 상한이 영구적으로 6시간 증가합니다."
+      },
+      "card_offline_once_6h": {
+        "name": "오프라인 시간 +6시간 (1회)",
+        "desc": "한 번에 한해 오프라인 시간을 6시간 증가시킵니다."
+      },
+      "card_cap_perm": {
+        "name": "탭 한도 영구 +",
+        "desc": "하루 탭 한도를 영구적으로 증가시킵니다."
+      },
+      "ticket_pet_single": {
+        "name": "펫 가챠 티켓 (단일)",
+        "desc": "펫 가챠를 1회 사용할 수 있습니다."
+      },
+      "ticket_pet_10plus1": {
+        "name": "펫 가챠 티켓 (10+1)",
+        "desc": "10회 가격으로 11회를 뽑을 수 있습니다."
+      },
+      "pack_daily": {
+        "name": "일일 패키지",
+        "desc": "매일 한정 구매, 자원과 아이템 포함."
+      },
+      "pack_monthly": {
+        "name": "월간 패키지",
+        "desc": "매월 한정 구매, 풍부한 보상 포함."
+      },
+      "pack_7n_starter": {
+        "name": "7일 스타터 패키지",
+        "desc": "계정 생성 후 첫 7일 동안 구매 가능."
+      },
+      "pack_30n_starter": {
+        "name": "30일 스타터 패키지",
+        "desc": "계정 생성 후 첫 30일 동안 구매 가능."
+      }
+    }
+  },
   "tutorial": {
     "pet_intro": "펫은 가챠로 얻을 수 있어요. 가장 든든한 동료입니다",
     "pet_ticket_info": "이제 일일 미션에서 가챠 티켓을 받을 수 있어요",
