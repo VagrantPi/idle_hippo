@@ -18,6 +18,7 @@ import 'package:idle_hippo/services/pet_ticket_quest_service.dart';
 import 'package:idle_hippo/services/rewarded_ad_service.dart';
 import 'package:idle_hippo/services/checkin_service.dart';
 import 'package:idle_hippo/services/audio_download_service.dart';
+import 'package:idle_hippo/services/integrated_store_service.dart';
 import 'package:idle_hippo/ui/main_screen.dart';
 import 'package:idle_hippo/ui/debug_panel.dart';
 import 'package:idle_hippo/services/decimal_utils.dart';
@@ -123,6 +124,7 @@ class _IdleHippoScreenState extends State<IdleHippoScreen>
     await _initializeLocalization();
     await _loadGameState();
     await _setupGameStateSync();
+    await _initializeIntegratedStore();
     // 初始化 RewardedAdService，供抽卡動畫等元件查詢每日十連廣告配額
     try {
       await _rewardedAdService.initialize(_gameStateService);
@@ -234,6 +236,19 @@ class _IdleHippoScreenState extends State<IdleHippoScreen>
       await _localization.init(language: 'zh'); // 預設使用繁體中文
     } catch (e) {
       throw Exception('Failed to initialize localization: $e');
+    }
+  }
+
+  Future<void> _initializeIntegratedStore() async {
+    try {
+      await IntegratedStoreService().initialize(
+        configService: _configService,
+        saveService: _saveService,
+        useMockServices: true, // 使用 Mock 服務進行開發測試
+      );
+    } catch (e) {
+      // ignore: avoid_print
+      print('[Main] IntegratedStoreService init failed: $e');
     }
   }
 

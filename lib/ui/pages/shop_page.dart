@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
-import 'package:idle_hippo/services/store_service.dart';
-import 'package:idle_hippo/services/rewarded_ad_service.dart';
+import 'package:idle_hippo/services/integrated_store_service.dart';
+import 'package:idle_hippo/models/purchase_models.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -22,8 +22,8 @@ class _ShopPageState extends State<ShopPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Preload store purchase counts.
-    StoreService().initialize().then((_) {
+    // Initialize integrated store service
+    IntegratedStoreService().initialize().then((_) {
       if (mounted) setState(() {});
     });
   }
@@ -241,7 +241,6 @@ class _StoreCard extends StatelessWidget {
     final int maxCount = (data['purchase_max_count'] is int)
         ? (data['purchase_max_count'] as int)
         : 1;
-    final store = StoreService();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -306,251 +305,297 @@ class _StoreCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             AnimatedBuilder(
-                              animation: store,
+                              animation: IntegratedStoreService(),
                               builder: (context, _) {
-                                final currentCount = store.getCount(itemKey);
-                                final bool isLimited = limitType == 'limited';
-                                final bool isUnlimited =
-                                    limitType == 'unlimited';
-                                final bool isDaily = limitType == 'daily';
-                                final bool isMonthly = limitType == 'monthly';
-                                final bool isFirst7 = limitType == 'first7';
-                                final bool isFirst30 = limitType == 'first30';
-                                final bool canBuyLimited =
-                                    isLimited && currentCount < maxCount;
-                                final bool canBuyDaily = isDaily
-                                    ? store.canPurchaseDaily(itemKey, maxCount)
-                                    : false;
-                                final bool canBuyMonthly = isMonthly
-                                    ? store.canPurchaseMonthly(
-                                        itemKey,
-                                        maxCount,
-                                      )
-                                    : false;
-                                final bool canBuyFirst7 = isFirst7
-                                    ? store.canPurchaseFirst7(itemKey, maxCount)
-                                    : false;
-                                final bool canBuyFirst30 = isFirst30
-                                    ? store.canPurchaseFirst30(
-                                        itemKey,
-                                        maxCount,
-                                      )
-                                    : false;
-                                final bool showBuy =
-                                    isUnlimited ||
-                                    canBuyLimited ||
-                                    canBuyDaily ||
-                                    canBuyMonthly ||
-                                    canBuyFirst7 ||
-                                    canBuyFirst30;
-                                final String buyText = i18n.getString(
-                                  'store.btn.buy',
-                                  defaultValue: 'Buy',
-                                );
-                                final String ownedText = i18n.getString(
-                                  'store.btn.owned',
-                                  defaultValue: 'Owned',
-                                );
-                                final String disabledText = i18n.getString(
-                                  'store.btn.disabled',
-                                  defaultValue: 'Disabled',
-                                );
+                                return FutureBuilder<PurchaseAvailability>(
+                                  future: IntegratedStoreService().getAvailability(itemKey),
+                                  builder: (context, snapshot) {
+                                    final availability = snapshot.data ?? const PurchaseAvailability(false);
+                                    final bool showBuy = availability.canBuy;
+                                    final bool isDailyPack = itemKey == 'store.pack_daily';
+                                    final String buyText = i18n.getString(
+                                      'store.btn.buy',
+                                      defaultValue: 'Buy',
+                                    );
+                                    final String disabledText = i18n.getString(
+                                      'store.btn.disabled',
+                                      defaultValue: 'Disabled',
+                                    );
 
-                                return Wrap(
-                                  spacing: 8,
-                                  runSpacing: 6,
-                                  children: [
-                                    // 主購買按鈕（不經廣告）
-                                    if (showBuy)
-                                      GestureDetector(
-                                        onTap: () async {
-                                          if (isDaily) {
-                                            await store.purchaseDaily(itemKey);
-                                          } else if (isMonthly) {
-                                            await store.purchaseMonthly(
-                                              itemKey,
-                                            );
-                                          } else if (isFirst7 || isFirst30) {
-                                            await store.purchaseFirstWindow(
-                                              itemKey,
-                                            );
-                                          } else {
-                                            await store.purchase(itemKey);
-                                          }
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(
-                                              0xFF00FFD1,
-                                            ).withValues(alpha: 0.9),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            buyText,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    else
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          isLimited ? ownedText : disabledText,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-
-                                    // 廣告購買按鈕（ads_pay=true 時顯示）
-                                    if (adsPay && showBuy)
-                                      GestureDetector(
-                                        onTap: () async {
-                                          final title = i18n.getString(
-                                            'store.ads.title',
-                                            defaultValue:
-                                                'Watch Ad to Purchase',
-                                          );
-                                          await RewardedAdService().showAd(
-                                            context: context,
-                                            onAdWatched: () async {
-                                              if (isDaily) {
-                                                await store.purchaseDaily(
-                                                  itemKey,
-                                                );
-                                              } else if (isMonthly) {
-                                                await store.purchaseMonthly(
-                                                  itemKey,
-                                                );
-                                              } else if (isFirst7 ||
-                                                  isFirst30) {
-                                                await store.purchaseFirstWindow(
-                                                  itemKey,
-                                                );
-                                              } else {
-                                                await store.purchase(itemKey);
+                                    // 特例：每日禮包同時顯示 IAP 與看廣告兩個按鈕
+                                    if (isDailyPack && showBuy) {
+                                      return Wrap(
+                                        spacing: 8,
+                                        runSpacing: 6,
+                                        children: [
+                                          // IAP 購買按鈕
+                                          GestureDetector(
+                                            onTap: () async {
+                                              try {
+                                                await IntegratedStoreService().buyProductViaIap(itemKey);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.purchase_success', defaultValue: 'Purchase successful!')),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.purchase_failed', defaultValue: 'Purchase failed!')),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
                                               }
                                             },
-                                            dialogTitle: title,
-                                            rewardContent: Text(
-                                              name,
-                                              style: const TextStyle(
-                                                color: Colors.white,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF00FFD1).withValues(alpha: 0.9),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                buyText,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
                                               ),
                                             ),
-                                            showSuccessDialog: true,
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(
-                                              0xFF00FFD1,
-                                            ).withValues(alpha: 0.6),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+
+                                          // 看廣告購買按鈕
+                                          GestureDetector(
+                                            onTap: () async {
+                                              try {
+                                                await IntegratedStoreService().buyProductViaAd(itemKey);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.ad_purchase_success', defaultValue: 'Ad reward received!')),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.ad_purchase_failed', defaultValue: 'Ad reward failed!')),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.withValues(alpha: 0.9),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                i18n.getString('store.btn.ad_buy', defaultValue: 'Watch Ad'),
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                          child: Text(
-                                            i18n.getString(
-                                              'store.btn.ad_buy',
-                                              defaultValue: 'Ad Purchase',
+                                        ],
+                                      );
+                                    }
+
+                                    // 其他商品：維持原有邏輯
+                                    return Wrap(
+                                      spacing: 8,
+                                      runSpacing: 6,
+                                      children: [
+                                        // 主購買按鈕（IAP）
+                                        if (showBuy && !adsPay)
+                                          GestureDetector(
+                                            onTap: () async {
+                                              try {
+                                                await IntegratedStoreService().buyProduct(itemKey);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.purchase_success', defaultValue: 'Purchase successful!')),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.purchase_failed', defaultValue: 'Purchase failed!')),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF00FFD1).withValues(alpha: 0.9),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                buyText,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
                                             ),
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
+                                          )
+                                        else if (!showBuy)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.08),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              availability.reasonKey != null
+                                                  ? i18n.getString(availability.reasonKey!, defaultValue: disabledText)
+                                                  : disabledText,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white54,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      )
-                                    else if (adsPay)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          i18n.getString(
-                                            'store.btn.ad_buy',
-                                            defaultValue: 'Ad Purchase',
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    // 限制標籤
-                                    if (badgeText.isNotEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.15,
+
+                                        // 廣告購買按鈕（ads_pay=true 時顯示）
+                                        if (adsPay && showBuy)
+                                          GestureDetector(
+                                            onTap: () async {
+                                              try {
+                                                await IntegratedStoreService().buyProduct(itemKey);
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.ad_purchase_success', defaultValue: 'Ad reward received!')),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(i18n.getString('store.ad_purchase_failed', defaultValue: 'Ad reward failed!')),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.withValues(alpha: 0.9),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                i18n.getString('store.btn.ad_buy', defaultValue: 'Ad Purchase'),
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        else if (adsPay)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.08),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              i18n.getString('store.btn.ad_buy', defaultValue: 'Ad Purchase'),
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white54,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
+                                        // 限制標籤與剩餘次數（first7/first30 額外顯示倒數，使用 i18n 單位）
+                                        if (badgeText.isNotEmpty)
+                                          FutureBuilder<Map<String, int>?>(
+                                            future: (limitType == 'first7' || limitType == 'first30')
+                                                ? IntegratedStoreService().getFirstPeriodRemaining(itemKey)
+                                                : Future.value(null),
+                                            builder: (context, cdSnap) {
+                                              final baseText = availability.remaining > 0
+                                                  ? '$badgeText (${availability.remaining})'
+                                                  : badgeText;
+                                              String text = baseText;
+                                              if (cdSnap.connectionState == ConnectionState.done && cdSnap.data != null) {
+                                                final d = cdSnap.data!['days'] ?? 0;
+                                                final h = cdSnap.data!['hours'] ?? 0;
+                                                final m = cdSnap.data!['minutes'] ?? 0;
+                                                final dayUnit = i18n.getString('store.time.day', defaultValue: '天');
+                                                final hourUnit = i18n.getString('store.time.hour', defaultValue: '小時');
+                                                final minuteUnit = i18n.getString('store.time.minute', defaultValue: '分');
+                                                String timeStr;
+                                                if (d > 0) {
+                                                  timeStr = '$d$dayUnit$h$hourUnit';
+                                                } else {
+                                                  timeStr = '$h$hourUnit$m$minuteUnit';
+                                                }
+                                                final cdTpl = i18n.getString('store.badge.countdown', defaultValue: '倒數：{time}');
+                                                final cdText = cdTpl.replaceAll('{time}', timeStr);
+                                                text = '$baseText · $cdText';
+                                              }
+                                              return Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 10,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withValues(alpha: 0.2),
+                                                  border: Border.all(
+                                                    color: Colors.white.withValues(alpha: 0.15),
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(999),
+                                                ),
+                                                child: Text(
+                                                  text,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        ),
-                                        child: Text(
-                                          badgeText,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                      ],
+                                    );
+                                  },
                                 );
                               },
                             ),

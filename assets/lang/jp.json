@@ -364,7 +364,13 @@
       "monthly": "マンスリー限定",
       "first7": "最初の7日間",
       "first30": "最初の30日間",
-      "ads": "動画報酬"
+      "ads": "動画報酬",
+      "countdown": "残り：{time}"
+    },
+    "time": {
+      "day": "日",
+      "hour": "時間",
+      "minute": "分"
     },
     "btn": {
       "buy": "購入",

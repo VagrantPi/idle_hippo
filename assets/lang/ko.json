@@ -364,7 +364,13 @@
       "monthly": "월간 한정",
       "first7": "첫 7일",
       "first30": "첫 30일",
-      "ads": "영상 보상"
+      "ads": "영상 보상",
+      "countdown": "카운트다운: {time}"
+    },
+    "time": {
+      "day": "일",
+      "hour": "시간",
+      "minute": "분"
     },
     "btn": {
       "buy": "구매",

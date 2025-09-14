@@ -379,7 +379,13 @@
       "monthly": "每月限購",
       "first7": "前 7 天",
       "first30": "前 30 天",
-      "ads": "影片回饋"
+      "ads": "影片回饋",
+      "countdown": "倒數：{time}"
+    },
+    "time": {
+      "day": "天",
+      "hour": "小時",
+      "minute": "分"
     },
     "ads": {
       "title": "觀看廣告以購買"
