@@ -1,10 +1,15 @@
 import 'dart:convert';
 import 'package:idle_hippo/services/asset_loader.dart';
+import 'package:meta/meta.dart';
 
 class ConfigService {
   static final ConfigService _instance = ConfigService._internal();
   factory ConfigService() => _instance;
   ConfigService._internal();
+
+  /// 測試用生成式建構子，允許子類在測試中呼叫非 factory 的 super constructor
+  @visibleForTesting
+  ConfigService.testable();
 
   Map<String, dynamic> _configs = {};
   bool _isLoaded = false;
@@ -139,5 +144,14 @@ class ConfigService {
     }
 
     return null;
+  }
+
+  /// 取得商城配置
+  Map<String, dynamic> getStoreConfig() {
+    if (!_isLoaded) return {};
+    
+    final storeConfig = _configs['store'] as Map<String, dynamic>?;
+    final itemsConfig = storeConfig?['items'] as Map<String, dynamic>?;
+    return itemsConfig ?? {};
   }
 }

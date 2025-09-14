@@ -386,7 +386,13 @@
       "monthly": "Monthly Limited",
       "first7": "First 7 Days",
       "first30": "First 30 Days",
-      "ads": "Video Reward"
+      "ads": "Video Reward",
+      "countdown": "Countdown: {time}"
+    },
+    "time": {
+      "day": "d",
+      "hour": "h",
+      "minute": "m"
     },
     "btn": {
       "buy": "Purchase",
