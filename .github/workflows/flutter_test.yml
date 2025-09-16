@@ -85,27 +85,13 @@ jobs:
         if: matrix.test-group == 'step-tests'
         run: |
           flutter test \
-            test/step08_idle_income_test.dart \
-            test/step09_idle_equipment_test.dart \
-            test/step18_pet_upgrade_test.dart \
-            test/step24_collect_swr_test.dart \
-            test/step21/ \
-            test/step22_1/ \
-            test/step22_2/ \
-            test/step22_3/ \
-            test/step22_4/ \
-            test/step25/ \
-            test/step25-2/ \
-            test/step26-1/ \
-            test/step26-2/ \
-            test/step27/
+            test/step*
 
       - name: Run UI and widget tests
         if: matrix.test-group == 'ui-widgets'
         run: |
           flutter test \
-            test/main_screen_widget_test.dart \
-            test/offline_reward_widget_test.dart \
-            test/power_saver_page_test.dart \
+            test/*_widget_test.dart \
+            test/*_page_test.dart \
             test/ui/ \
             test/widget_test.dart
