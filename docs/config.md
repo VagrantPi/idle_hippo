@@ -284,6 +284,43 @@ assets/config/
 - 名稱與描述可直接使用本檔 `name`/`desc`（含多語對應值）；若未提供對應語言，會回退到 `en` 或 `zh`。
 - 僅提供 UI 所需欄位；購買/權益等邏輯將於後續階段實作。
 
+### SKU 對照層（Step27-1）
+
+`SkuMapper` 服務提供 storeId 到 skuId 的轉換功能，用於 Google Play IAP 整合：
+
+#### 功能說明
+
+- **單向轉換**：將商店資料用的 `storeId`（如 `store.card_click_perm`）轉換為 IAP 用的 `skuId`（如 `card_click_perm`）
+- **轉換規則**：去除 `store.` 前綴
+- **錯誤處理**：若 `storeId` 不存在於 `items` 中，拋出 `SkuMappingNotFound` 例外
+
+#### 使用方式
+
+```dart
+final skuMapper = SkuMapper.instance;
+await skuMapper.init();
+
+// 成功轉換
+final skuId = skuMapper.getSkuId('store.card_click_perm'); // 回傳 'card_click_perm'
+
+// 失敗情況
+try {
+  skuMapper.getSkuId('store.not_exists');
+} catch (e) {
+  print(e); // SkuMappingNotFound: store.not_exists
+}
+
+// 驗證所有 tabs 中的 storeId 都能成功轉換
+final isValid = skuMapper.validateAllTabsStoreIds(); // 回傳 true/false
+```
+
+#### API 方法
+
+- `Future<void> init()`: 初始化，載入 store.json 配置
+- `String getSkuId(String storeId)`: 轉換 storeId 為 skuId
+- `List<String> getAllStoreIds()`: 取得所有有效的 storeId 列表
+- `bool validateAllTabsStoreIds()`: 驗證所有 tabs 中的 storeId 都能成功轉換
+
 ---
 
 ## 📋 quests.json - 主線任務配置

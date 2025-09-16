@@ -8,6 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-group: [
+          "core",
+          "services", 
+          "step-tests",
+          "ui-widgets"
+        ]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
@@ -30,5 +39,59 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Run core tests
+        if: matrix.test-group == 'core'
+        run: |
+          flutter test \
+            test/config_service_pets_rarity_fallback_test.dart \
+            test/decimal_tap_gain_test.dart \
+            test/decimal_utils_test.dart \
+            test/game_clock_test.dart \
+            test/meme_points_precision_test.dart \
+            test/persistence_test.dart \
+            test/secure_save_fast_cache_test.dart \
+            test/secure_save_service_test.dart
+
+      - name: Run services tests
+        if: matrix.test-group == 'services'
+        run: |
+          flutter test \
+            test/checkin_collect_accum_test.dart \
+            test/checkin_service_integration_test.dart \
+            test/daily_mission_freeze_target_test.dart \
+            test/daily_mission_service_test.dart \
+            test/daily_tap_service_test.dart \
+            test/equipment_dependencies_test.dart \
+            test/equipment_service_default_levels_test.dart \
+            test/equipment_service_test.dart \
+            test/gacha_ad_service_test.dart \
+            test/gacha_animation_test.dart \
+            test/gacha_pending_batch_test.dart \
+            test/gacha_service_test.dart \
+            test/karaoke_service_test.dart \
+            test/localization_service_test.dart \
+            test/main_quest_service_test.dart \
+            test/offline_reward_service_test.dart \
+            test/page_manager_test.dart \
+            test/pet_model_test.dart \
+            test/pet_service_test.dart \
+            test/pet_ticket_quest_service_test.dart \
+            test/quest_generation_test.dart \
+            test/quest_instantiation_test.dart \
+            test/tap_service_test.dart \
+            test/titles_persistence_test.dart
+
+      - name: Run step tests
+        if: matrix.test-group == 'step-tests'
+        run: |
+          flutter test \
+            test/step*
+
+      - name: Run UI and widget tests
+        if: matrix.test-group == 'ui-widgets'
+        run: |
+          flutter test \
+            test/*_widget_test.dart \
+            test/*_page_test.dart \
+            test/ui/ \
+            test/widget_test.dart
