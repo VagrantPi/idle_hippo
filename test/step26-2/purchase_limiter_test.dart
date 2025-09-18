@@ -44,7 +44,7 @@ void main() {
         },
         'first30_item': {
           'purchase_limit_type': 'first30',
-          'purchase_max_count': 2,
+          'purchase_max_count': 1,
         },
       };
       mockConfig = MockConfigService(storeConfig);
@@ -247,7 +247,7 @@ void main() {
           testDate,
         );
         expect(availability.canBuy, isTrue);
-        expect(availability.remaining, equals(2));
+        expect(availability.remaining, equals(1));
       });
 
       test('first30 超過 30 天應該禁用', () async {
