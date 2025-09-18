@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/models/buff_models.dart';
 import 'package:idle_hippo/services/daily_tap_service.dart';
 
 void main() {
@@ -29,6 +30,18 @@ void main() {
       final stats = svc.getStats(result.state);
       expect(stats['todayGained'], 1);
       expect(stats['effectiveCap'], 200);
+    });
+
+    test('永久上限加成會放大每日上限', () {
+      final buffedState = state.copyWith(
+        buffs: const BuffState(
+          permanent: PermanentEntitlements(capIncreased: true),
+        ),
+      );
+
+      final ensured = svc.ensureDailyBlock(buffedState);
+      final stats = svc.getStats(ensured);
+      expect(stats['effectiveCap'], 300); // 200 * 1.5
     });
 
     test('上限規則：允許收益應被夾制到剩餘值', () {

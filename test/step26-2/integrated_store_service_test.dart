@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_hippo/models/purchase_models.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/integrated_store_service.dart';
 // SecureSaveService 未在整合商城測試中使用，避免引入平台相依介面

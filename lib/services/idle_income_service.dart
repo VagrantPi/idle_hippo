@@ -47,8 +47,14 @@ class IdleIncomeService {
 
     // 放置裝備加成
     double equipmentBonus = 0.0;
+    double buffMultiplier = 1.0;
     if (_currentGameState != null) {
       equipmentBonus = _equipmentService.sumIdleBonus(_currentGameState!);
+      final buffs = _currentGameState!.buffs;
+      if (buffs != null) {
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        buffMultiplier = buffs.getIdleMultiplier(nowMs);
+      }
     }
 
     // 寵物加成：始終以 PetService 的即時狀態為準
@@ -60,7 +66,8 @@ class IdleIncomeService {
     }
     petBonus = _petService.getCurrentPetIdlePerSec();
 
-    return DecimalUtils.add(DecimalUtils.add(base, equipmentBonus), petBonus);
+    final additive = DecimalUtils.add(DecimalUtils.add(base, equipmentBonus), petBonus);
+    return DecimalUtils.multiply(additive, buffMultiplier);
   }
 
   /// 測試用途：設定 idle_per_sec 覆寫（傳入 null 以清除）

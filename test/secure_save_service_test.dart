@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/models/buff_models.dart';
 
 void main() {
   group('GameState 模型測試', () {
@@ -19,12 +20,16 @@ void main() {
         memePoints: 123.0,
         equipments: {'youtube': 2, 'idle_chip': 0},
         lastTs: 1724000000000,
+        buffs: const BuffState(),
       );
 
       final json = originalState.toJson();
       final deserializedState = GameState.fromJson(json);
 
-      expect(deserializedState, equals(originalState));
+      expect(
+        deserializedState.toMap(),
+        equals(originalState.toMap()),
+      );
     });
 
     test('應能正確驗證', () {
@@ -94,6 +99,7 @@ void main() {
         memePoints: 999.0,
         equipments: {'sword': 5, 'shield': 3, 'potion': 0},
         lastTs: DateTime.now().toUtc().millisecondsSinceEpoch,
+        buffs: const BuffState(),
       );
 
       // Multiple serialization cycles
@@ -103,7 +109,10 @@ void main() {
         currentState = GameState.fromJson(json);
       }
 
-      expect(currentState, equals(originalState));
+      expect(
+        currentState.toMap(),
+        equals(originalState.toMap()),
+      );
       expect(currentState.validate(), true);
     });
 
@@ -113,13 +122,17 @@ void main() {
         memePoints: 0.0,
         equipments: {},
         lastTs: 1,
+        buffs: const BuffState(),
       );
 
       expect(edgeState.validate(), true);
 
       final json = edgeState.toJson();
       final deserializedState = GameState.fromJson(json);
-      expect(deserializedState, equals(edgeState));
+      expect(
+        deserializedState.toMap(),
+        equals(edgeState.toMap()),
+      );
     });
   });
 }

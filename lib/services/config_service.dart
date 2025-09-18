@@ -149,7 +149,7 @@ class ConfigService {
   /// 取得商城配置
   Map<String, dynamic> getStoreConfig() {
     if (!_isLoaded) return {};
-    
+
     final storeConfig = _configs['store'] as Map<String, dynamic>?;
     final itemsConfig = storeConfig?['items'] as Map<String, dynamic>?;
     return itemsConfig ?? {};

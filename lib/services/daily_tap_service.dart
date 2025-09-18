@@ -56,7 +56,13 @@ class DailyTapService {
     final block = state.dailyTap;
     final doubled = block?.adDoubledToday == true;
     final base = dailyCapBase;
-    return doubled ? base * adMultiplier : base;
+    final buffs = state.buffs;
+    final multiplier = buffs?.getDailyCapMultiplier() ?? 1.0;
+    final baseWithBuff = DecimalUtils.multiply(base.toDouble(), multiplier);
+    final capValue = doubled
+        ? DecimalUtils.multiply(baseWithBuff, adMultiplier)
+        : baseWithBuff;
+    return capValue.round();
   }
 
   // Returns (updatedState, allowedGain)

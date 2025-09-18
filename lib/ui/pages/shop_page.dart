@@ -238,9 +238,6 @@ class _StoreCard extends StatelessWidget {
     final adsPay = (data['ads_pay'] ?? false) as bool;
 
     final badgeText = _badgeText(i18n, limitType);
-    final int maxCount = (data['purchase_max_count'] is int)
-        ? (data['purchase_max_count'] as int)
-        : 1;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -308,11 +305,15 @@ class _StoreCard extends StatelessWidget {
                               animation: IntegratedStoreService(),
                               builder: (context, _) {
                                 return FutureBuilder<PurchaseAvailability>(
-                                  future: IntegratedStoreService().getAvailability(itemKey),
+                                  future: IntegratedStoreService()
+                                      .getAvailability(itemKey),
                                   builder: (context, snapshot) {
-                                    final availability = snapshot.data ?? const PurchaseAvailability(false);
+                                    final availability =
+                                        snapshot.data ??
+                                        const PurchaseAvailability(false);
                                     final bool showBuy = availability.canBuy;
-                                    final bool isDailyPack = itemKey == 'store.pack_daily';
+                                    final bool isDailyPack =
+                                        itemKey == 'store.pack_daily';
                                     final String buyText = i18n.getString(
                                       'store.btn.buy',
                                       defaultValue: 'Buy',
@@ -332,31 +333,57 @@ class _StoreCard extends StatelessWidget {
                                           GestureDetector(
                                             onTap: () async {
                                               try {
-                                                await IntegratedStoreService().buyProductViaIap(itemKey);
+                                                await IntegratedStoreService()
+                                                    .buyProductViaIap(itemKey);
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.purchase_success', defaultValue: 'Purchase successful!')),
-                                                      backgroundColor: Colors.green,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.purchase_success',
+                                                          defaultValue:
+                                                              'Purchase successful!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.green,
                                                     ),
                                                   );
                                                 }
                                               } catch (e) {
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.purchase_failed', defaultValue: 'Purchase failed!')),
-                                                      backgroundColor: Colors.red,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.purchase_failed',
+                                                          defaultValue:
+                                                              'Purchase failed!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
                                                     ),
                                                   );
                                                 }
                                               }
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF00FFD1).withValues(alpha: 0.9),
-                                                borderRadius: BorderRadius.circular(8),
+                                                color: const Color(
+                                                  0xFF00FFD1,
+                                                ).withValues(alpha: 0.9),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: Text(
                                                 buyText,
@@ -374,34 +401,63 @@ class _StoreCard extends StatelessWidget {
                                           GestureDetector(
                                             onTap: () async {
                                               try {
-                                                await IntegratedStoreService().buyProductViaAd(itemKey);
+                                                await IntegratedStoreService()
+                                                    .buyProductViaAd(itemKey);
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.ad_purchase_success', defaultValue: 'Ad reward received!')),
-                                                      backgroundColor: Colors.green,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.ad_purchase_success',
+                                                          defaultValue:
+                                                              'Ad reward received!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.green,
                                                     ),
                                                   );
                                                 }
                                               } catch (e) {
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.ad_purchase_failed', defaultValue: 'Ad reward failed!')),
-                                                      backgroundColor: Colors.red,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.ad_purchase_failed',
+                                                          defaultValue:
+                                                              'Ad reward failed!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
                                                     ),
                                                   );
                                                 }
                                               }
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: Colors.orange.withValues(alpha: 0.9),
-                                                borderRadius: BorderRadius.circular(8),
+                                                color: Colors.orange.withValues(
+                                                  alpha: 0.9,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: Text(
-                                                i18n.getString('store.btn.ad_buy', defaultValue: 'Watch Ad'),
+                                                i18n.getString(
+                                                  'store.btn.ad_buy',
+                                                  defaultValue: 'Watch Ad',
+                                                ),
                                                 overflow: TextOverflow.ellipsis,
                                                 style: const TextStyle(
                                                   color: Colors.black,
@@ -425,31 +481,57 @@ class _StoreCard extends StatelessWidget {
                                           GestureDetector(
                                             onTap: () async {
                                               try {
-                                                await IntegratedStoreService().buyProduct(itemKey);
+                                                await IntegratedStoreService()
+                                                    .buyProduct(itemKey);
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.purchase_success', defaultValue: 'Purchase successful!')),
-                                                      backgroundColor: Colors.green,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.purchase_success',
+                                                          defaultValue:
+                                                              'Purchase successful!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.green,
                                                     ),
                                                   );
                                                 }
                                               } catch (e) {
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.purchase_failed', defaultValue: 'Purchase failed!')),
-                                                      backgroundColor: Colors.red,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.purchase_failed',
+                                                          defaultValue:
+                                                              'Purchase failed!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
                                                     ),
                                                   );
                                                 }
                                               }
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF00FFD1).withValues(alpha: 0.9),
-                                                borderRadius: BorderRadius.circular(8),
+                                                color: const Color(
+                                                  0xFF00FFD1,
+                                                ).withValues(alpha: 0.9),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: Text(
                                                 buyText,
@@ -464,14 +546,24 @@ class _StoreCard extends StatelessWidget {
                                           )
                                         else if (!showBuy)
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.08),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: Colors.white.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               availability.reasonKey != null
-                                                  ? i18n.getString(availability.reasonKey!, defaultValue: disabledText)
+                                                  ? i18n.getString(
+                                                      availability.reasonKey!,
+                                                      defaultValue:
+                                                          disabledText,
+                                                    )
                                                   : disabledText,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
@@ -487,34 +579,63 @@ class _StoreCard extends StatelessWidget {
                                           GestureDetector(
                                             onTap: () async {
                                               try {
-                                                await IntegratedStoreService().buyProduct(itemKey);
+                                                await IntegratedStoreService()
+                                                    .buyProduct(itemKey);
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.ad_purchase_success', defaultValue: 'Ad reward received!')),
-                                                      backgroundColor: Colors.green,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.ad_purchase_success',
+                                                          defaultValue:
+                                                              'Ad reward received!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.green,
                                                     ),
                                                   );
                                                 }
                                               } catch (e) {
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
                                                     SnackBar(
-                                                      content: Text(i18n.getString('store.ad_purchase_failed', defaultValue: 'Ad reward failed!')),
-                                                      backgroundColor: Colors.red,
+                                                      content: Text(
+                                                        i18n.getString(
+                                                          'store.ad_purchase_failed',
+                                                          defaultValue:
+                                                              'Ad reward failed!',
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
                                                     ),
                                                   );
                                                 }
                                               }
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: Colors.orange.withValues(alpha: 0.9),
-                                                borderRadius: BorderRadius.circular(8),
+                                                color: Colors.orange.withValues(
+                                                  alpha: 0.9,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: Text(
-                                                i18n.getString('store.btn.ad_buy', defaultValue: 'Ad Purchase'),
+                                                i18n.getString(
+                                                  'store.btn.ad_buy',
+                                                  defaultValue: 'Ad Purchase',
+                                                ),
                                                 overflow: TextOverflow.ellipsis,
                                                 style: const TextStyle(
                                                   color: Colors.black,
@@ -526,13 +647,22 @@ class _StoreCard extends StatelessWidget {
                                           )
                                         else if (adsPay)
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.08),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: Colors.white.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
-                                              i18n.getString('store.btn.ad_buy', defaultValue: 'Ad Purchase'),
+                                              i18n.getString(
+                                                'store.btn.ad_buy',
+                                                defaultValue: 'Ad Purchase',
+                                              ),
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                 color: Colors.white54,
@@ -544,46 +674,85 @@ class _StoreCard extends StatelessWidget {
                                         // 限制標籤與剩餘次數（first7/first30 額外顯示倒數，使用 i18n 單位）
                                         if (badgeText.isNotEmpty)
                                           FutureBuilder<Map<String, int>?>(
-                                            future: (limitType == 'first7' || limitType == 'first30')
-                                                ? IntegratedStoreService().getFirstPeriodRemaining(itemKey)
+                                            future:
+                                                (limitType == 'first7' ||
+                                                    limitType == 'first30')
+                                                ? IntegratedStoreService()
+                                                      .getFirstPeriodRemaining(
+                                                        itemKey,
+                                                      )
                                                 : Future.value(null),
                                             builder: (context, cdSnap) {
-                                              final baseText = availability.remaining > 0
+                                              final baseText =
+                                                  availability.remaining > 0
                                                   ? '$badgeText (${availability.remaining})'
                                                   : badgeText;
                                               String text = baseText;
-                                              if (cdSnap.connectionState == ConnectionState.done && cdSnap.data != null) {
-                                                final d = cdSnap.data!['days'] ?? 0;
-                                                final h = cdSnap.data!['hours'] ?? 0;
-                                                final m = cdSnap.data!['minutes'] ?? 0;
-                                                final dayUnit = i18n.getString('store.time.day', defaultValue: '天');
-                                                final hourUnit = i18n.getString('store.time.hour', defaultValue: '小時');
-                                                final minuteUnit = i18n.getString('store.time.minute', defaultValue: '分');
+                                              if (cdSnap.connectionState ==
+                                                      ConnectionState.done &&
+                                                  cdSnap.data != null) {
+                                                final d =
+                                                    cdSnap.data!['days'] ?? 0;
+                                                final h =
+                                                    cdSnap.data!['hours'] ?? 0;
+                                                final m =
+                                                    cdSnap.data!['minutes'] ??
+                                                    0;
+                                                final dayUnit = i18n.getString(
+                                                  'store.time.day',
+                                                  defaultValue: '天',
+                                                );
+                                                final hourUnit = i18n.getString(
+                                                  'store.time.hour',
+                                                  defaultValue: '小時',
+                                                );
+                                                final minuteUnit = i18n
+                                                    .getString(
+                                                      'store.time.minute',
+                                                      defaultValue: '分',
+                                                    );
                                                 String timeStr;
                                                 if (d > 0) {
-                                                  timeStr = '$d$dayUnit$h$hourUnit';
+                                                  timeStr =
+                                                      '$d$dayUnit$h$hourUnit';
                                                 } else {
-                                                  timeStr = '$h$hourUnit$m$minuteUnit';
+                                                  timeStr =
+                                                      '$h$hourUnit$m$minuteUnit';
                                                 }
-                                                final cdTpl = i18n.getString('store.badge.countdown', defaultValue: '倒數：{time}');
-                                                final cdText = cdTpl.replaceAll('{time}', timeStr);
+                                                final cdTpl = i18n.getString(
+                                                  'store.badge.countdown',
+                                                  defaultValue: '倒數：{time}',
+                                                );
+                                                final cdText = cdTpl.replaceAll(
+                                                  '{time}',
+                                                  timeStr,
+                                                );
                                                 text = '$baseText · $cdText';
                                               }
                                               return Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 10,
-                                                  vertical: 4,
-                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black.withValues(alpha: 0.2),
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.2),
                                                   border: Border.all(
-                                                    color: Colors.white.withValues(alpha: 0.15),
+                                                    color: Colors.white
+                                                        .withValues(
+                                                          alpha: 0.15,
+                                                        ),
                                                   ),
-                                                  borderRadius: BorderRadius.circular(999),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        999,
+                                                      ),
                                                 ),
                                                 child: Text(
                                                   text,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: const TextStyle(
                                                     color: Colors.white70,
                                                     fontSize: 11,
