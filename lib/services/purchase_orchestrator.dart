@@ -119,7 +119,7 @@ class PurchaseOrchestrator {
           // 僅針對 non-consumable 嘗試權益發放
           if (_isNonConsumable(event.productId)) {
             final entitlement = _entitlementKeyFor(event.productId);
-            await _entitlementManager.grant(entitlement);
+            await _entitlementManager.grant(skuId: entitlement);
             _stateCtr.add(OrchestratorState.success(event.productId));
           }
           // 單輪恢復後即退出恢復模式（若有多筆也逐筆處理）
@@ -135,7 +135,7 @@ class PurchaseOrchestrator {
             );
             if (verify.ok) {
               final entitlement = _entitlementKeyFor(event.productId);
-              await _entitlementManager.grant(entitlement);
+              await _entitlementManager.grant(skuId: entitlement, orderId: 'mock-order');
               _stateCtr.add(OrchestratorState.success(event.productId));
             } else {
               _stateCtr.add(OrchestratorState.error('verify_failed',

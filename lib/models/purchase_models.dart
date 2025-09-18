@@ -1,14 +1,15 @@
 /// 購買相關的資料模型與抽象介面定義
-/// 
+///
 /// 提供購買商品資訊、購買事件、購買狀態等核心資料結構
+library;
 
 /// 商品資訊
 class ProductInfo {
-  final String id;       // 商品 ID（= store.* key）
-  final String name;     // UI 端自行做 i18n 映射
+  final String id; // 商品 ID（= store.* key）
+  final String name; // UI 端自行做 i18n 映射
   final String desc;
   final String image;
-  final double? price;   // Mock 可填，IAP 由 SDK 回傳
+  final double? price; // Mock 可填，IAP 由 SDK 回傳
   final String? currency;
 
   const ProductInfo({
@@ -89,10 +90,15 @@ enum LimitType { limited, unlimited, daily, monthly, first7, first30 }
 /// 購買可用性狀態
 class PurchaseAvailability {
   final bool canBuy;
-  final String? reasonKey; // i18n key: e.g. store.unavailable.daily_cap, store.unavailable.first7_expired
-  final int remaining;     // 本視窗期內剩餘次數（-1 表示無上限）
+  final String?
+  reasonKey; // i18n key: e.g. store.unavailable.daily_cap, store.unavailable.first7_expired
+  final int remaining; // 本視窗期內剩餘次數（-1 表示無上限）
 
-  const PurchaseAvailability(this.canBuy, {this.reasonKey, this.remaining = -1});
+  const PurchaseAvailability(
+    this.canBuy, {
+    this.reasonKey,
+    this.remaining = -1,
+  });
 
   @override
   bool operator ==(Object other) =>
@@ -118,11 +124,7 @@ class PurchaseRecord {
   final DailyRecord? daily;
   final MonthlyRecord? monthly;
 
-  const PurchaseRecord({
-    this.total,
-    this.daily,
-    this.monthly,
-  });
+  const PurchaseRecord({this.total, this.daily, this.monthly});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> json = {};
@@ -162,15 +164,9 @@ class DailyRecord {
   final String date; // YYYY-MM-DD (Asia/Taipei)
   final int count;
 
-  const DailyRecord({
-    required this.date,
-    required this.count,
-  });
+  const DailyRecord({required this.date, required this.count});
 
-  Map<String, dynamic> toJson() => {
-        'date': date,
-        'count': count,
-      };
+  Map<String, dynamic> toJson() => {'date': date, 'count': count};
 
   factory DailyRecord.fromJson(Map<String, dynamic> json) {
     return DailyRecord(
@@ -180,10 +176,7 @@ class DailyRecord {
   }
 
   DailyRecord copyWith({String? date, int? count}) {
-    return DailyRecord(
-      date: date ?? this.date,
-      count: count ?? this.count,
-    );
+    return DailyRecord(date: date ?? this.date, count: count ?? this.count);
   }
 }
 
@@ -192,28 +185,16 @@ class MonthlyRecord {
   final String ym; // YYYY-MM (Asia/Taipei)
   final int count;
 
-  const MonthlyRecord({
-    required this.ym,
-    required this.count,
-  });
+  const MonthlyRecord({required this.ym, required this.count});
 
-  Map<String, dynamic> toJson() => {
-        'ym': ym,
-        'count': count,
-      };
+  Map<String, dynamic> toJson() => {'ym': ym, 'count': count};
 
   factory MonthlyRecord.fromJson(Map<String, dynamic> json) {
-    return MonthlyRecord(
-      ym: json['ym'] as String,
-      count: json['count'] as int,
-    );
+    return MonthlyRecord(ym: json['ym'] as String, count: json['count'] as int);
   }
 
   MonthlyRecord copyWith({String? ym, int? count}) {
-    return MonthlyRecord(
-      ym: ym ?? this.ym,
-      count: count ?? this.count,
-    );
+    return MonthlyRecord(ym: ym ?? this.ym, count: count ?? this.count);
   }
 }
 
@@ -221,17 +202,11 @@ class MonthlyRecord {
 class InstallRecord {
   final String firstOpenDate; // YYYY-MM-DD (Asia/Taipei)
 
-  const InstallRecord({
-    required this.firstOpenDate,
-  });
+  const InstallRecord({required this.firstOpenDate});
 
-  Map<String, dynamic> toJson() => {
-        'firstOpenDate': firstOpenDate,
-      };
+  Map<String, dynamic> toJson() => {'firstOpenDate': firstOpenDate};
 
   factory InstallRecord.fromJson(Map<String, dynamic> json) {
-    return InstallRecord(
-      firstOpenDate: json['firstOpenDate'] as String,
-    );
+    return InstallRecord(firstOpenDate: json['firstOpenDate'] as String);
   }
 }

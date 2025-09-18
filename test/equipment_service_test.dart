@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/models/buff_models.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
 
@@ -35,6 +36,22 @@ void main() {
       equipment.computeTapGain(state),
       1,
     ); // base=1 from assets/config/game.json
+  });
+
+  test('computeTapGain：永久點擊加成會乘上最終獲得點數', () {
+    final state = GameState.initial(1).copyWith(
+      buffs: const BuffState(
+        permanent: PermanentEntitlements(clickBoost: 1.5),
+      ),
+    );
+
+    expect(
+      equipment.computeTapGain(
+        state,
+        currentTimeMs: DateTime(2024).millisecondsSinceEpoch,
+      ),
+      1.5,
+    );
   });
 
   test('升級成功：扣除成本並提升等級', () {

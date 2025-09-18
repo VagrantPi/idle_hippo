@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/models/buff_models.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/equipment_service.dart';
 import 'package:idle_hippo/services/idle_income_service.dart';
@@ -220,6 +221,25 @@ void main() {
       idleIncomeService.updateGameState(state);
       final idlePerSec = idleIncomeService.currentIdlePerSec;
       expect(idlePerSec, greaterThan(0.2));
+    });
+
+    test('永久 Idle 加成會乘上放置收益', () {
+      final baseState = GameState.initial(1);
+      idleIncomeService.updateGameState(baseState);
+      final basePerSec = idleIncomeService.currentIdlePerSec;
+
+      final buffedState = baseState.copyWith(
+        buffs: const BuffState(
+          permanent: PermanentEntitlements(idleBoost: 1.2),
+        ),
+      );
+      idleIncomeService.updateGameState(buffedState);
+      final buffedPerSec = idleIncomeService.currentIdlePerSec;
+
+      expect(buffedPerSec, closeTo(basePerSec * 1.2, 1e-6));
+
+      // reset to base to avoid干擾其他測試
+      idleIncomeService.updateGameState(baseState);
     });
 
     test('放置裝備收益隨時間累積', () {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_hippo/models/game_state.dart';
+import 'package:idle_hippo/models/buff_models.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/offline_reward_service.dart';
 
@@ -111,6 +112,22 @@ void main() {
       await service.simulateAddSeconds(threeHours);
       expect(lastReward, closeTo(twoHours * 2.0, 1e-6));
       expect(lastEffective, Duration(seconds: twoHours));
+    });
+
+    test('永久離線上限加成會延長封頂時間', () async {
+      final tenHours = 10 * 3600;
+      state = state.copyWith(
+        buffs: const BuffState(
+          permanent: PermanentEntitlements(offlineExtended: true),
+        ),
+      );
+
+      await service.simulateAddSeconds(tenHours);
+
+      final expectedCapHours = state.offline.capHours + 6; // +6 小時永久加成
+      final expectedCapSeconds = expectedCapHours * 3600;
+      expect(lastReward, closeTo(expectedCapSeconds * idlePerSec, 1e-6));
+      expect(lastEffective, Duration(seconds: expectedCapSeconds));
     });
   });
 

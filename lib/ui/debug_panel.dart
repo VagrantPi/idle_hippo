@@ -5,6 +5,7 @@ import '../services/idle_income_service.dart';
 import '../services/pet_service.dart';
 import '../services/gacha_service.dart';
 import '../models/game_state.dart';
+import '../models/buff_models.dart';
 import '../services/tap_service.dart';
 import '../services/daily_mission_service.dart';
 import '../services/checkin_service.dart';
@@ -178,6 +179,13 @@ class _DebugPanelState extends State<DebugPanel> {
                 _buildIdleIncomeStats(),
                 const SizedBox(height: 8),
 
+                // Buffs Section
+                if (widget.gameState?.buffs != null) ...[
+                  _buildSectionTitle('Buffs'),
+                  _buildBuffStats(),
+                  const SizedBox(height: 8),
+                ],
+
                 // Daily Mission Section
                 if (widget.dailyMissionService != null &&
                     widget.gameState != null) ...[
@@ -283,6 +291,36 @@ class _DebugPanelState extends State<DebugPanel> {
           stats['averageIncomePerSec']?.toStringAsFixed(3) ?? '0.0',
         ),
         _buildConfigRow('subscribed', stats['isSubscribed']),
+      ],
+    );
+  }
+
+  Widget _buildBuffStats() {
+    final buffs = widget.gameState!.buffs!;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    TimedBuff? idleBuff;
+    for (final buff in buffs.activeBuffs) {
+      if (buff.type == 'idle_2x' && !buff.isExpired(nowMs)) {
+        idleBuff = buff;
+        break;
+      }
+    }
+
+    final remainingLabel = idleBuff != null
+        ? _formatDurationMs(idleBuff.getRemainingMs(nowMs))
+        : '0s';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildConfigRow(
+          'idle_2x.remaining',
+          remainingLabel,
+        ),
+        _buildConfigRow(
+          'idle_2x.multiplier',
+          idleBuff?.multiplier ?? '-',
+        ),
       ],
     );
   }
@@ -554,6 +592,21 @@ class _DebugPanelState extends State<DebugPanel> {
         ),
       ],
     );
+  }
+
+  String _formatDurationMs(int ms) {
+    if (ms <= 0) return '0s';
+    final duration = Duration(milliseconds: ms);
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+    if (hours > 0) {
+      return '${hours}h ${minutes}m ${seconds}s';
+    }
+    if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    }
+    return '${seconds}s';
   }
 
   String _formatTimestamp(int timestamp) {

@@ -37,7 +37,7 @@
 ## Config Document
 - **docs/**：可額外存放 PM spec、遊戲設計圖
 - 每次實作需求前都需要查看 assets/config 內參數，是否新需求有可以共用的，那就不需要再新增而外變數
-- 每當有新增新增數於 assets/config 內，則需要更新 docs/config.md 文件
+- 每當在 assets/config 內新增數值，則需要更新 docs/config.md 文件
 
 ## Other Flutter Guidelines
 - withOpacity 都改用 withValues 方法

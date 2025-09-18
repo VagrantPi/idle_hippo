@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:meta/meta.dart';
 import '../models/purchase_models.dart';
 import '../services/config_service.dart';
 import '../services/secure_save_service.dart';
@@ -9,13 +8,16 @@ import '../services/purchase_limiter.dart';
 import '../services/purchase_service.dart';
 import '../services/mock_purchase_service.dart';
 import '../services/mock_rewarded_ad_service.dart';
+import '../services/entitlement_manager.dart';
+import '../services/game_state_service.dart';
 
 /// 整合的商城服務
-/// 
+///
 /// 結合新的購買抽象層與現有的商城功能
 /// 提供統一的商城操作介面
 class IntegratedStoreService extends ChangeNotifier {
-  static final IntegratedStoreService _instance = IntegratedStoreService._internal();
+  static final IntegratedStoreService _instance =
+      IntegratedStoreService._internal();
   factory IntegratedStoreService() => _instance;
   IntegratedStoreService._internal();
 
@@ -23,13 +25,14 @@ class IntegratedStoreService extends ChangeNotifier {
   @visibleForTesting
   IntegratedStoreService.testable();
 
-  late final ConfigService _configService;
-  late final SecureSaveService _saveService;
-  late final PurchaseRepository _repository;
-  late final PurchaseLimiter _limiter;
-  late final PurchaseService _purchaseService;
-  late final RewardedAdService _rewardedAdService;
-  
+  late ConfigService _configService;
+  late PurchaseRepository _repository;
+  late PurchaseLimiter _limiter;
+  late PurchaseService _purchaseService;
+  late RewardedAdService _rewardedAdService;
+  late GameStateService _gameStateService;
+  late EntitlementManager _entitlementManager;
+
   StreamSubscription<PurchaseEvent>? _purchaseSubscription;
   bool _initialized = false;
   bool _disposed = false;
@@ -41,15 +44,23 @@ class IntegratedStoreService extends ChangeNotifier {
     ConfigService? configService,
     SecureSaveService? saveService,
     bool useMockServices = true,
+    GameStateService? gameStateService,
+    EntitlementManager? entitlementManager,
   }) async {
     if (_initialized) return;
 
     _disposed = false;
     _configService = configService ?? ConfigService();
-    _saveService = saveService ?? SecureSaveService();
     _repository = PurchaseRepository();
     _limiter = PurchaseLimiterImpl(_configService, _repository);
-    
+
+    // 遊戲狀態與權益管理（確保購買後能發放效果）
+    _gameStateService = gameStateService ?? GameStateService();
+    await _gameStateService.initialize();
+    _entitlementManager = entitlementManager ??
+        EntitlementManagerImpl(gameStateService: _gameStateService);
+    await _entitlementManager.init();
+
     // 根據參數決定使用 Mock 或真實服務
     if (useMockServices) {
       _purchaseService = MockPurchaseService();
@@ -60,37 +71,10 @@ class IntegratedStoreService extends ChangeNotifier {
       _rewardedAdService = MockRewardedAdService();
     }
 
-  /// 取得新手期剩餘時間元件（天/時/分），供 UI 以 i18n 模板格式化
-  Future<Map<String, int>?> getFirstPeriodRemaining(String productId) async {
-    if (!_initialized) return null;
-
-    final storeConfig = _configService.getStoreConfig();
-    final productConfig = storeConfig[productId] as Map<String, dynamic>?;
-    if (productConfig == null) return null;
-
-    final type = productConfig['purchase_limit_type'] as String?;
-    if (type != 'first7' && type != 'first30') return null;
-
-    final daysTotal = type == 'first7' ? 7 : 30;
-    final nowLocal = _getCurrentTaipeiTime();
-    final installRecord = await _repository.ensureInstallRecord(nowLocal);
-    final firstOpen = DateTime.parse(installRecord.firstOpenDate);
-    final endAt = firstOpen.add(Duration(days: daysTotal));
-    final diff = endAt.difference(nowLocal);
-    if (diff.inSeconds <= 0) return null;
-
-    final d = diff.inDays;
-    final h = diff.inHours % 24;
-    final m = diff.inMinutes % 60;
-    return {
-      'days': d,
-      'hours': h,
-      'minutes': m,
-    };
-  }
-
     // 監聽購買事件
-    _purchaseSubscription = _purchaseService.purchaseStream.listen(_onPurchaseEvent);
+    _purchaseSubscription = _purchaseService.purchaseStream.listen(
+      _onPurchaseEvent,
+    );
 
     _initialized = true;
   }
@@ -99,9 +83,12 @@ class IntegratedStoreService extends ChangeNotifier {
   Future<PurchaseAvailability> getAvailability(String productId) async {
     if (!_initialized) {
       // 服務未初始化時，返回不可購買狀態
-      return const PurchaseAvailability(false, reasonKey: 'store.not_initialized');
+      return const PurchaseAvailability(
+        false,
+        reasonKey: 'store.not_initialized',
+      );
     }
-    
+
     try {
       final nowLocal = _getCurrentTaipeiTime();
       return await _limiter.availability(productId, nowLocal);
@@ -116,33 +103,40 @@ class IntegratedStoreService extends ChangeNotifier {
     if (!_initialized) {
       throw Exception('IntegratedStoreService not initialized');
     }
-    
+
     final storeConfig = _configService.getStoreConfig();
     final productConfig = storeConfig[productId] as Map<String, dynamic>?;
-    
+
     if (productConfig == null) {
       throw Exception('Product not found: $productId');
     }
 
     final adsPay = productConfig['ads_pay'] as bool? ?? false;
-    
+
     if (adsPay) {
       // 廣告購買
-      final result = await _rewardedAdService.show('store_item', productId: productId);
+      final result = await _rewardedAdService.show(
+        'store_item',
+        productId: productId,
+      );
       if (result == RewardedStatus.rewarded) {
         // 廣告成功，觸發購買成功事件
-        await _onPurchaseEvent(PurchaseEvent(
-          productId: productId,
-          status: PurchaseStatus.success,
-          message: 'Rewarded ad completed',
-        ));
+        await _onPurchaseEvent(
+          PurchaseEvent(
+            productId: productId,
+            status: PurchaseStatus.success,
+            message: 'Rewarded ad completed',
+          ),
+        );
       } else {
         // 廣告失敗或取消
-        await _onPurchaseEvent(PurchaseEvent(
-          productId: productId,
-          status: PurchaseStatus.canceled,
-          message: 'Rewarded ad not completed',
-        ));
+        await _onPurchaseEvent(
+          PurchaseEvent(
+            productId: productId,
+            status: PurchaseStatus.canceled,
+            message: 'Rewarded ad not completed',
+          ),
+        );
       }
     } else {
       // IAP 購買
@@ -177,19 +171,26 @@ class IntegratedStoreService extends ChangeNotifier {
       throw Exception('Product not found: $productId');
     }
 
-    final result = await _rewardedAdService.show('store_item', productId: productId);
+    final result = await _rewardedAdService.show(
+      'store_item',
+      productId: productId,
+    );
     if (result == RewardedStatus.rewarded) {
-      await _onPurchaseEvent(PurchaseEvent(
-        productId: productId,
-        status: PurchaseStatus.success,
-        message: 'Rewarded ad completed',
-      ));
+      await _onPurchaseEvent(
+        PurchaseEvent(
+          productId: productId,
+          status: PurchaseStatus.success,
+          message: 'Rewarded ad completed',
+        ),
+      );
     } else {
-      await _onPurchaseEvent(PurchaseEvent(
-        productId: productId,
-        status: PurchaseStatus.canceled,
-        message: 'Rewarded ad not completed',
-      ));
+      await _onPurchaseEvent(
+        PurchaseEvent(
+          productId: productId,
+          status: PurchaseStatus.canceled,
+          message: 'Rewarded ad not completed',
+        ),
+      );
     }
   }
 
@@ -230,10 +231,10 @@ class IntegratedStoreService extends ChangeNotifier {
     final d = diff.inDays;
     final h = diff.inHours % 24;
     if (d > 0) {
-      return '${d}天${h}小時';
+      return '$d天$h小時';
     } else {
       final m = diff.inMinutes % 60;
-      return '${h}小時${m}分';
+      return '$h小時$m分';
     }
   }
 
@@ -244,14 +245,27 @@ class IntegratedStoreService extends ChangeNotifier {
       // 更新購買記錄
       final nowLocal = _getCurrentTaipeiTime();
       await _limiter.markPurchased(event.productId, nowLocal);
-      
+
+      // 發放對應權益（例如：store.card_click_perm 啟用永久點擊 1.5x）
+      try {
+        // EntitlementManager 的配置鍵為 'store.*'，若傳入 sku 需補上前綴
+        final grantId = event.productId.startsWith('store.')
+            ? event.productId
+            : 'store.${event.productId}';
+        await _entitlementManager.grant(skuId: grantId);
+      } catch (e) {
+        debugPrint('Entitlement grant failed for ${event.productId}: $e');
+      }
+
       // 通知 UI 更新
       notifyListeners();
-      
+
       // 這裡未來可以加入權益下發邏輯
       debugPrint('Purchase successful: ${event.productId}');
     } else {
-      debugPrint('Purchase event: ${event.status} for ${event.productId} - ${event.message}');
+      debugPrint(
+        'Purchase event: ${event.status} for ${event.productId} - ${event.message}',
+      );
     }
   }
 
@@ -267,6 +281,10 @@ class IntegratedStoreService extends ChangeNotifier {
     for (final productId in storeConfig.keys) {
       await _repository.savePurchaseRecord(productId, const PurchaseRecord());
     }
+    // 一併清除權益持久化資料，避免重置後殘留永久權益或訂單紀錄
+    try {
+      await _entitlementManager.resetPersistedData();
+    } catch (_) {}
     notifyListeners();
   }
 
@@ -314,19 +332,17 @@ class IntegratedStoreService extends ChangeNotifier {
     final days = totalMinutes ~/ (24 * 60);
     final hours = (totalMinutes - days * 24 * 60) ~/ 60;
     final minutes = totalMinutes - days * 24 * 60 - hours * 60;
-    return {
-      'days': days,
-      'hours': hours,
-      'minutes': minutes,
-    };
+    return {'days': days, 'hours': hours, 'minutes': minutes};
   }
 
   /// 釋放資源
   @override
   void dispose() {
     _purchaseSubscription?.cancel();
-    _purchaseService.dispose();
     _purchaseSubscription = null;
+    if (_initialized) {
+      _purchaseService.dispose();
+    }
     _initialized = false;
     _disposed = true;
     super.dispose();
@@ -357,7 +373,7 @@ class IntegratedStoreService extends ChangeNotifier {
     final record = await getPurchaseRecord(itemKey);
     final nowLocal = _getCurrentTaipeiTime();
     final currentDate = _formatDate(nowLocal);
-    
+
     if (record?.daily?.date == currentDate) {
       return record!.daily!.count;
     }
@@ -369,7 +385,7 @@ class IntegratedStoreService extends ChangeNotifier {
     final record = await getPurchaseRecord(itemKey);
     final nowLocal = _getCurrentTaipeiTime();
     final currentYm = _formatYearMonth(nowLocal);
-    
+
     if (record?.monthly?.ym == currentYm) {
       return record!.monthly!.count;
     }
@@ -378,12 +394,12 @@ class IntegratedStoreService extends ChangeNotifier {
 
   String _formatDate(DateTime dateTime) {
     return '${dateTime.year.toString().padLeft(4, '0')}-'
-           '${dateTime.month.toString().padLeft(2, '0')}-'
-           '${dateTime.day.toString().padLeft(2, '0')}';
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')}';
   }
 
   String _formatYearMonth(DateTime dateTime) {
     return '${dateTime.year.toString().padLeft(4, '0')}-'
-           '${dateTime.month.toString().padLeft(2, '0')}';
+        '${dateTime.month.toString().padLeft(2, '0')}';
   }
 }

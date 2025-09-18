@@ -30,6 +30,7 @@ import 'package:idle_hippo/services/gacha_service.dart';
 import 'package:idle_hippo/models/game_state.dart';
 import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/game_state_service.dart';
+import 'package:idle_hippo/services/equipment_service.dart';
 
 class MainScreen extends StatefulWidget {
   final double memePoints;
@@ -409,10 +410,21 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     final particleY = characterCenterY + math.sin(angle) * distance;
 
     final particleKey = UniqueKey();
-    final displayValue =
-        (widget.lastTapDisplayValue != null && widget.lastTapDisplayValue! > 0)
-        ? widget.lastTapDisplayValue!
-        : gained;
+    final equipmentService = EquipmentService();
+    final computedGain = equipmentService.computeTapGain(
+      widget.gameState,
+      currentTimeMs: DateTime.now().millisecondsSinceEpoch,
+    );
+    final displayValue = () {
+      final latest = widget.lastTapDisplayValue;
+      if (latest != null && latest > 0) {
+        return latest;
+      }
+      if (computedGain > 0) {
+        return computedGain;
+      }
+      return gained;
+    }();
     final particle = PlusMemeParticle(
       key: particleKey,
       startPosition: Offset(particleX, particleY),

@@ -24,7 +24,7 @@ void main() {
     setUp(() {
       // 以記憶體實作初始化 SharedPreferences，避免 plugin 造成測試等待
       SharedPreferences.setMockInitialValues({});
-      final Map<String, dynamic> _storeConfig = {
+      final Map<String, dynamic> storeConfig = {
         'unlimited_item': {
           'purchase_limit_type': 'unlimited',
           'purchase_max_count': 999,
@@ -47,7 +47,7 @@ void main() {
           'purchase_max_count': 2,
         },
       };
-      mockConfig = MockConfigService(_storeConfig);
+      mockConfig = MockConfigService(storeConfig);
       repository = PurchaseRepository();
       limiter = PurchaseLimiterImpl(mockConfig, repository);
     });
@@ -193,9 +193,11 @@ void main() {
         final installDate = DateTime(2025, 8, 1);
         final testDate = DateTime(2025, 8, 5); // 第 5 天
 
-        // 設定安裝記錄
+        // 設定安裝記錄（使用 installDate）
+        final installDateStr =
+            '${installDate.year.toString().padLeft(4, '0')}-${installDate.month.toString().padLeft(2, '0')}-${installDate.day.toString().padLeft(2, '0')}';
         await repository.saveInstallRecord(
-          InstallRecord(firstOpenDate: '2025-08-01'),
+          InstallRecord(firstOpenDate: installDateStr),
         );
 
         final availability = await limiter.availability(
@@ -210,9 +212,11 @@ void main() {
         final installDate = DateTime(2025, 8, 1);
         final testDate = DateTime(2025, 8, 10); // 第 10 天，超過 7 天
 
-        // 設定安裝記錄
+        // 設定安裝記錄（使用 installDate）
+        final installDateStr =
+            '${installDate.year.toString().padLeft(4, '0')}-${installDate.month.toString().padLeft(2, '0')}-${installDate.day.toString().padLeft(2, '0')}';
         await repository.saveInstallRecord(
-          InstallRecord(firstOpenDate: '2025-08-01'),
+          InstallRecord(firstOpenDate: installDateStr),
         );
 
         final availability = await limiter.availability(
@@ -231,9 +235,11 @@ void main() {
         final installDate = DateTime(2025, 8, 1);
         final testDate = DateTime(2025, 8, 25); // 第 25 天
 
-        // 設定安裝記錄
+        // 設定安裝記錄（使用 installDate）
+        final installDateStr =
+            '${installDate.year.toString().padLeft(4, '0')}-${installDate.month.toString().padLeft(2, '0')}-${installDate.day.toString().padLeft(2, '0')}';
         await repository.saveInstallRecord(
-          InstallRecord(firstOpenDate: '2025-08-01'),
+          InstallRecord(firstOpenDate: installDateStr),
         );
 
         final availability = await limiter.availability(
@@ -248,9 +254,11 @@ void main() {
         final installDate = DateTime(2025, 8, 1);
         final testDate = DateTime(2025, 9, 5); // 超過 30 天
 
-        // 設定安裝記錄
+        // 設定安裝記錄（使用 installDate）
+        final installDateStr =
+            '${installDate.year.toString().padLeft(4, '0')}-${installDate.month.toString().padLeft(2, '0')}-${installDate.day.toString().padLeft(2, '0')}';
         await repository.saveInstallRecord(
-          InstallRecord(firstOpenDate: '2025-08-01'),
+          InstallRecord(firstOpenDate: installDateStr),
         );
 
         final availability = await limiter.availability(
@@ -268,9 +276,11 @@ void main() {
         final installDate = DateTime(2025, 8, 1);
         final testDate = DateTime(2025, 8, 3); // 第 3 天
 
-        // 設定安裝記錄
+        // 設定安裝記錄（使用 installDate）
+        final installDateStr =
+            '${installDate.year.toString().padLeft(4, '0')}-${installDate.month.toString().padLeft(2, '0')}-${installDate.day.toString().padLeft(2, '0')}';
         await repository.saveInstallRecord(
-          InstallRecord(firstOpenDate: '2025-08-01'),
+          InstallRecord(firstOpenDate: installDateStr),
         );
 
         // 購買到上限

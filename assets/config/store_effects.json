@@ -1,0 +1,138 @@
+{
+  "store.card_click_perm": {
+    "type": "permanent",
+    "effects": {
+      "clickBoost": 1.5
+    },
+    "description": "點擊加成 +50%"
+  },
+  "store.card_idle_perm": {
+    "type": "permanent",
+    "effects": {
+      "idleBoost": 1.2
+    },
+    "description": "Idle 加成 +20%"
+  },
+  "store.card_click_2x_30m": {
+    "type": "timed",
+    "effects": {
+      "click_2x": {
+        "multiplier": 2.0,
+        "durationMinutes": 30
+      }
+    },
+    "description": "點擊倍數 2x，持續 30 分鐘"
+  },
+  "store.card_idle_2x_1h": {
+    "type": "timed",
+    "effects": {
+      "idle_2x": {
+        "multiplier": 2.0,
+        "durationMinutes": 60
+      }
+    },
+    "description": "Idle 倍數 2x，持續 1 小時"
+  },
+  "store.card_offline_perm_6h": {
+    "type": "permanent",
+    "effects": {
+      "offlineExtended": true
+    },
+    "description": "離線獎勵永久 +6 小時"
+  },
+  "store.card_offline_once_6h": {
+    "type": "timed",
+    "effects": {
+      "offline_extended": {
+        "multiplier": 1.0,
+        "durationMinutes": 1440
+      }
+    },
+    "description": "離線獎勵暫時 +6 小時，持續 24 小時"
+  },
+  "store.card_cap_perm": {
+    "type": "permanent",
+    "effects": {
+      "capIncreased": true
+    },
+    "description": "每日上限 +50%"
+  },
+  "store.ticket_pet_single": {
+    "type": "instant",
+    "effects": {
+      "petTickets": 1
+    },
+    "description": "寵物抽獎券 +1"
+  },
+  "store.ticket_pet_10plus1": {
+    "type": "instant",
+    "effects": {
+      "petTickets": 11
+    },
+    "description": "寵物抽獎券 +11"
+  },
+  "store.pack_daily": {
+    "type": "bundle",
+    "effects": {
+      "instant": {
+        "memePoints": 300,
+        "petTickets": 2
+      },
+      "timed": {
+        "idle_2x": {
+          "multiplier": 2.0,
+          "durationMinutes": 30
+        }
+      }
+    },
+    "description": "每日禮包：迷因點數 +300、抽獎券 +2、Idle 2x (30分鐘)"
+  },
+  "store.pack_monthly": {
+    "type": "bundle",
+    "effects": {
+      "instant": {
+        "memePoints": 3000,
+        "petTickets": 22
+      },
+      "timed": {
+        "idle_2x": {
+          "multiplier": 2.0,
+          "durationMinutes": 1440
+        }
+      }
+    },
+    "description": "每月禮包：迷因點數 +3000、抽獎券 +22、Idle 2x (24小時)"
+  },
+  "store.pack_7n_starter": {
+    "type": "bundle",
+    "effects": {
+      "instant": {
+        "memePoints": 1000,
+        "petTickets": 11
+      },
+      "timed": {
+        "idle_2x": {
+          "multiplier": 2.0,
+          "durationMinutes": 1440
+        }
+      }
+    },
+    "description": "新手 7 日禮包：迷因點數 +1000、抽獎券 +11、Idle 2x (24小時)"
+  },
+  "store.pack_30n_starter": {
+    "type": "bundle",
+    "effects": {
+      "instant": {
+        "memePoints": 5000,
+        "petTickets": 33
+      },
+      "timed": {
+        "idle_2x": {
+          "multiplier": 2.0,
+          "durationMinutes": 7200
+        }
+      }
+    },
+    "description": "新手 30 日禮包：迷因點數 +5000、抽獎券 +33、Idle 2x (120小時)"
+  }
+}

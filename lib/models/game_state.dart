@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'pet.dart';
+import 'buff_models.dart';
 import 'package:idle_hippo/services/config_service.dart';
 
 /// 待提交的抽卡批次（兩階段提交用）
@@ -1186,6 +1187,7 @@ class GameState {
   final PendingGachaBatch? pendingGachaBatch;
   final CheckinState? checkin;
   final KaraokeState? karaoke; // Step23: 每日卡拉OK次數限制
+  final BuffState? buffs; // Step27-3: buff 系統
 
   const GameState({
     required this.saveVersion,
@@ -1205,6 +1207,7 @@ class GameState {
     this.pendingGachaBatch,
     this.checkin,
     this.karaoke,
+    this.buffs,
   });
 
   /// 建立初始狀態
@@ -1224,6 +1227,7 @@ class GameState {
       gacha: null,
       titles: const TitlesState(),
       karaoke: null,
+      buffs: const BuffState(),
     );
   }
 
@@ -1304,6 +1308,10 @@ class GameState {
           map.containsKey('karaoke') && map['karaoke'] is Map<String, dynamic>
           ? KaraokeState.fromMap(map['karaoke'] as Map<String, dynamic>)
           : null,
+      buffs:
+          map.containsKey('buffs') && map['buffs'] is Map<String, dynamic>
+          ? BuffState.fromMap(map['buffs'] as Map<String, dynamic>)
+          : const BuffState(),
     );
   }
 
@@ -1333,6 +1341,7 @@ class GameState {
         'pendingGachaBatch': pendingGachaBatch!.toMap(),
       if (checkin != null) 'checkin': checkin!.toMap(),
       if (karaoke != null) 'karaoke': karaoke!.toMap(),
+      if (buffs != null) 'buffs': buffs!.toMap(),
     };
   }
 
@@ -1388,6 +1397,7 @@ class GameState {
     bool? clearPendingGachaBatch,
     CheckinState? checkin,
     KaraokeState? karaoke,
+    BuffState? buffs,
   }) {
     return GameState(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1410,6 +1420,7 @@ class GameState {
           : (pendingGachaBatch ?? this.pendingGachaBatch),
       checkin: checkin ?? this.checkin,
       karaoke: karaoke ?? this.karaoke,
+      buffs: buffs ?? this.buffs,
     );
   }
 
@@ -1446,7 +1457,8 @@ class GameState {
         other.titles == titles &&
         _pendingBatchEquals(other.pendingGachaBatch, pendingGachaBatch) &&
         other.checkin == checkin &&
-        other.karaoke == karaoke;
+        other.karaoke == karaoke &&
+        other.buffs == buffs;
   }
 
   @override
@@ -1467,7 +1479,8 @@ class GameState {
         (titles?.hashCode ?? 0) ^
         (pendingGachaBatch?.hashCode ?? 0) ^
         (checkin?.hashCode ?? 0) ^
-        (karaoke?.hashCode ?? 0);
+        (karaoke?.hashCode ?? 0) ^
+        (buffs?.hashCode ?? 0);
   }
 
   bool _mapEquals(Map<String, int> a, Map<String, int> b) {

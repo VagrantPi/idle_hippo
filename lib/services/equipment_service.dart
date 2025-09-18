@@ -239,10 +239,22 @@ class EquipmentService {
     return DecimalUtils.sum(bonuses);
   }
 
-  double computeTapGain(GameState state) {
+  double computeTapGain(
+    GameState state, {
+    int? currentTimeMs,
+  }) {
     final baseVal = _config.getValue('game.tap.base', defaultValue: 1);
     final base = baseVal is num ? baseVal.toDouble() : 1.0;
-    return DecimalUtils.add(base, sumTapBonus(state));
+    final additiveGain = DecimalUtils.add(base, sumTapBonus(state));
+
+    final buffs = state.buffs;
+    if (buffs == null) {
+      return additiveGain;
+    }
+
+    final nowMs = currentTimeMs ?? DateTime.now().millisecondsSinceEpoch;
+    final multiplier = buffs.getClickMultiplier(nowMs);
+    return DecimalUtils.multiply(additiveGain, multiplier);
   }
 
   int? getNextCost(String id, int currentLevel) {
