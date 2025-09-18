@@ -1,105 +1,80 @@
+import 'dart:async';
+
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
+
 import '../models/purchase_models.dart';
 import '../services/config_service.dart';
 import '../services/purchase_repository.dart';
+import 'purchase_limit_policy.dart';
 import 'purchase_service.dart';
 
 /// 購買限制器實作
-/// 
+///
 /// 依商品規則與當前時間、歷史購買資料，回傳可購買狀態
 class PurchaseLimiterImpl implements PurchaseLimiter {
   final ConfigService _configService;
   final PurchaseRepository _repository;
+  SharedPreferences? _prefs;
+  PurchaseLimitPolicy? _policy;
 
   PurchaseLimiterImpl(this._configService, this._repository);
 
   @override
-  Future<PurchaseAvailability> availability(String productId, DateTime nowLocal) async {
-    // 確保跨日/跨月重置
+  Future<PurchaseAvailability> availability(
+    String productId,
+    DateTime nowLocal,
+  ) async {
     await ensureRollovers(nowLocal);
-    
-    // 取得商品設定
+
     final storeConfig = _configService.getStoreConfig();
     final productConfig = storeConfig[productId] as Map<String, dynamic>?;
-    
     if (productConfig == null) {
-      return const PurchaseAvailability(false, reasonKey: 'store.unavailable.product_not_found');
+      return const PurchaseAvailability(
+        false,
+        reasonKey: 'store.unavailable.product_not_found',
+      );
     }
-    
-    final limitType = _parseLimitType(productConfig['purchase_limit_type'] as String?);
-    final maxCount = productConfig['purchase_max_count'] as int? ?? 1;
-    
-    // 取得購買記錄
+
+    final policy = await _getPolicy();
+    await _syncFirstLaunchDate(nowLocal);
+
+    final limitType =
+        _parseLimitType(productConfig['purchase_limit_type'] as String?);
+    final canBuy = policy.canPurchase(productId, nowLocal);
+    final remaining = policy.remainingQuota(productId, nowLocal);
+
+    if (canBuy) {
+      return PurchaseAvailability(true, remaining: remaining);
+    }
+
     final record = await _repository.getPurchaseRecord(productId);
-    
-    switch (limitType) {
-      case LimitType.unlimited:
-        return const PurchaseAvailability(true, remaining: -1);
-        
-      case LimitType.limited:
-        final totalPurchased = record?.total ?? 0;
-        final remaining = maxCount - totalPurchased;
-        if (remaining > 0) {
-          return PurchaseAvailability(true, remaining: remaining);
-        } else {
-          return const PurchaseAvailability(false, reasonKey: 'store.unavailable.limited_cap', remaining: 0);
-        }
-        
-      case LimitType.daily:
-        final currentDate = _formatDate(nowLocal);
-        final dailyRecord = record?.daily;
-        
-        if (dailyRecord == null || dailyRecord.date != currentDate) {
-          // 新的一天或首次購買
-          return PurchaseAvailability(true, remaining: maxCount);
-        } else {
-          final remaining = maxCount - dailyRecord.count;
-          if (remaining > 0) {
-            return PurchaseAvailability(true, remaining: remaining);
-          } else {
-            return const PurchaseAvailability(false, reasonKey: 'store.unavailable.daily_cap', remaining: 0);
-          }
-        }
-        
-      case LimitType.monthly:
-        final currentYm = _formatYearMonth(nowLocal);
-        final monthlyRecord = record?.monthly;
-        
-        if (monthlyRecord == null || monthlyRecord.ym != currentYm) {
-          // 新的月份或首次購買
-          return PurchaseAvailability(true, remaining: maxCount);
-        } else {
-          final remaining = maxCount - monthlyRecord.count;
-          if (remaining > 0) {
-            return PurchaseAvailability(true, remaining: remaining);
-          } else {
-            return const PurchaseAvailability(false, reasonKey: 'store.unavailable.monthly_cap', remaining: 0);
-          }
-        }
-        
-      case LimitType.first7:
-        return await _checkFirstNDays(productId, nowLocal, 7, 'store.unavailable.first7_expired');
-        
-      case LimitType.first30:
-        return await _checkFirstNDays(productId, nowLocal, 30, 'store.unavailable.first30_expired');
-    }
+    final reasonKey = await _resolveReasonKey(limitType, record, nowLocal);
+    final nonNegativeRemaining = remaining < 0 ? 0 : remaining;
+    return PurchaseAvailability(
+      false,
+      reasonKey: reasonKey,
+      remaining: nonNegativeRemaining,
+    );
   }
 
   @override
   Future<void> markPurchased(String productId, DateTime nowLocal) async {
-    // 確保跨日/跨月重置
     await ensureRollovers(nowLocal);
-    
-    // 取得商品設定
+
     final storeConfig = _configService.getStoreConfig();
     final productConfig = storeConfig[productId] as Map<String, dynamic>?;
-    
     if (productConfig == null) return;
-    
-    final limitType = _parseLimitType(productConfig['purchase_limit_type'] as String?);
-    
-    // 取得現有記錄
-    var record = await _repository.getPurchaseRecord(productId) ?? const PurchaseRecord();
-    
+
+    final policy = await _getPolicy();
+    await _syncFirstLaunchDate(nowLocal);
+    policy.recordPurchase(productId, nowLocal);
+
+    final limitType =
+        _parseLimitType(productConfig['purchase_limit_type'] as String?);
+    var record =
+        await _repository.getPurchaseRecord(productId) ?? const PurchaseRecord();
+
     switch (limitType) {
       case LimitType.unlimited:
       case LimitType.limited:
@@ -107,11 +82,11 @@ class PurchaseLimiterImpl implements PurchaseLimiter {
         final newTotal = (record.total ?? 0) + 1;
         record = record.copyWith(total: newTotal);
         break;
-        
+
       case LimitType.daily:
         final currentDate = _formatDate(nowLocal);
         final dailyRecord = record.daily;
-        
+
         if (dailyRecord == null || dailyRecord.date != currentDate) {
           // 新的一天
           record = record.copyWith(
@@ -124,11 +99,11 @@ class PurchaseLimiterImpl implements PurchaseLimiter {
           );
         }
         break;
-        
+
       case LimitType.monthly:
         final currentYm = _formatYearMonth(nowLocal);
         final monthlyRecord = record.monthly;
-        
+
         if (monthlyRecord == null || monthlyRecord.ym != currentYm) {
           // 新的月份
           record = record.copyWith(
@@ -141,7 +116,7 @@ class PurchaseLimiterImpl implements PurchaseLimiter {
           );
         }
         break;
-        
+
       case LimitType.first7:
       case LimitType.first30:
         // 新手期商品也需要記錄總計數
@@ -149,7 +124,7 @@ class PurchaseLimiterImpl implements PurchaseLimiter {
         record = record.copyWith(total: newTotal);
         break;
     }
-    
+
     await _repository.savePurchaseRecord(productId, record);
   }
 
@@ -159,39 +134,95 @@ class PurchaseLimiterImpl implements PurchaseLimiter {
     await _repository.resetMonthlyRecords(nowLocal);
   }
 
-  /// 檢查新手期商品可購買性
-  Future<PurchaseAvailability> _checkFirstNDays(
-    String productId,
+  Future<PurchaseLimitPolicy> _getPolicy() async {
+    if (_policy != null) {
+      return _policy!;
+    }
+    _prefs ??= await SharedPreferences.getInstance();
+    _policy = await PurchaseLimitPolicy.create(
+      configService: _configService,
+      repository: _repository,
+      preferences: _prefs!,
+    );
+    return _policy!;
+  }
+
+  Future<void> _syncFirstLaunchDate(DateTime nowLocal) async {
+    _prefs ??= await SharedPreferences.getInstance();
+    final installRecord = await _repository.ensureInstallRecord(nowLocal);
+    PurchaseLimitPolicy.cacheInstallDate(installRecord.firstOpenDate, _prefs!);
+    if (!(_prefs!
+            .getString(PurchaseLimitPolicy.firstLaunchKey)
+            ?.isNotEmpty ??
+        false)) {
+      await _prefs!.setString(
+        PurchaseLimitPolicy.firstLaunchKey,
+        installRecord.firstOpenDate,
+      );
+    }
+  }
+
+  Future<String> _resolveReasonKey(
+    LimitType type,
+    PurchaseRecord? record,
+    DateTime nowLocal,
+  ) async {
+    switch (type) {
+      case LimitType.unlimited:
+        return 'store.unavailable.limited_cap';
+      case LimitType.limited:
+        return 'store.unavailable.limited_cap';
+      case LimitType.daily:
+        return 'store.unavailable.daily_cap';
+      case LimitType.monthly:
+        return 'store.unavailable.monthly_cap';
+      case LimitType.first7:
+        return await _firstPeriodReason(
+          record,
+          nowLocal,
+          7,
+          'store.unavailable.first7_expired',
+        );
+      case LimitType.first30:
+        return await _firstPeriodReason(
+          record,
+          nowLocal,
+          30,
+          'store.unavailable.first30_expired',
+        );
+    }
+  }
+
+  Future<String> _firstPeriodReason(
+    PurchaseRecord? record,
     DateTime nowLocal,
     int days,
-    String expiredReasonKey,
+    String expiredKey,
   ) async {
-    // 確保安裝記錄存在
+    if ((record?.total ?? 0) > 0) {
+      return 'store.unavailable.limited_cap';
+    }
+
     final installRecord = await _repository.ensureInstallRecord(nowLocal);
-    final firstOpenDate = DateTime.parse(installRecord.firstOpenDate);
-    
-    // 計算天數差異
-    final daysDiff = nowLocal.difference(firstOpenDate).inDays;
-    
-    if (daysDiff >= days) {
-      // 超過新手期
-      return PurchaseAvailability(false, reasonKey: expiredReasonKey, remaining: 0);
+    final launchDate = installRecord.firstOpenDate;
+    final location = tz.getLocation('Asia/Taipei');
+    final first = _parseDateString(launchDate, location);
+    final now = tz.TZDateTime.from(nowLocal, location);
+    final diffDays = now.difference(first).inDays;
+
+    if (diffDays >= days) {
+      return expiredKey;
     }
-    
-    // 在新手期內，檢查是否已購買過
-    final storeConfig = _configService.getStoreConfig();
-    final productConfig = storeConfig[productId] as Map<String, dynamic>?;
-    final maxCount = productConfig?['purchase_max_count'] as int? ?? 1;
-    
-    final record = await _repository.getPurchaseRecord(productId);
-    final totalPurchased = record?.total ?? 0;
-    final remaining = maxCount - totalPurchased;
-    
-    if (remaining > 0) {
-      return PurchaseAvailability(true, remaining: remaining);
-    } else {
-      return const PurchaseAvailability(false, reasonKey: 'store.unavailable.limited_cap', remaining: 0);
-    }
+
+    return 'store.unavailable.limited_cap';
+  }
+
+  tz.TZDateTime _parseDateString(String date, tz.Location location) {
+    final parts = date.split('-');
+    final year = int.parse(parts[0]);
+    final month = int.parse(parts[1]);
+    final day = int.parse(parts[2]);
+    return tz.TZDateTime(location, year, month, day);
   }
 
   /// 解析限購類型
@@ -217,13 +248,13 @@ class PurchaseLimiterImpl implements PurchaseLimiter {
   /// 格式化日期為 YYYY-MM-DD (Asia/Taipei)
   String _formatDate(DateTime dateTime) {
     return '${dateTime.year.toString().padLeft(4, '0')}-'
-           '${dateTime.month.toString().padLeft(2, '0')}-'
-           '${dateTime.day.toString().padLeft(2, '0')}';
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')}';
   }
 
   /// 格式化年月為 YYYY-MM (Asia/Taipei)
   String _formatYearMonth(DateTime dateTime) {
     return '${dateTime.year.toString().padLeft(4, '0')}-'
-           '${dateTime.month.toString().padLeft(2, '0')}';
+        '${dateTime.month.toString().padLeft(2, '0')}';
   }
 }
