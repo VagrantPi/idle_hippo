@@ -143,6 +143,16 @@ class PurchaseRepository {
     }
   }
 
+  /// 清除所有購買相關存檔（包含安裝紀錄與各商品計數）
+  Future<void> clearAll() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storeKey);
+    } catch (_) {
+      // 忽略清除錯誤
+    }
+  }
+
   /// 格式化日期為 YYYY-MM-DD (Asia/Taipei)
   String _formatDate(DateTime dateTime) {
     return '${dateTime.year.toString().padLeft(4, '0')}-'

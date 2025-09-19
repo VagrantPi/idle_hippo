@@ -343,6 +343,10 @@
     "daily_locked": "本日は完了しました。明日また来てください！"
   },
   "store": {
+    "ui": {
+      "purchasing": "購入処理中...",
+      "verifying": "検証中..."
+    },
     "tab": {
       "permanent": "常駐リソース",
       "limited": "期間限定パック"

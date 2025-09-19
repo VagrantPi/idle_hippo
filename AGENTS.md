@@ -1,4 +1,6 @@
-% Repository Guidelines
+# Repository Guidelines
+
+使用繁體中文回覆我
 
 ## Project Structure & Module Organization
 - `lib/core/`: 共用邏輯（`router.dart`、assets 常數、事件 bus）。

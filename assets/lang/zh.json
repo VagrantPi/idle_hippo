@@ -358,6 +358,10 @@
     "next": "下一步"
   },
   "store": {
+    "ui": {
+      "purchasing": "購買中...",
+      "verifying": "驗證中..."
+    },
     "tab": {
       "permanent": "常駐資源",
       "limited": "限時優惠包"

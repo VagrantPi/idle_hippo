@@ -66,6 +66,21 @@ class PurchaseLimitPolicy {
     );
   }
 
+  /// 清除所有與限購相關的偏好資料（重置用）
+  static Future<void> resetAllPrefs({SharedPreferences? preferences}) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
+    // 移除所有以 'limit:' 為前綴的 key
+    final keys = prefs.getKeys().toList();
+    for (final k in keys) {
+      if (k.startsWith('limit:')) {
+        await prefs.remove(k);
+      }
+    }
+    await prefs.remove(firstLaunchKey);
+    await prefs.remove(_installCacheKey);
+    _repositoryCachedInstallDate = null;
+  }
+
   /// 檢查指定商品在 `now` 時刻是否仍可購買。
   bool canPurchase(String storeId, DateTime now) {
     final rule = _resolveRule(storeId);

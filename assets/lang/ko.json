@@ -343,6 +343,10 @@
     "daily_locked": "오늘은 이미 완료했습니다. 내일 다시 오세요!"
   },
   "store": {
+    "ui": {
+      "purchasing": "구매 중...",
+      "verifying": "검증 중..."
+    },
     "tab": {
       "permanent": "상주 자원",
       "limited": "한정 혜택 패키지"

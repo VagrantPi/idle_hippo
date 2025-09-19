@@ -3,6 +3,7 @@ import 'package:idle_hippo/services/config_service.dart';
 import 'package:idle_hippo/services/localization_service.dart';
 import 'package:idle_hippo/services/integrated_store_service.dart';
 import 'package:idle_hippo/models/purchase_models.dart';
+import 'package:idle_hippo/ui/widgets/shop_purchase_controls.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({super.key});
@@ -304,6 +305,13 @@ class _StoreCard extends StatelessWidget {
                             AnimatedBuilder(
                               animation: IntegratedStoreService(),
                               builder: (context, _) {
+                                // New unified UI state machine control
+                                return ShopPurchaseControls(
+                                  itemKey: itemKey,
+                                  limitType: limitType,
+                                  adsPay: adsPay,
+                                );
+                                // Legacy code below (kept for gradual migration)
                                 return FutureBuilder<PurchaseAvailability>(
                                   future: IntegratedStoreService()
                                       .getAvailability(itemKey),

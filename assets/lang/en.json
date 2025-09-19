@@ -365,6 +365,10 @@
     "next": "Next"
   },
   "store": {
+    "ui": {
+      "purchasing": "Purchasing...",
+      "verifying": "Verifying..."
+    },
     "tab": {
       "permanent": "Permanent Resources",
       "limited": "Limited-Time Pack"
