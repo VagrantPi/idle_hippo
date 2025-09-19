@@ -5,6 +5,7 @@ import 'config_service.dart';
 import 'entitlement_manager.dart';
 import 'purchase_service.dart';
 import 'verify_client.dart';
+import 'pending_grant_store.dart';
 
 /// Orchestrator 狀態
 class OrchestratorState {
@@ -38,6 +39,7 @@ class PurchaseOrchestrator {
   final PurchaseService _purchaseService;
   final VerifyClient _verifyClient;
   final EntitlementManager _entitlementManager;
+  final PendingGrantStore _pendingStore;
 
   final StreamController<OrchestratorState> _stateCtr =
       StreamController<OrchestratorState>.broadcast(sync: true);
@@ -58,10 +60,12 @@ class PurchaseOrchestrator {
     required PurchaseService purchaseService,
     required VerifyClient verifyClient,
     required EntitlementManager entitlementManager,
+    PendingGrantStore? pendingGrantStore,
   })  : _configService = configService,
         _purchaseService = purchaseService,
         _verifyClient = verifyClient,
-        _entitlementManager = entitlementManager {
+        _entitlementManager = entitlementManager,
+        _pendingStore = pendingGrantStore ?? InMemoryPendingGrantStore() {
     // 監聽底層購買事件
     _purchaseSub = _purchaseService.purchaseStream.listen(_onPurchaseEvent);
   }
@@ -128,14 +132,21 @@ class PurchaseOrchestrator {
           // 正常購買流程：需進行驗證
           _stateCtr.add(OrchestratorState.verifying(orderId: null));
           try {
-            // 目前沒有實際 orderId，先給一個 placeholder
+            // 目前沒有實際 orderId，先給一個 placeholder，並保存 pending_grant
+            const orderId = 'mock-order';
+            await _pendingStore.save(PendingGrant(
+              skuId: event.productId,
+              orderId: orderId,
+            ));
+
             final verify = await _verifyClient.verify(
               skuId: event.productId,
-              orderId: 'mock-order',
+              orderId: orderId,
             );
             if (verify.ok) {
               final entitlement = _entitlementKeyFor(event.productId);
-              await _entitlementManager.grant(skuId: entitlement, orderId: 'mock-order');
+              await _entitlementManager.grant(skuId: entitlement, orderId: orderId);
+              await _pendingStore.clear();
               _stateCtr.add(OrchestratorState.success(event.productId));
             } else {
               _stateCtr.add(OrchestratorState.error('verify_failed',
@@ -179,5 +190,38 @@ class PurchaseOrchestrator {
     _disposed = true;
     _purchaseSub?.cancel();
     _stateCtr.close();
+  }
+
+  /// App 啟動時補發（Crash-safe）
+  ///
+  /// 檢查 pending_grant，若存在則再次驗證並授權（冪等）。
+  Future<void> onAppStart() async {
+    if (_disposed) return;
+    final pending = await _pendingStore.load();
+    if (pending == null) return;
+
+    try {
+      _stateCtr.add(OrchestratorState.verifying(orderId: pending.orderId));
+      final verify = await _verifyClient.verify(
+        skuId: pending.skuId,
+        orderId: pending.orderId,
+      );
+      if (verify.ok) {
+        final entitlement = _entitlementKeyFor(pending.skuId);
+        await _entitlementManager.grant(
+          skuId: entitlement,
+          orderId: pending.orderId,
+        );
+        await _pendingStore.clear();
+        _stateCtr.add(OrchestratorState.success(pending.skuId));
+      } else {
+        _stateCtr.add(OrchestratorState.error(
+          'verify_failed',
+          verify.reason ?? 'verify not ok',
+        ));
+      }
+    } catch (e) {
+      _stateCtr.add(OrchestratorState.error('verify_exception', '$e'));
+    }
   }
 }

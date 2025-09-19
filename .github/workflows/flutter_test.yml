@@ -12,8 +12,9 @@ jobs:
       matrix:
         test-group: [
           "core",
-          "services", 
-          "step-tests",
+          "services",
+          "step-tests-1",
+          "step-tests-2",
           "ui-widgets"
         ]
       fail-fast: false
@@ -81,11 +82,21 @@ jobs:
             test/tap_service_test.dart \
             test/titles_persistence_test.dart
 
-      - name: Run step tests
-        if: matrix.test-group == 'step-tests'
+      - name: Run step tests 1
+        if: matrix.test-group == 'step-tests-1'
         run: |
           flutter test \
-            test/step*
+            test/step21/ \
+            test/step22/ \
+            test/step25/ \
+            test/step26-1/
+
+      - name: Run step tests 2
+        if: matrix.test-group == 'step-tests-2'
+        run: |
+          flutter test \
+            test/step26-2/ \
+            test/step27/
 
       - name: Run UI and widget tests
         if: matrix.test-group == 'ui-widgets'
