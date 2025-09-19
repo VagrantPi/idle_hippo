@@ -9,6 +9,7 @@ import '../services/purchase_service.dart';
 import '../services/mock_purchase_service.dart';
 import '../services/mock_rewarded_ad_service.dart';
 import '../services/entitlement_manager.dart';
+import '../services/purchase_limit_policy.dart';
 import '../services/game_state_service.dart';
 
 /// 整合的商城服務
@@ -277,11 +278,11 @@ class IntegratedStoreService extends ChangeNotifier {
 
   /// 重置所有購買記錄（測試用）
   Future<void> resetAllPurchases() async {
-    final storeConfig = _configService.getStoreConfig();
-    for (final productId in storeConfig.keys) {
-      await _repository.savePurchaseRecord(productId, const PurchaseRecord());
-    }
-    // 一併清除權益持久化資料，避免重置後殘留永久權益或訂單紀錄
+    // 清除購買存檔（包含安裝紀錄與各商品計數）
+    await _repository.clearAll();
+    // 清除限購偏好資料（每日/月/首次啟動等快取）
+    await PurchaseLimitPolicy.resetAllPrefs();
+    // 一併清除權益持久化資料，避免殘留永久權益或訂單紀錄
     try {
       await _entitlementManager.resetPersistedData();
     } catch (_) {}

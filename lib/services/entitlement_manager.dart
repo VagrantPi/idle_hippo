@@ -129,6 +129,9 @@ class EntitlementManagerImpl implements EntitlementManager {
   final FlutterSecureStorage _storage;
   final String _storageKey = 'entitlement_data';
 
+  // 全域快取：避免重複載入 assets/config/store_effects.json
+  static Map<String, StoreEffectConfig>? _effectsConfigCache;
+
   EntitlementData _data = const EntitlementData();
   Map<String, StoreEffectConfig> _effectsConfig = {};
 
@@ -146,18 +149,26 @@ class EntitlementManagerImpl implements EntitlementManager {
 
   /// 載入商品效果配置
   Future<void> _loadEffectsConfig() async {
+    // 若已快取，直接使用，避免重複 IO 與重複日誌
+    if (_effectsConfigCache != null) {
+      _effectsConfig = _effectsConfigCache!;
+      return;
+    }
     try {
       final jsonString = await rootBundle.loadString(
         'assets/config/store_effects.json',
       );
       final Map<String, dynamic> configMap = json.decode(jsonString);
 
-      _effectsConfig = configMap.map(
+      final mapped = configMap.map(
         (key, value) => MapEntry(
           key,
           StoreEffectConfig.fromMap(value as Map<String, dynamic>),
         ),
       );
+
+      _effectsConfig = mapped;
+      _effectsConfigCache = mapped; // 設快取供後續實例共用
 
       debugPrint('[EntitlementManager] 載入商品效果配置: ${_effectsConfig.length} 項');
     } catch (e) {
