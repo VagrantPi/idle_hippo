@@ -18,6 +18,8 @@ class _ShopPageState extends State<ShopPage>
 
   final _config = ConfigService();
   final _i18n = LocalizationService();
+  bool _restoring = false;
+  bool _restoreCompleted = false;
 
   @override
   void initState() {
@@ -42,13 +44,69 @@ class _ShopPageState extends State<ShopPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _i18n.getPageName('shop'),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _i18n.getPageName('shop'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: (_restoring || _restoreCompleted)
+                    ? null
+                    : () async {
+                        setState(() => _restoring = true);
+                        try {
+                          final count =
+                              await IntegratedStoreService().restorePurchases();
+                          if (!mounted) return;
+                          final msg = count > 0
+                              ? _i18n.getString(
+                                  'store.restore.success',
+                                  replacements: {'n': '$count'},
+                                  defaultValue: 'Restored $count item(s)',
+                                )
+                              : _i18n.getString(
+                                  'store.restore.none',
+                                  defaultValue: 'Nothing to restore',
+                                );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(msg),
+                              backgroundColor:
+                                  count > 0 ? Colors.green : Colors.grey,
+                            ),
+                          );
+                        } catch (_) {} finally {
+                          if (mounted) {
+                            setState(() {
+                              _restoring = false;
+                              _restoreCompleted = true;
+                            });
+                          }
+                        }
+                      },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange.withValues(alpha: 0.9),
+                  disabledBackgroundColor: Colors.white.withValues(alpha: 0.12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text(
+                  _i18n.getString('store.btn.restore', defaultValue: 'Restore'),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           _buildTabs(),

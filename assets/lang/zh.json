@@ -398,7 +398,12 @@
       "buy": "購買",
       "owned": "已擁有",
       "disabled": "未開放",
-      "ad_buy": "看廣告購買"
+      "ad_buy": "看廣告購買",
+      "restore": "恢復購買"
+    },
+    "restore": {
+      "success": "已恢復 {n} 項",
+      "none": "沒有可恢復項目"
     },
     "items": {
       "card_click_perm": {
