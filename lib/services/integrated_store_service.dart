@@ -195,9 +195,59 @@ class IntegratedStoreService extends ChangeNotifier {
     }
   }
 
-  /// 恢復購買
-  Future<void> restorePurchases() async {
-    await _purchaseService.restore();
+  /// 恢復購買（僅計入 non-consumable），回傳本次新恢復的項目數量
+  Future<int> restorePurchases() async {
+    if (!_initialized) return 0;
+
+    // 事先快照目前已擁有之 non-consumable 權益，用於判斷本次新增數量
+    final store = _configService.getStoreConfig();
+    final nonConsumables = store.keys.where(_isNonConsumableKey).toSet();
+    final Map<String, bool> before = {
+      for (final k in nonConsumables) k: _entitlementManager.hasEntitlement(k),
+    };
+
+    int restored = 0;
+    late StreamSubscription sub;
+    sub = _purchaseService.purchaseStream.listen((event) {
+      if (event.status != PurchaseStatus.success) return;
+      final isNC = _isNonConsumable(event.productId);
+      if (!isNC) return;
+      final entitlement = _entitlementKeyFor(event.productId);
+      final hadBefore = before[entitlement] ?? false;
+      if (!hadBefore) restored += 1;
+    });
+
+    try {
+      await _purchaseService.restore();
+      // 稍作等待，讓事件能被處理
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    } finally {
+      await sub.cancel();
+    }
+    return restored;
+  }
+
+  bool _isNonConsumable(String productId) {
+    final store = _configService.getStoreConfig();
+    final key = productId.startsWith('store.') ? productId : 'store.$productId';
+    final cfg = store[key] as Map<String, dynamic>?;
+    if (cfg == null) return false;
+    final type = cfg['purchase_limit_type'] as String?;
+    final max = cfg['purchase_max_count'] as int?;
+    return type == 'limited' && (max == null || max == 1);
+  }
+
+  bool _isNonConsumableKey(String key) {
+    final store = _configService.getStoreConfig();
+    final cfg = store[key] as Map<String, dynamic>?;
+    if (cfg == null) return false;
+    final type = cfg['purchase_limit_type'] as String?;
+    final max = cfg['purchase_max_count'] as int?;
+    return type == 'limited' && (max == null || max == 1);
+  }
+
+  String _entitlementKeyFor(String productId) {
+    return productId.startsWith('store.') ? productId : 'store.$productId';
   }
 
   /// 查詢商品資訊

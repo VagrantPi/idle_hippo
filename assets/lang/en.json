@@ -402,7 +402,12 @@
       "buy": "Purchase",
       "disabled": "Locked",
       "owned": "Owned",
-      "ad_buy": "Ad Purchase"
+      "ad_buy": "Ad Purchase",
+      "restore": "Restore"
+    },
+    "restore": {
+      "success": "Restored {n} item(s)",
+      "none": "Nothing to restore"
     },
     "ads": {
       "title": "Watch Ad to Purchase"
