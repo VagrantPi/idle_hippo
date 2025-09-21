@@ -383,6 +383,27 @@
       "ad_buy": "広告で購入",
       "restore": "購入の復元"
     },
+    "purchase_success": "購入に成功しました！",
+    "purchase_failed": "購入に失敗しました。",
+    "ad_purchase_failed": "動画購入に失敗しました。",
+    "error": "ストアエラー",
+    "not_initialized": "ストアを初期化しています。しばらくしてからお試しください。",
+    "errors": {
+      "verify_failed": "検証に失敗しました。サポートへご連絡ください。",
+      "verify_exception": "検証サービスでエラーが発生しました。しばらくしてから再試行してください。",
+      "canceled": "購入がキャンセルされました。",
+      "purchase_error": "購入に失敗しました。再度お試しください。",
+      "not_initialized": "ストアの準備が完了していません。",
+      "unknown": "不明なストアエラーが発生しました。"
+    },
+    "unavailable": {
+      "limited_cap": "購入上限に達しました。",
+      "daily_cap": "本日の購入回数は上限です。",
+      "monthly_cap": "今月の購入回数は上限です。",
+      "first7_expired": "7日間限定パックは終了しました。",
+      "first30_expired": "30日間限定パックは終了しました。",
+      "product_not_found": "商品が見つかりません。"
+    },
     "restore": {
       "success": "{n} 件を復元しました",
       "none": "復元する項目はありません"

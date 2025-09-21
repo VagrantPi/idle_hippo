@@ -118,6 +118,21 @@ class PurchaseAvailability {
   }
 }
 
+/// 購買流程錯誤：攜帶可供 UI 映射的錯誤代碼。
+class PurchaseFlowException implements Exception {
+  final String code;
+  final String? message;
+  final Object? cause;
+
+  const PurchaseFlowException({required this.code, this.message, this.cause});
+
+  @override
+  String toString() {
+    final msg = message ?? code;
+    return 'PurchaseFlowException(code: $code, message: $msg)';
+  }
+}
+
 /// 購買記錄資料結構
 class PurchaseRecord {
   final int? total;

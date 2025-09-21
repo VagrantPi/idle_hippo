@@ -405,6 +405,27 @@
       "ad_buy": "Ad Purchase",
       "restore": "Restore"
     },
+    "purchase_success": "Purchase successful!",
+    "purchase_failed": "Purchase failed!",
+    "ad_purchase_failed": "Ad purchase failed!",
+    "error": "Store error",
+    "not_initialized": "Store is initializing, please retry later.",
+    "errors": {
+      "verify_failed": "Verification failed. Please contact support.",
+      "verify_exception": "Verification service error. Please try again later.",
+      "canceled": "Purchase cancelled.",
+      "purchase_error": "Purchase failed. Please retry.",
+      "not_initialized": "Store is not ready yet.",
+      "unknown": "Unexpected store error."
+    },
+    "unavailable": {
+      "limited_cap": "Purchase limit reached.",
+      "daily_cap": "Daily limit reached.",
+      "monthly_cap": "Monthly limit reached.",
+      "first7_expired": "First 7-day offer expired.",
+      "first30_expired": "First 30-day offer expired.",
+      "product_not_found": "Product unavailable."
+    },
     "restore": {
       "success": "Restored {n} item(s)",
       "none": "Nothing to restore"

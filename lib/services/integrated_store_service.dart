@@ -37,8 +37,20 @@ class IntegratedStoreService extends ChangeNotifier {
   StreamSubscription<PurchaseEvent>? _purchaseSubscription;
   bool _initialized = false;
   bool _disposed = false;
+  String? _mockNextErrorCode;
 
   bool get isInitialized => _initialized;
+
+  @visibleForTesting
+  void debugSetNextPurchaseError(String? code) {
+    _mockNextErrorCode = code;
+  }
+
+  String? _takeMockErrorCode() {
+    final code = _mockNextErrorCode;
+    _mockNextErrorCode = null;
+    return code;
+  }
 
   /// 初始化服務
   Future<void> initialize({
@@ -105,6 +117,11 @@ class IntegratedStoreService extends ChangeNotifier {
       throw Exception('IntegratedStoreService not initialized');
     }
 
+    final mockCode = _takeMockErrorCode();
+    if (mockCode != null) {
+      throw PurchaseFlowException(code: mockCode);
+    }
+
     final storeConfig = _configService.getStoreConfig();
     final productConfig = storeConfig[productId] as Map<String, dynamic>?;
 
@@ -151,6 +168,11 @@ class IntegratedStoreService extends ChangeNotifier {
       throw Exception('IntegratedStoreService not initialized');
     }
 
+    final mockCode = _takeMockErrorCode();
+    if (mockCode != null) {
+      throw PurchaseFlowException(code: mockCode);
+    }
+
     final storeConfig = _configService.getStoreConfig();
     final productConfig = storeConfig[productId] as Map<String, dynamic>?;
     if (productConfig == null) {
@@ -164,6 +186,11 @@ class IntegratedStoreService extends ChangeNotifier {
   Future<void> buyProductViaAd(String productId) async {
     if (!_initialized) {
       throw Exception('IntegratedStoreService not initialized');
+    }
+
+    final mockCode = _takeMockErrorCode();
+    if (mockCode != null) {
+      throw PurchaseFlowException(code: mockCode);
     }
 
     final storeConfig = _configService.getStoreConfig();

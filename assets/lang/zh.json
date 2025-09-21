@@ -401,6 +401,27 @@
       "ad_buy": "看廣告購買",
       "restore": "恢復購買"
     },
+    "purchase_success": "購買成功！",
+    "purchase_failed": "購買失敗！",
+    "ad_purchase_failed": "影片購買失敗！",
+    "error": "商城錯誤",
+    "not_initialized": "商城初始化中，請稍後再試。",
+    "errors": {
+      "verify_failed": "驗證失敗，請聯絡客服。",
+      "verify_exception": "驗證服務異常，請稍後再試。",
+      "canceled": "已取消購買。",
+      "purchase_error": "購買失敗，請再試一次。",
+      "not_initialized": "商城尚未準備完成。",
+      "unknown": "發生未知的商城錯誤。"
+    },
+    "unavailable": {
+      "limited_cap": "已達購買上限。",
+      "daily_cap": "今日購買次數已滿。",
+      "monthly_cap": "本月購買次數已滿。",
+      "first7_expired": "新手 7 日禮包已過期。",
+      "first30_expired": "新手 30 日禮包已過期。",
+      "product_not_found": "商品已下架或不存在。"
+    },
     "restore": {
       "success": "已恢復 {n} 項",
       "none": "沒有可恢復項目"
