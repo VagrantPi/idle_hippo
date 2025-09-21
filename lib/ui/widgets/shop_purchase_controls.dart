@@ -51,7 +51,10 @@ class _ShopPurchaseControlsState extends State<ShopPurchaseControls> {
 
   Future<void> _init() async {
     // 載入價格：直接透過 IntegratedStoreService.queryProducts
-    setState(() => _state = UiPurchaseState.loadingPrice);
+    setState(() {
+      _state = UiPurchaseState.loadingPrice;
+      _errorKey = null;
+    });
     try {
       final List<ProductInfo> list =
           await IntegratedStoreService().queryProducts([widget.itemKey]);
@@ -65,10 +68,14 @@ class _ShopPurchaseControlsState extends State<ShopPurchaseControls> {
         await IntegratedStoreService().getAvailability(widget.itemKey);
     if (!mounted) return;
     if (availability.canBuy) {
-      setState(() => _state = UiPurchaseState.ready);
+      setState(() {
+        _state = UiPurchaseState.ready;
+        _errorKey = null;
+      });
     } else {
       setState(() {
         _state = _mapUnavailabilityToState(widget.limitType);
+        _errorKey = availability.reasonKey ?? _mapErrorCode('unknown');
       });
     }
   }
@@ -106,6 +113,19 @@ class _ShopPurchaseControlsState extends State<ShopPurchaseControls> {
       default:
         return UiPurchaseState.disabled;
     }
+  }
+
+  String? _mapErrorCode(String code) {
+    const mapping = {
+      'verify_failed': 'store.errors.verify_failed',
+      'verify_exception': 'store.errors.verify_exception',
+      'canceled': 'store.errors.canceled',
+      'purchase_error': 'store.errors.purchase_error',
+      'not_initialized': 'store.errors.not_initialized',
+      'product_not_found': 'store.unavailable.product_not_found',
+      'unknown': 'store.errors.unknown',
+    };
+    return mapping[code];
   }
 
   @override
@@ -247,9 +267,15 @@ class _ShopPurchaseControlsState extends State<ShopPurchaseControls> {
       );
       setState(() {
         _state = _successLandingState(widget.limitType);
+        _errorKey = null;
       });
     } catch (e) {
       if (!mounted) return;
+      if (e is PurchaseFlowException) {
+        _errorKey = _mapErrorCode(e.code) ?? 'store.purchase_failed';
+      } else {
+        _errorKey ??= 'store.errors.unknown';
+      }
       final msgKey = _errorKey ?? 'store.purchase_failed';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -285,9 +311,15 @@ class _ShopPurchaseControlsState extends State<ShopPurchaseControls> {
       );
       setState(() {
         _state = _successLandingState(widget.limitType);
+        _errorKey = null;
       });
     } catch (e) {
       if (!mounted) return;
+      if (e is PurchaseFlowException) {
+        _errorKey = _mapErrorCode(e.code) ?? 'store.purchase_failed';
+      } else {
+        _errorKey ??= 'store.errors.unknown';
+      }
       final msgKey = _errorKey ?? 'store.purchase_failed';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -1,7 +1,5 @@
 # idle_hippo
 
-A new Flutter project.
-
 ## 功能特色
 
 - 🦛 可愛的河馬角色互動
@@ -13,11 +11,7 @@ A new Flutter project.
 - 🐾 寵物系統與抽獎
 - 🌍 多國語系支援 (繁中/英文/日文/韓文)
 
-A few resources to get you started if this is your first Flutter project:
+## build 時需要記得修改
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+build.gradle.kts 中的 versionCode, versionName
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.

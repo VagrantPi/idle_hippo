@@ -36,8 +36,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 21
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.0.23-2-1"
+        versionCode = 3
+        versionName = "0.0.27-8"
     }
 
     signingConfigs {
@@ -66,4 +66,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.android.billingclient:billing:6.0.1")
 }
